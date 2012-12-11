@@ -1,0 +1,34 @@
+╔═════════════════════╤═════════════════════╤═════════════════════╤═════════════════════╤═════════════════════╗
+║       PROBLEM       │      SOLUTION       │         UVP         │  UNFAIR ADVANTAGE   │  CUSTOMER SEGMENTS  ║
+║1. Users want extra  │1. Integrated        │DEVS:                │1. OSS (AGPL)?       │1. OSS devs          ║
+║features in OSS      │solution that allows │Earn money from OSS  │2. Insider of OSS    │2. OSS users         ║
+║project, but cant    │many users sponsor   │and solve your users │3. Connections with  │                     ║
+║finance them 100%    │single feature       │real problems        │OSS projects build   │                     ║
+║2. OSS devs          │2. SAAS or OSS       │Another way of       │4. First-mover +     │early adopters:      ║
+║want to earn         │3. Widgets           │making money in OSS  │network effect       │-LanguageTool        ║
+║some money not beg   │4. Paying upfront    │Easy setup        	  │                     │-FOSSDEM projects    ║
+║3. OSS devs want     │and releasing as OSS │USERS:               │                     │-Few small OSS projs ║
+║to know what         │                     │Influence the        │                     │                     ║
+║users want           ├─────────────────────┤development of       ├─────────────────────┤                     ║
+║                     │     KEY METRICS     │your favourite       │      CHANNELS       │                     ║
+║                     │1. Number of trans.  │OSS project          │1. FOSSDEM 2013      │                     ║
+║                     │2. Amount of trans.  │by sponsoring        │2. Organic - friends │                     ║
+║                     │3. Known projects    │best features        │3. Go directly to    │                     ║
+║                     │4. How many hits     │like software upfront│OSS projects         │                     ║
+║                     │5. How many registers│RMS                  │                     │                     ║
+║                     │6. How many widget   │                     │                     │                     ║
+║                     │impressions          │Something about not  │                     │                     ║
+║                     │                     │begging for donations│                     │                     ║
+║                     │                     │but fulfulling contra│                     │                     ║
+╟─────────────────────┴─────────────────────┴──────────┬──────────┴─────────────────────┴─────────────────────╢
+║                    COST STRUCTURE                    │                   REVENUE STREAMS                    ║
+║1. Servers                                            │1. Percentage from transaction                        ║
+║2. Conferences / Travel / Communication               │2. Flat contract with a project                       ║
+║3. Design                                             │3. Services related to the platform for big projects  ║
+║4. Transaction fees, merchant accounts                │4. Platform itself - eat your own dogfood             ║
+║5. Insurance                                          │                                                      ║
+║                                                      │                                                      ║
+║                                                      │                                                      ║
+║                                                      │                                                      ║
+║                                                      │                                                      ║
+╚══════════════════════════════════════════════════════╧══════════════════════════════════════════════════════╝
