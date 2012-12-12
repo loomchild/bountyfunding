@@ -1,34 +1,34 @@
 ╔═════════════════════╤═════════════════════╤═════════════════════╤═════════════════════╤═════════════════════╗
 ║       PROBLEM       │      SOLUTION       │         UVP         │  UNFAIR ADVANTAGE   │  CUSTOMER SEGMENTS  ║
-║1. Users want extra  │1. Integrated        │DEVS:                │1. OSS (AGPL)?       │1. OSS devs          ║
-║features in OSS      │solution that allows │Earn money from OSS  │2. Insider of OSS    │2. OSS users         ║
-║project, but cant    │many users sponsor   │and solve your users │3. Connections with  │                     ║
-║finance them 100%    │single feature       │real problems        │OSS projects build   │                     ║
-║2. OSS devs          │2. SAAS or OSS       │Another way of       │4. First-mover +     │early adopters:      ║
-║want to earn         │3. Widgets           │making money in OSS  │network effect       │-LanguageTool        ║
-║some money not beg   │4. Paying upfront    │Easy setup        	  │                     │-FOSSDEM projects    ║
-║3. OSS devs want     │and releasing as OSS │USERS:               │                     │-Few small OSS projs ║
-║to know what         │                     │Influence the        │                     │                     ║
-║users want           ├─────────────────────┤development of       ├─────────────────────┤                     ║
-║                     │     KEY METRICS     │your favourite       │      CHANNELS       │                     ║
-║                     │1. Number of trans.  │OSS project          │1. FOSSDEM 2013      │                     ║
-║                     │2. Amount of trans.  │by sponsoring        │2. Organic - friends │                     ║
-║                     │3. Known projects    │best features        │3. Go directly to    │                     ║
-║                     │4. How many hits     │like software upfront│OSS projects         │                     ║
-║                     │5. How many registers│RMS                  │                     │                     ║
-║                     │6. How many widget   │                     │                     │                     ║
-║                     │impressions          │Something about not  │                     │                     ║
-║                     │                     │begging for donations│                     │                     ║
-║                     │                     │but fulfulling contra│                     │                     ║
+║1. Users want fixes/ │1. Many users sponsor│DEVS:                │1. OSS (AGPL)        │1. OSS devs          ║
+║features in OSS      │OSS feature / bugfix │1. Alternative OSS   │2. Connections with  │2. OSS users         ║
+║project, but can't   │2. Portal + widgets  │business model:      │OSS projects         │3. Project leaders   ║
+║finance them 100%    │integrating to       │- Users pay for      │3. First-mover       │                     ║
+║2. OSS devs          │website / bugtracker │features that benefit│+ network-effect     │early adopters:      ║
+║want to earn         │                     │everyone             │                     │-LanguageTool        ║
+║some money not beg   │                     │- Developers do not  │                     │-FOSSDEM projects    ║
+║for it               │                     │have to rely only on │                     │-Few small OSS projs ║
+║                     │                     │donations            │                     │                     ║
+║                     ├─────────────────────┤2. Open source -     ├─────────────────────┤                     ║
+║                     │     KEY METRICS     │SAAS or private      │      CHANNELS       │                     ║
+║                     │1. Turnaround        │deployment           │1. FOSSDEM 2013      │                     ║
+║Existing alternatives│2. Transaction number│                     │2. Organic - friends │                     ║
+║donations            │3. Project count,    │                     │3. Go directly to    │                     ║
+║kickstarter          │calibre              │                     │OSS projects         │                     ║
+║rent-a-coder         │4. Widget impressions│                     │                     │                     ║
+║flattr               │5. Hits, Registers   │                     │                     │                     ║
+║nothing - free work  │Activations, Returns,│                     │                     │                     ║
+║                     │Paying Users         │                     │                     │                     ║
+║                     │                     │                     │                     │                     ║
 ╟─────────────────────┴─────────────────────┴──────────┬──────────┴─────────────────────┴─────────────────────╢
 ║                    COST STRUCTURE                    │                   REVENUE STREAMS                    ║
-║1. Servers                                            │1. Percentage from transaction                        ║
-║2. Conferences / Travel / Communication               │2. Flat contract with a project                       ║
-║3. Design                                             │3. Services related to the platform for big projects  ║
-║4. Transaction fees, merchant accounts                │4. Platform itself - eat your own dogfood             ║
-║5. Insurance                                          │                                                      ║
+║1. Servers (tilaa, 0€)                                │1. Percentage from transaction (10%)                  ║
+║2. Conferences / Travel / Communication (200€/m)      │2. Services related to the platform for big projects, ║
+║3. Building MVP / Design (60h/m * 20€ = 1200€/m)      │using platform itself - eat your own dogfood (100€/m) ║
+║4. Transaction fees, merchant accounts (5%)           │                                                      ║
 ║                                                      │                                                      ║
 ║                                                      │                                                      ║
-║                                                      │                                                      ║
+║                            Break even on turnaround  │                                                      ║
+║                            25000€/m                  │                                                      ║
 ║                                                      │                                                      ║
 ╚══════════════════════════════════════════════════════╧══════════════════════════════════════════════════════╝

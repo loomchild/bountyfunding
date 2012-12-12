@@ -1,3 +1,10 @@
+Introduction
+
+Open source bounty platform. 
+
+
+Notes
+
 First define a problem, be flexible with a solution. 
 Problem is that as a open source developer I need money. I do not really want to beg for it, just do my work, so everyone can benefit. It's like paying upfront for software, so it can be release in open source.
 As an open source user I need certain features. 
@@ -17,9 +24,10 @@ Maybe users can create a task but developer must approve it (sth like client-sec
 
 Acceptance after finishing work. There are multiple requesters, so what about when some of them are not happy? Democratic vote (maybe 2/3). Acceptation only after feature in production. Maybe allow to pay parts for milestones?
 Donors may not accept the solution but still get the benefits - some people may abuse this - needs conflict resolution system. 
+Maybe reputation system so users with poor reputation will be required to pay full, may not be accepted by developers (after all they are the contractors), etc. Users can be identified by creadit card, paypal account, etc. - ask for it upfront.
 
 How to manage the money? 
-Micro payments, like flattr are easy to set up.
+Micropayments, like flattr are easy to set up.
 I need to control the money before work begins to guarantee payment.
 PayPal will not accept this. Or maybe it will - see Pledgie, Flattr - check TOS.
 How to donate? Maybe bitcoin - a bit too geeky but no trnsfer costs. Paypal will probably get pissed because it's a prepaid service. 
@@ -44,7 +52,7 @@ Kickstarter is aiming at much bigger projects (looks like not really, there are 
 
 What about core team? They may not accept the work to the trunk. But why shouldn't they, out of jealousy? We must also respect them and their donation systems. 
 
-What if someone already implements a features / fixes a bug and does not claim the bounty? We can try to contact them or we can return the money. 
+What if someone already implements a feature / fixes a bug and does not claim the bounty? We can try to contact them or we can return the money. 
 What about when team implements it? They need to split it themseves.
 
 Maybe users can also donate randomly to bugfixes, which will be distributed between developers fixing them. Other categories include infrastructure, etc.
@@ -68,10 +76,13 @@ Who sets the total:
 no total, but then users can overpay
 developers, but then they will set some not needed projects
 users, but which one?
+no total, developer can set a minimum
 
 We need 3 types of actors - developers, sponsors and project leaders. It's complicated, why do we need project leaders? - because code needs to be accepted to the trunk and they can help achieve it and manage the progress, they can focus tasks by putting a list on main project page, maybe they should also be able to receive percentage fee for a task - to maintain the code and to convince them that it makes sense to use our product?
 
 Who registers tasks - is it project leaders? But others should also do it - but they can, when using issue tracking tools integrated with us. Also maybe users should be able to create tasks independently of main project stream on our page - I think it's a temporary solution, but makes it more obvious to project leaders to use our tool.
+
+It's getting complicated - we need to simplify and get to the essence.
 
 Maybe trunk is no longer important in the age of github? Noo, I believe it still is, users still use main project lines.
 
@@ -85,12 +96,14 @@ Small potential market.
 
 Allow users to sponsor with 0 dollars - equivalent to like button, just to encourage devs. Useful to allow users to gain some positive experience before asking them for money. Maybe project admins should be able to disable it. 
 
+Widgets opengraph, semantic, so we can also have a browser plugin 
+
 ---------------------------------------
 
 Implementation
 
 Workflow
-1. Developer sets up project account
+1. Project leader sets up project account (validation via return email, mailing list, website ownership)
 2. Users support issues using widgets / web interface
 3. Users can always retrieve funds back if no-one will develop the faeture (maybe automatic time limit).
 4. Developer accepts a task
@@ -103,7 +116,7 @@ One million euros in 5 years;) - 2K euros after 6 moths, double every 6 months
 For 1% fee I will need to have 200K worth of transactions in 6 moths - impossible
 Can't go too high in fees because competition can close me since it's open-source
 Flattr takes 10% - maybe can do the same?
-Kicstarter takes 5%. 
+Kicstarter takes 5% + payment processing fees (3-5%). 
 
 MVP
 Manifesto
@@ -113,7 +126,7 @@ Web-only interface
 
 PROBLEMS 
 users may not want to wait until someone else pays for a feature
-they may also need them immediately
+they may also need them immediately (then set-up an optional deadline)
 developers may not want to work for customers
 
 LEAN
@@ -147,12 +160,4 @@ appstorm.com.br
 
 
 NEED TO REGISTER LIGHTING TALK UNTIL 21 DECEMBER, 15 MIN TALK
-
-Todo before fosdem:
-Lean canvas
-Discuss with Milkowski, Jose, Viktor
-Landing page
-Roadmap (trello hipster?)
-Slides
-
 
