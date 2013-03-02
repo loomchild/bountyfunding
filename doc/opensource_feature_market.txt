@@ -1,3 +1,6 @@
+ASCII Contents of Fragments 1466937-1466946 in sda2.img-0-0
+
+
 Introduction
 
 Open source bounty platform. 
@@ -18,7 +21,7 @@ Opposite to begging for money - can be a real job (it requires lots of funding t
 Workflow
 Who sets up the task, developer or user?
 I believe it should be users, because they know what they need the most. We have bounty systems, but they do not work well, maybe because developers set them (not sure)?.
-Do not allow to gather more money than requested, otherwise developers go crazy. On the other hand who sets the max price? Maybe better 
+Do not allow to gather more money than requested, otherwise developers go crazy. On the other hand who sets the max price?  
 Great thing is tha multiple people can donate to the same task.
 Maybe users can create a task but developer must approve it (sth like client-secret). But in general I think both should be able to somehow do it.
 
@@ -101,16 +104,6 @@ Widgets opengraph, semantic, so we can also have a browser plugin
 ---------------------------------------
 
 Implementation
-
-Workflow
-1. Project leader sets up project account (validation via return email, mailing list, website ownership)
-2. Users support issues using widgets / web interface
-3. Users can always retrieve funds back if no-one will develop the faeture (maybe automatic time limit).
-4. Developer accepts a task
-5. It would be useful to have a deadline, ala normal software development
-6. Developer finishes
-7. Sponsors vote to accept the changes
-
 How much money I need to make to break-through
 One million euros in 5 years;) - 2K euros after 6 moths, double every 6 months
 For 1% fee I will need to have 200K worth of transactions in 6 moths - impossible
@@ -160,4 +153,8 @@ appstorm.com.br
 
 
 NEED TO REGISTER LIGHTING TALK UNTIL 21 DECEMBER, 15 MIN TALK
+
+Make 2 canvasses - for sponsors and projects
+
+Maybe workflow should be customizable. But keep it simple, like Obligatory Steps and Optional Steps that can be enabled / disabled. I can expreiment on my own project.
 

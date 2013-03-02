@@ -1,8 +1,0 @@
-https://www.braintreepayments.com/
-https://squareup.com/
-https://www.wellsfargo.com/
-https://www.authorize.net/
-paypal
-wepay
-
-Can be thought as a bounty system - for example https://bountyoss.com/
