@@ -1,0 +1,3 @@
+[trac.plugins]
+gang = gang.gang
+
