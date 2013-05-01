@@ -1,8 +1,0 @@
-setup.py
-Gang.egg-info/PKG-INFO
-Gang.egg-info/SOURCES.txt
-Gang.egg-info/dependency_links.txt
-Gang.egg-info/entry_points.txt
-Gang.egg-info/top_level.txt
-gang/__init__.py
-gang/gang.py
