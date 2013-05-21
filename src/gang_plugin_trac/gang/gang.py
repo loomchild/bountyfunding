@@ -9,6 +9,8 @@ from trac.web import IRequestHandler
 from trac.web.chrome import INavigationContributor
 from trac.web.api import ITemplateStreamFilter
 
+import requests
+
 class GangPlugin(Component):
 	implements(ITemplateStreamFilter)
 
@@ -22,9 +24,12 @@ class GangPlugin(Component):
 		if filename == 'ticket.html':
 			ticket = data.get('ticket')
 			if ticket and ticket.exists:
+				request = requests.get('http://localhost:8000/issue/1')
+				amount = request.json().get('amount', 0)
+
 				#Alternatively add custom field to ticket object
 				#pprint (vars(ticket))
 				filter = Transformer('.//table[@class="properties"]	')
-				stream |= filter.append(tag.tr(tag.th(" Gang: ", id="h_gang"), tag.td(u"100\u20ac", headers="h_gang")))
+				stream |= filter.append(tag.tr(tag.th(" Gang: ", id="h_gang"), tag.td(u"%d\u20ac" % amount, headers="h_gang")))
 		return stream
 
