@@ -1,13 +1,13 @@
-#!/usr/bin/env python
-
+from gang_api import app
 from flask import Flask, url_for, render_template, make_response, redirect, abort
 
-app = Flask(__name__)
+@app.route("/issue/<id>")
+def hello(id):
+	amount = int(id) * 100
+	return '{"amount":%s}' % amount
 
-@app.route("/")
-def hello():
-    return "Hello World!"
 
+# Examples
 @app.route('/user/<username>')
 def show_user_profile(username):
 	return 'User %s' % username
@@ -35,5 +35,3 @@ def error():
 	app.logger.error('An error occurred')
 	abort(401)
 
-if __name__ == "__main__":
-    app.run(debug = True)

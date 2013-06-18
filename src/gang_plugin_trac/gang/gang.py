@@ -11,6 +11,8 @@ from trac.web.api import ITemplateStreamFilter
 
 import requests
 
+API_URL='http://localhost:5000'
+
 class GangPlugin(Component):
 	implements(ITemplateStreamFilter)
 
@@ -24,11 +26,13 @@ class GangPlugin(Component):
 		if filename == 'ticket.html':
 			ticket = data.get('ticket')
 			if ticket and ticket.exists:
-				request = requests.get('http://localhost:8000/issue/1')
+				identifier = ticket.id
+				url = API_URL + '/issue/%s' % identifier
+				request = requests.get(url)
 				amount = request.json().get('amount', 0)
 
 				#Alternatively add custom field to ticket object
-				#pprint (vars(ticket))
+				pprint (vars(ticket))
 				filter = Transformer('.//table[@class="properties"]	')
 				stream |= filter.append(tag.tr(tag.th(" Gang: ", id="h_gang"), tag.td(u"%d\u20ac" % amount, headers="h_gang")))
 		return stream
