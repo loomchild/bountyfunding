@@ -47,8 +47,8 @@ class GangPlugin(Component):
 					fragment.append(" ")
 					#fragment.append(tag.div(id="slider"))
 					#fragment.append(tag.script("(function($) { $('#slider').slider(); })(jQuery)"))
-					#fragment.append(tag.form(tag.input(name="amount", type="text", size="5"), tag.input(name=user, type="hidden", value=user), tag.input(type="submit")))
-					fragment.append(tag.a("Sponsor", href="/ticket/%s/sponsor?amount=100" % identifier))
+					fragment.append(tag.form(tag.input(name="amount", type="text", size="3"), tag.input(name="user", type="hidden", value=user), tag.input(type="submit", value="Sponsor"), action="/ticket/%s/sponsor" % identifier, style="display: inline;"))
+					#fragment.append(tag.a("Sponsor", href="/ticket/%s/sponsor?amount=100" % identifier))
 
 				#Alternatively add custom field to ticket object
 				filter = Transformer('.//table[@class="properties"]	')
