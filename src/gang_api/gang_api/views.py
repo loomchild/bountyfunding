@@ -22,21 +22,22 @@ def get_sponsorships(issue_ref):
 	issue = retrieve_issue(DEFAULT_PROJECT_ID, issue_ref)
 
 	if issue != None:
-		result = db.session.query(Sponsorship.issue_id, Sponsorship.amount, User.name)\
+		result = db.session.query(Sponsorship.issue_id, Sponsorship.amount, Sponsorship.status, User.name)\
 				.filter_by(issue_id=issue.issue_id).join(Sponsorship.user).all()
-		sponsorships = dict(map(lambda r: (r.name, {'amount': r.amount}), result))
+		sponsorships = dict(map(\
+				lambda r: (r.name, {'amount': r.amount, 'status': Sponsorship.Status.to_string(r.status)}),\
+				result))
 		response = jsonify(sponsorships)
 	else:
 		response = jsonify(error='Issue not found'), 404
 	return response
 
 
-@app.route("/issue/<issue_ref>/sponsorships", methods=['POST'])
+@app.route("/issue/<issue_ref>/sponsorships", methods=['POST', 'PUT'])
 def post_sponsorship(issue_ref):
-	user_name = request.values.get('user', None)
-	amount = int(request.values.get('amount', 0))
-	if amount < 0:
-		amount = 0
+	user_name = request.values.get('user')
+	amount = request.values.get('amount')
+	status = request.values.get('status')
 
 	issue = retrieve_create_issue(DEFAULT_PROJECT_ID, issue_ref)
 
@@ -48,16 +49,21 @@ def post_sponsorship(issue_ref):
 	sponsorship = Sponsorship.query.filter_by(issue_id=issue.issue_id, user_id=user.user_id).first()
 	if sponsorship == None:
 		sponsorship = Sponsorship(issue.issue_id, user.user_id)
-	sponsorship.amount = amount
+
+	# TODO: security, check if status allows such changes
+	if amount != None:
+		sponsorship.amount = int(max(amount, 0))
+	if status != None:
+		sponsorship.status = Sponsorship.Status.from_string(status)
 	db.session.add(sponsorship)
 	db.session.commit()
 
 	response = jsonify(message='Sponsorship updated')
 	return response
 
-@app.route("/issue/<issue_ref>/status", methods=['POST'])
+@app.route("/issue/<issue_ref>/status", methods=['PUT'])
 def post_status(issue_ref):
-	status = request.values.get('status', None)
+	status = request.values.get('status')
 
 	issue = retrieve_create_issue(DEFAULT_PROJECT_ID, issue_ref)
 	

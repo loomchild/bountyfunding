@@ -47,13 +47,20 @@ class Sponsorship(db.Model):
 	issue_id = db.Column(db.Integer, db.ForeignKey(Issue.issue_id))
 	user_id = db.Column(db.Integer, db.ForeignKey(User.user_id))
 	amount = db.Column(db.Integer)
+	status = db.Column(db.Integer)
 
 	user = db.relation(User)
 	
+	class Status(Enum):
+		PLEDGED = 10
+		CONFIRMED = 20
+		VALIDATED = 30
+
 	def __init__(self, issue_id, user_id, amount=0):
 		self.issue_id = issue_id
 		self.user_id = user_id
 		self.amount = amount
+		self.status = Sponsorship.Status.PLEDGED
 
 	def __repr__(self):
 		return '<User issue_id: "%s", user_id: "%s">' % (self.issue_id, self.user_id)
