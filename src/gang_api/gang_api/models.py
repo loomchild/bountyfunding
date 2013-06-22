@@ -1,26 +1,60 @@
+
 from flask.ext.sqlalchemy import SQLAlchemy
 from gang_api import app
+from utils import Enum 
+#import logging
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////tmp/test.db'
 db = SQLAlchemy(app)
 
-class Issue(db.Model):
-	id = db.Column(db.Integer, primary_key=True)
-	project_id = db.Column(db.Integer)
-	issue_id = db.Column(db.String(256))
-	amount = db.Column(db.Integer)
+#logging.basicConfig()
+#logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
 
-	def __init__(self, project_id, issue_id):
+class Issue(db.Model):
+	issue_id = db.Column(db.Integer, primary_key=True)
+	project_id = db.Column(db.Integer)
+	issue_ref = db.Column(db.String(256))
+	status = db.Column(db.Integer)
+
+	class Status(Enum):
+		NEW = 10
+		ASSIGNED = 20
+		COMPLETED = 30
+		DELETED = 90
+
+	def __init__(self, project_id, issue_ref):
 		self.project_id = project_id
-		self.issue_id = issue_id
-		self.amount = 0
+		self.issue_ref = issue_ref
+		self.status = Issue.Status.NEW
 
 	def __repr__(self):
-		return '<Issue Project ID: "%s", Issue ID: "%s">' % self.project_id, self.issue_id
+		return '<Issue project_id: "%s", issue_ref: "%s">' % self.project_id, self.issue_ref
 
-#class User(db.Model):
-#	pass
+class User(db.Model):
+	user_id = db.Column(db.Integer, primary_key=True)
+	project_id = db.Column(db.Integer)
+	name = db.Column(db.String(256))
 
-#class Sponsorship(db.Model):
-#	amount = db.Column(db.Integer)
+	def __init__(self, project_id, name):
+		self.project_id = project_id
+		self.name = name
 
+	def __repr__(self):
+		return '<User project_id: "%s", name: "%s">' % self.project_id, self.nae
+
+class Sponsorship(db.Model):
+	sponsorship_id = db.Column(db.Integer, primary_key=True)
+	issue_id = db.Column(db.Integer, db.ForeignKey(Issue.issue_id))
+	user_id = db.Column(db.Integer, db.ForeignKey(User.user_id))
+	amount = db.Column(db.Integer)
+
+	user = db.relation(User)
+	
+	def __init__(self, issue_id, user_id, amount=0):
+		self.issue_id = issue_id
+		self.user_id = user_id
+		self.amount = amount
+
+	def __repr__(self):
+		return '<User issue_id: "%s", user_id: "%s">' % (self.issue_id, self.user_id)
+	
