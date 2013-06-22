@@ -11,30 +11,7 @@ def get_issue(issue_ref):
 	issue = retrieve_issue(DEFAULT_PROJECT_ID, issue_ref)
 	if issue != None:
 		status = Issue.Status.to_string(issue.status)
-		total_amount = db.session.query(db.func.sum(Sponsorship.amount))\
-				.filter_by(issue_id=issue.issue_id).scalar()
-		if total_amount == None:
-			total_amount = 0
-		response = jsonify(status=status, total_amount=total_amount)
-	else:
-		response = jsonify(error='Issue not found'), 404
-	return response
-
-@app.route("/issue/<issue_ref>/sponsorship", methods=['GET'])
-def get_sponsorship(issue_ref):
-	user_name = request.values.get('user', None)
-	
-	issue = retrieve_issue(DEFAULT_PROJECT_ID, issue_ref)
-
-	if issue != None:
-		user = User.query.filter_by(project_id=DEFAULT_PROJECT_ID, name=user_name).first()
-		amount = 0
-		if user != None:
-			sponsorship = Sponsorship.query.filter_by(issue_id=issue.issue_id, user_id=user.user_id).first()
-			if sponsorship != None:
-				amount = sponsorship.amount
-		
-		response = jsonify(amount=amount)
+		response = jsonify(status=status)
 	else:
 		response = jsonify(error='Issue not found'), 404
 	return response
@@ -47,8 +24,8 @@ def get_sponsorships(issue_ref):
 	if issue != None:
 		result = db.session.query(Sponsorship.issue_id, Sponsorship.amount, User.name)\
 				.filter_by(issue_id=issue.issue_id).join(Sponsorship.user).all()
-		sponsorships = map(lambda r: {'amount': r.amount, 'name': r.name}, result)
-		response = jsonify(data=sponsorships)
+		sponsorships = dict(map(lambda r: (r.name, {'amount': r.amount}), result))
+		response = jsonify(sponsorships)
 	else:
 		response = jsonify(error='Issue not found'), 404
 	return response

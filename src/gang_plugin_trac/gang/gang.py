@@ -18,7 +18,12 @@ SPONSOR_PATTERN = re.compile("/ticket/([0-9]+)/sponsor")
 def call_gang_api(method, path, **kwargs):
 	url = API_URL + path
 	return requests.request(method, url, params=kwargs)
-	
+
+
+class Sponsorship:
+	def __init__(self, amount):
+		self.amount = amount
+
 
 class GangPlugin(Component):
 	implements(ITemplateStreamFilter, IRequestHandler, ITicketChangeListener)
@@ -36,22 +41,24 @@ class GangPlugin(Component):
 				user = req.authname
 				request = call_gang_api('GET', '/issue/%s' % identifier)
 				fragment = tag()
-				user_amount = 0
-				total_amount = 0
+				sponsorships = {}
 				status = convert_status(ticket.values['status'])
-				owner = ticket.values['status']
+				owner = ticket.values['owner']
+				total_amount = 0
 				if request.status_code == 200:
-					json = request.json()
-					total_amount = json.get('total_amount', 0)
-					fragment.append(u"%d\u20ac" % total_amount)
-					request = call_gang_api('GET', '/issue/%s/sponsorship' % identifier, user=user)
+					request = call_gang_api('GET', '/issue/%s/sponsorships' % identifier)
 					if request.status_code == 200:
-						user_amount = request.json().get('amount', 0)
+						sponsorships = {k:Sponsorship(v.get('amount', 0)) for k, v in request.json().items()}
+						total_amount = sum(map(lambda v: v.amount, sponsorships.values()))
+
+					fragment.append(u"%d\u20ac" % total_amount)
 
 				elif request.status_code == 404:
 					fragment.append("Not sponsored yet")
 				else:
 					fragment.append("Error occured")
+				
+				user_amount = sponsorships.get(user, Sponsorship(0)).amount
 
 				if user != None and user != 'anonymous' and status == 'NEW':
 					fragment.append(" ")
@@ -61,13 +68,20 @@ class GangPlugin(Component):
 					#fragment.append(tag.a("Sponsor", href="/ticket/%s/sponsor?amount=100" % identifier))
 
 				elif status == 'ASSIGNED':
-					if owner == user:
-						fragment.append(u' (Unconfirmed: %d\u20ac)' % total_amount)
-					else:
+					unconfirmed = u'(Unconfirmed: %d\u20ac' % total_amount
+					if user_amount > 0:
+						unconfirmed += u', You: %d\u20ac' % user_amount
+					unconfirmed += ')'
+					fragment.append(tag(tag.br(), unconfirmed))
+
+					if owner != user:
+						# TODO: buttons
 						pass
+						
 
 				filter = Transformer('.//table[@class="properties"]	')
-				stream |= filter.append(tag.tr(tag.th(" Gang: ", id="h_gang"), tag.td(fragment, headers="h_gang")))
+				gang_tag = tag.tr(tag.th(" Gang: ", id="h_gang"), tag.td(fragment, headers="h_gang")) 
+				stream |= filter.append(gang_tag)
 		return stream
 
 	# IRequestHandler methods
