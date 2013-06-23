@@ -1,0 +1,12 @@
+.gang form {
+	display: inline;
+}
+
+.gang form div {
+	display: inline;
+}
+
+.gang form input {
+	font-size: 100%; 
+	vertical-align: baseline;
+}

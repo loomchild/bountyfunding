@@ -6,7 +6,7 @@ from genshi.builder import tag
 from trac.core import *
 from trac.util.html import html
 from trac.web import IRequestHandler
-from trac.web.chrome import INavigationContributor, ITemplateProvider
+from trac.web.chrome import INavigationContributor, ITemplateProvider, add_stylesheet
 from trac.web.api import ITemplateStreamFilter
 from trac.ticket.api import ITicketChangeListener
 
@@ -82,15 +82,15 @@ class GangPlugin(Component):
 						
 					if ((status == 'ASSIGNED' or status == 'COMPLETED') 
 							and user_sponsorship.status == 'PLEDGED'):
-						action = tag.form(tag.input(type="submit", value=u"Confirm %d\u20ac" % user_sponsorship.amount, style="font-size: 100%; vertical-align: baseline;"), method="post", action="/ticket/%s/confirm" % identifier, style="display: inline;")
+						action = tag.form(tag.input(type="submit", value=u"Confirm %d\u20ac" % user_sponsorship.amount), method="post", action="/ticket/%s/confirm" % identifier)
 
 					elif status == 'COMPLETED' and user_sponsorship.status == 'CONFIRMED':
-						action = tag.form(tag.input(type="submit", name='accept', value=u"Validate %d\u20ac" % user_sponsorship.amount, style="font-size: 100%; vertical-align: baseline;"), method="post", action="/ticket/%s/validate" % identifier, style="display: inline;")
+						action = tag.form(tag.input(type="submit", name='accept', value=u"Validate %d\u20ac" % user_sponsorship.amount), method="post", action="/ticket/%s/validate" % identifier)
 
 					elif (status != 'COMPLETED' and (status == 'NEW' or user_sponsorship.amount == 0) 
 							and user != None 
 							and user_sponsorship.status == None or user_sponsorship.status == 'PLEDGED'):
-						action = tag.form(tag.input(name="amount", type="text", size="3", style="font-size: 100%; vertical-align: baseline;", value=user_sponsorship.amount), tag.input(type="submit", value="Pledge", style="font-size: 100%; vertical-align: baseline;"), method="post", action="/ticket/%s/sponsor" % identifier, style="display: inline;")
+						action = tag.form(tag.input(name="amount", type="text", size="3", value=user_sponsorship.amount), tag.input(type="submit", value="Pledge"), method="post", action="/ticket/%s/sponsor" % identifier)
 					
 					if action != None:
 						fragment.append(" ")
@@ -101,8 +101,11 @@ class GangPlugin(Component):
 				else:
 					fragment.append("Error occured")
 	
+				add_stylesheet(req, 'htdocs/styles/gang.css')
+
 				filter = Transformer('.//table[@class="properties"]	')
-				gang_tag = tag.tr(tag.th("Bounty: ", id="h_gang"), tag.td(fragment, headers="h_gang")) 
+				gang_tag = tag.tr(tag.th("Bounty: ", id="h_gang"), 
+						tag.td(fragment, headers="h_gang", class_="gang")) 
 				stream |= filter.append(gang_tag)
 		return stream
 
@@ -160,5 +163,15 @@ class GangPlugin(Component):
 		return [resource_filename(__name__, 'templates')]
 
 	def get_htdocs_dirs(self):
-		return []
+		"""Return a list of directories with static resources (such as style
+		sheets, images, etc.)
+
+		Each item in the list must be a `(prefix, abspath)` tuple. The
+		`prefix` part defines the path in the URL that requests to these
+		resources are prefixed with.
+
+		The `abspath` is the absolute path to the directory containing the
+		resources on the local file system.
+		"""
+		return [('htdocs', resource_filename(__name__, 'htdocs'))]
 
