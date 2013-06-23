@@ -1,4 +1,4 @@
 *.pyc
-.*.py.swp
+.*.swp
 *.egg-info
 doc/out
