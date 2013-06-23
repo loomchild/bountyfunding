@@ -6,11 +6,13 @@ from genshi.builder import tag
 from trac.core import *
 from trac.util.html import html
 from trac.web import IRequestHandler
-from trac.web.chrome import INavigationContributor
+from trac.web.chrome import INavigationContributor, ITemplateProvider
 from trac.web.api import ITemplateStreamFilter
 from trac.ticket.api import ITicketChangeListener
 
-import requests, re, urlparse
+import requests, re
+from pkg_resources import resource_filename
+
 
 API_URL='http://localhost:5000'
 GANG_TICKET_PATTERN = re.compile("/ticket/([0-9]+)/(sponsor|confirm|validate)")
@@ -36,7 +38,7 @@ def sum_amounts(sponsorships, statuses=None):
 
 
 class GangPlugin(Component):
-	implements(ITemplateStreamFilter, IRequestHandler, ITicketChangeListener)
+	implements(ITemplateStreamFilter, IRequestHandler, ITemplateProvider, ITicketChangeListener)
 
 	# ITemplateStreamFilter methods
 	def filter_stream(self, req, method, filename, stream, data):
@@ -80,15 +82,15 @@ class GangPlugin(Component):
 						
 					if ((status == 'ASSIGNED' or status == 'COMPLETED') 
 							and user_sponsorship.status == 'PLEDGED'):
-						action = tag.form(tag.input(name="user", type="hidden", value=user), " ", tag.input(type="submit", value=u"Confirm %d\u20ac" % user_sponsorship.amount, style="font-size: 100%; vertical-align: baseline;"), action="/ticket/%s/confirm" % identifier, style="display: inline;")
+						action = tag.form(tag.input(type="submit", value=u"Confirm %d\u20ac" % user_sponsorship.amount, style="font-size: 100%; vertical-align: baseline;"), method="post", action="/ticket/%s/confirm" % identifier, style="display: inline;")
 
 					elif status == 'COMPLETED' and user_sponsorship.status == 'CONFIRMED':
-						action = tag.form(tag.input(name="user", type="hidden", value=user), " ", tag.input(type="submit", value=u"Validate %d\u20ac" % user_sponsorship.amount, style="font-size: 100%; vertical-align: baseline;"), action="/ticket/%s/validate" % identifier, style="display: inline;")
+						action = tag.form(tag.input(type="submit", name='accept', value=u"Validate %d\u20ac" % user_sponsorship.amount, style="font-size: 100%; vertical-align: baseline;"), tag.input(type="submit", name='reject', value="Reject", style="font-size: 100%; vertical-align: baseline;"), method="post", action="/ticket/%s/validate" % identifier, style="display: inline;")
 
 					elif (status != 'COMPLETED' and (status == 'NEW' or user_sponsorship.amount == 0) 
 							and user != None 
 							and user_sponsorship.status == None or user_sponsorship.status == 'PLEDGED'):
-						action = tag.form(tag.input(name="amount", type="text", size="3", style="font-size: 100%; vertical-align: baseline;", value=user_sponsorship.amount), tag.input(name="user", type="hidden", value=user), tag.input(type="submit", value="Pledge", style="font-size: 100%; vertical-align: baseline;"), action="/ticket/%s/sponsor" % identifier, style="display: inline;")
+						action = tag.form(tag.input(name="amount", type="text", size="3", style="font-size: 100%; vertical-align: baseline;", value=user_sponsorship.amount), tag.input(type="submit", value="Pledge", style="font-size: 100%; vertical-align: baseline;"), method="post", action="/ticket/%s/sponsor" % identifier, style="display: inline;")
 					
 					if action != None:
 						fragment.append(" ")
@@ -112,15 +114,33 @@ class GangPlugin(Component):
 		match = GANG_TICKET_PATTERN.match(req.path_info)
 		ticket_id = match.group(1)
 		action = match.group(2)
-		query = urlparse.parse_qs(req.query_string)
 
 		if action == 'sponsor':
-			amount = query['amount']
-			call_gang_api('POST', '/issue/%s/sponsorships' % ticket_id, user=req.authname, amount=amount[0])
+			amount = req.args.get('amount')
+			call_gang_api('POST', '/issue/%s/sponsorships' % ticket_id, user=req.authname, amount=amount)
 		elif action == 'confirm':
-			call_gang_api('PUT', '/issue/%s/sponsorships' % ticket_id, user=req.authname, status='CONFIRMED')
+			pay = req.args.get('pay')
+			card_number = req.args.get('card_number')
+			card_date = req.args.get('card_date')
+			error = "" 
+			
+			if pay != None:
+				if not card_number or not card_date:
+					error = 'Please specify card number and expiry date'
+				if card_number and card_date:
+					response = call_gang_api('PUT', 
+							'/issue/%s/sponsorship/%s/status' % (ticket_id, req.authname), 
+							status='CONFIRMED', card_number=card_number, card_date=card_date)
+					if response.status_code != 200:
+						error = 'API refused your payment, error code: %d' % response.status_code
+					
+			if pay == None or error:
+				return "payment.html", {'error': error}, None
 		elif action == 'validate':
-			call_gang_api('PUT', '/issue/%s/sponsorships' % ticket_id, user=req.authname, status='VALIDATED')
+			accept = req.args.get('accept')
+			status = 'VALIDATED' if accept else 'REJECTED'
+			call_gang_api('PUT', '/issue/%s/sponsorship/%s/status' % (ticket_id, req.authname), 
+					status=status)
 		
 		req.redirect('/ticket/%s' % ticket_id)
 
@@ -136,4 +156,11 @@ class GangPlugin(Component):
 
 	def ticket_deleted(self, ticket):
 		pass
+
+    # ITemplateProvider methods
+	def get_templates_dirs(self):
+		return [resource_filename(__name__, 'templates')]
+
+	def get_htdocs_dirs(self):
+		return []
 

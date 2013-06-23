@@ -55,6 +55,7 @@ class Sponsorship(db.Model):
 		PLEDGED = 10
 		CONFIRMED = 20
 		VALIDATED = 30
+		REJECTED = 40
 
 	def __init__(self, issue_id, user_id, amount=0):
 		self.issue_id = issue_id

@@ -1,0 +1,35 @@
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:py="http://genshi.edgewall.org/"
+      xmlns:xi="http://www.w3.org/2001/XInclude">
+  <xi:include href="layout.html" />
+  <head>
+    <title>Payment</title>
+  </head>
+
+  <body>
+    <div id="ctxtnav" class="nav"></div>
+
+	<div class="central system-message" py:if="error">
+		<p>${error}</p>
+	</div>
+
+    <div id="content" class="helloworld">
+      <h1>Please provide your payment card details</h1>
+	  <form action="" method="post">
+	  	<label for="card_number">Card number: </label>
+	  	<input id="card_number" name="card_number" type="text" size="16"/>
+		<br/>
+	  	<label for="card_date">Expiry date (MM/YY): </label>
+		<input id="care_date" name="card_date" type="text" size="5"/>
+		<br/>
+		<input type="submit" name="pay" value="Pay"/>
+	  </form>
+    </div>
+
+	<br/>
+
+  </body>
+</html>
