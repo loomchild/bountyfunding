@@ -85,7 +85,7 @@ class GangPlugin(Component):
 						action = tag.form(tag.input(type="submit", value=u"Confirm %d\u20ac" % user_sponsorship.amount, style="font-size: 100%; vertical-align: baseline;"), method="post", action="/ticket/%s/confirm" % identifier, style="display: inline;")
 
 					elif status == 'COMPLETED' and user_sponsorship.status == 'CONFIRMED':
-						action = tag.form(tag.input(type="submit", name='accept', value=u"Validate %d\u20ac" % user_sponsorship.amount, style="font-size: 100%; vertical-align: baseline;"), tag.input(type="submit", name='reject', value="Reject", style="font-size: 100%; vertical-align: baseline;"), method="post", action="/ticket/%s/validate" % identifier, style="display: inline;")
+						action = tag.form(tag.input(type="submit", name='accept', value=u"Validate %d\u20ac" % user_sponsorship.amount, style="font-size: 100%; vertical-align: baseline;"), method="post", action="/ticket/%s/validate" % identifier, style="display: inline;")
 
 					elif (status != 'COMPLETED' and (status == 'NEW' or user_sponsorship.amount == 0) 
 							and user != None 
@@ -137,10 +137,8 @@ class GangPlugin(Component):
 			if pay == None or error:
 				return "payment.html", {'error': error}, None
 		elif action == 'validate':
-			accept = req.args.get('accept')
-			status = 'VALIDATED' if accept else 'REJECTED'
 			call_gang_api('PUT', '/issue/%s/sponsorship/%s/status' % (ticket_id, req.authname), 
-					status=status)
+					status='VALIDATED')
 		
 		req.redirect('/ticket/%s' % ticket_id)
 
