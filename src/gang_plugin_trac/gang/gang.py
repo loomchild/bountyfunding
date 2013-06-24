@@ -60,7 +60,7 @@ class GangPlugin(Component):
 					
 					request = call_gang_api('GET', '/issue/%s/sponsorships' % identifier)
 					if request.status_code == 200:
-						sponsorships =  {k:Sponsorship(v) for k, v in request.json().items()}
+						sponsorships = dict(map(lambda (k,v): (k, Sponsorship(v)), request.json().items()))
 					
 					pledged_amount = sum_amounts(sponsorships.values())
 					user_sponsorship = sponsorships.get(user, Sponsorship())
