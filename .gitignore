@@ -4,3 +4,4 @@
 doc/out
 src/gang_plugin_trac/build/
 src/gang_plugin_trac/dist/
+src/virtualenv
