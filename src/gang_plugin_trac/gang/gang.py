@@ -56,8 +56,9 @@ class GangPlugin(Component):
 				sponsorships = {}
 				status = convert_status(ticket.values['status'])
 				owner = ticket.values['owner']
-				if request.status_code == 200:
+				if request.status_code == 200 or request.status_code == 404:
 					
+					sponsorships = {}
 					request = call_gang_api('GET', '/issue/%s/sponsorships' % identifier)
 					if request.status_code == 200:
 						sponsorships = dict(map(lambda (k,v): (k, Sponsorship(v)), request.json().items()))
@@ -96,8 +97,6 @@ class GangPlugin(Component):
 						fragment.append(" ")
 						fragment.append(action)
 						
-				elif request.status_code == 404:
-					fragment.append("Not sponsored yet")
 				else:
 					fragment.append("Error occured")
 	
