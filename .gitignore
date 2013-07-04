@@ -2,6 +2,6 @@
 .*.swp
 *.egg-info
 doc/out
-src/gang_plugin_trac/build/
-src/gang_plugin_trac/dist/
-src/virtualenv
+plugins/gang_plugin_trac/src/build/
+plugins/gang_plugin_trac/src/dist/
+virtualenv
