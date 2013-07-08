@@ -1,5 +1,6 @@
 *.pyc
 .*.swp
+.*.swo
 *.egg-info
 doc/out
 plugins/gang_plugin_trac/src/build/
