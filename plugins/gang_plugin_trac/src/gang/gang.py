@@ -10,12 +10,14 @@ from trac.web.chrome import INavigationContributor, ITemplateProvider, add_style
 from trac.web.api import ITemplateStreamFilter
 from trac.ticket.api import ITicketChangeListener
 
+from trac.notification import NotifyEmail
+
 import requests, re
 from pkg_resources import resource_filename
 
 
 API_URL='http://localhost:5000'
-GANG_TICKET_PATTERN = re.compile("/ticket/([0-9]+)/(sponsor|confirm|validate)")
+GANG_PATTERN = re.compile("(?:/(?P<ticket>ticket)/(?P<ticket_id>[0-9]+)/(?P<ticket_action>sponsor|confirm|validate))|(?:/(?P<gang>gang)/(?P<gang_action>email))")
 
 def call_gang_api(method, path, **kwargs):
 	url = API_URL + path
@@ -25,6 +27,13 @@ class Sponsorship:
 	def __init__(self, dictionary={}):
 		self.amount = dictionary.get('amount', 0)
 		self.status = dictionary.get('status')
+
+class Email:
+	def __init__(self, dictionary):
+		self.id = dictionary.get('id')
+		self.recipient = dictionary.get('recipient')
+		self.subject = dictionary.get('subject')
+		self.body = dictionary.get('body')
 
 def convert_status(status):
 	table = {'new':'NEW', 'accepted':'ASSIGNED', 'assigned':'ASSIGNED', 'reopened':'NEW', 'closed':'COMPLETED'}
@@ -110,40 +119,51 @@ class GangPlugin(Component):
 
 	# IRequestHandler methods
 	def match_request(self, req):
-		return GANG_TICKET_PATTERN.match(req.path_info) != None
+		return GANG_PATTERN.match(req.path_info) != None
 	
 	def process_request(self, req):
-		match = GANG_TICKET_PATTERN.match(req.path_info)
-		ticket_id = match.group(1)
-		action = match.group(2)
+		match = GANG_PATTERN.match(req.path_info)
 
-		if action == 'sponsor':
-			amount = req.args.get('amount')
-			call_gang_api('POST', '/issue/%s/sponsorships' % ticket_id, user=req.authname, amount=amount)
-		elif action == 'confirm':
-			pay = req.args.get('pay')
-			card_number = req.args.get('card_number')
-			card_date = req.args.get('card_date')
-			error = "" 
-			
-			if pay != None:
-				if not card_number or not card_date:
-					error = 'Please specify card number and expiry date'
-				if card_number and card_date:
-					response = call_gang_api('PUT', 
-							'/issue/%s/sponsorship/%s/status' % (ticket_id, req.authname), 
-							status='CONFIRMED', card_number=card_number, card_date=card_date)
-					if response.status_code != 200:
-						error = 'API refused your payment, error code: %d' % response.status_code
-					
-			if pay == None or error:
-				return "payment.html", {'error': error}, None
-		elif action == 'validate':
-			call_gang_api('PUT', '/issue/%s/sponsorship/%s/status' % (ticket_id, req.authname), 
-					status='VALIDATED')
+		if match.group('ticket'):
+			ticket_id = match.group('ticket_id')
+			action = match.group('ticket_action')
+
+			if action == 'sponsor':
+				amount = req.args.get('amount')
+				call_gang_api('POST', '/issue/%s/sponsorships' % ticket_id, user=req.authname, amount=amount)
+			elif action == 'confirm':
+				pay = req.args.get('pay')
+				card_number = req.args.get('card_number')
+				card_date = req.args.get('card_date')
+				error = "" 
+				
+				if pay != None:
+					if not card_number or not card_date:
+						error = 'Please specify card number and expiry date'
+					if card_number and card_date:
+						response = call_gang_api('PUT', 
+								'/issue/%s/sponsorship/%s/status' % (ticket_id, req.authname), 
+								status='CONFIRMED', card_number=card_number, card_date=card_date)
+						if response.status_code != 200:
+							error = 'API refused your payment, error code: %d' % response.status_code
+						
+				if pay == None or error:
+					return "payment.html", {'error': error}, None
+			elif action == 'validate':
+				call_gang_api('PUT', '/issue/%s/sponsorship/%s/status' % (ticket_id, req.authname), 
+						status='VALIDATED')
+			req.redirect('/ticket/%s' % ticket_id)
 		
-		req.redirect('/ticket/%s' % ticket_id)
-
+		elif match.group('gang'):
+			action = match.group('gang_action')
+			if action == 'email':
+				request = call_gang_api('GET', '/emails')
+				if request.status_code == 200:
+					emails = [Email(email) for email in request.json().get('data')]
+					for email in emails:
+						send_email(self.env, email.recipient, email.subject, email.body)
+						call_gang_api('DELETE', '/email/%s' % email.id), 
+			req.send_no_content()
 
 	# ITicketChangeListener methods
 	def ticket_created(self, ticket):
@@ -173,4 +193,24 @@ class GangPlugin(Component):
 		resources on the local file system.
 		"""
 		return [('htdocs', resource_filename(__name__, 'htdocs'))]
+
+
+
+class GenericNotifyEmail(NotifyEmail):
+	template_name = 'email.txt'
+
+	def __init__(self, env, recipient, body):
+		NotifyEmail.__init__(self, env)
+		self.recipient = recipient
+		self.data = {}
+		self.data['body'] = body
+
+	def get_recipients(self, resid):
+		return ([self.recipient], [])	
+
+def send_email(env, recipient, subject, body):
+	email = GenericNotifyEmail(env, recipient, body)
+	email.notify('loomchild', subject)
+
+	
 

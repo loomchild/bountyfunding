@@ -50,7 +50,7 @@ class Sponsorship(db.Model):
 	amount = db.Column(db.Integer)
 	status = db.Column(db.Integer)
 
-	user = db.relation(User)
+	user = db.relation(User, lazy="joined")
 	
 	class Status(Enum):
 		PLEDGED = 10
@@ -64,5 +64,24 @@ class Sponsorship(db.Model):
 		self.status = Sponsorship.Status.PLEDGED
 
 	def __repr__(self):
-		return '<User issue_id: "%s", user_id: "%s">' % (self.issue_id, self.user_id)
+		return '<Sponsorship issue_id: "%s", user_id: "%s">' % (self.issue_id, self.user_id)
 	
+class Email(db.Model):
+	email_id = db.Column(db.Integer, primary_key=True)
+	project_id = db.Column(db.Integer)
+	user_id = db.Column(db.Integer, db.ForeignKey(User.user_id))
+	subject = db.Column(db.String(128))
+	body = db.Column(db.String(1024))
+
+	user = db.relation(User, lazy="joined")
+	
+	def __init__(self, project_id, user_id, subject, body):
+		self.project_id = project_id
+		self.user_id = user_id
+		self.subject = subject
+		self.body = body
+
+	def __repr__(self):
+		return '<Email project_id: "%s", user_id: "%s", subject: "%s">' %\
+				(self.project_id, self.user_id, self.subject)
+
