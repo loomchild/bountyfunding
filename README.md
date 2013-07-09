@@ -49,7 +49,7 @@ Install Trac, at least version 1.0 is required. Make the following changes to th
 		...
 		smtp_enabled = yes
 
-* All users or developers that want to use Gang need to specify their emails, as notifications and speedy replies are very important
+* All users or developers that want to use Gang need to specify their emails as notifications and speedy replies are very important
 * In case of problems you may consider enabling logging (to stderr or file) and increasing logging level to diagnose possible problems with configuration (in trac.ini):
 
 		[logging]
@@ -74,12 +74,6 @@ Download the archive from github [gang-master.zip](https://github.com/loomchild/
 
 * Restart Trac
 * To check if plugin has been installed properly go to Trac Admin / Plugins. Also you should see Bounty field on each ticket. It's also a good idea to check if email notifications are sent - create a ticket, sponsor it by one user and assign it or complete it by another user - first user should receive a notification. 
-* In case of problems you may consider enabling logging (to stderr, file) and increasing logging level to diagnose possible problems with configuration (in trac.ini):
-
-		[logging]
-		...
-		log_level = DEBUG
-		log_type = stderr
 
 ### Deploy API
 * Run the API
