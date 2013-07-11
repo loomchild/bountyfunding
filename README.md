@@ -4,7 +4,7 @@ Website (including live demo): [http://gang.loomchild.net](http://gang.loomchild
 
 Introduction
 ------------
-Gang is a bounty platform designed specifically for Free / Open-Source Software. It allows users to collectively sponsor most wanted features / bugfixes, and gives developers another source of income or maybe even a business model. Currently Gang only intehrates with Trac, support for other issue tracking systems will be developed soon.
+Gang is a bounty platform designed specifically for Free / Open-Source Software. It allows users to collectively sponsor most wanted features / bugfixes, and gives developers another source of income or maybe even a business model. Currently Gang only integrates with Trac, support for other issue tracking systems will be developed soon.
  
 Requirements
 ------------
