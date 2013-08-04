@@ -55,7 +55,8 @@ class GangPlugin(Component):
 		Quick and dirty solution - modify page on the fly to inject special field. It would be
 		nicer if we can do it by creating custom field as this depends on page structure.
 		"""
-		if filename == 'ticket.html':
+		if filename == 'ticket.html' or filename == 'bh_ticket.html':
+			bloodhound = (filename == 'bh_ticket.html')
 			ticket = data.get('ticket')
 			if ticket and ticket.exists:
 				identifier = ticket.id
@@ -111,9 +112,14 @@ class GangPlugin(Component):
 	
 				add_stylesheet(req, 'htdocs/styles/gang.css')
 
-				filter = Transformer('.//table[@class="properties"]	')
-				gang_tag = tag.tr(tag.th("Bounty: ", id="h_gang"), 
-						tag.td(fragment, headers="h_gang", class_="gang")) 
+				filter = Transformer('.//div[@id="ticket"]/table')
+				if not bloodhound:
+					gang_tag = tag.tr(tag.th("Bounty: ", id="h_gang"), 
+							tag.td(fragment, headers="h_gang", class_="gang")) 
+				else:
+					gang_tag = tag.tr(tag.td("Bounty", id="h_gang"), 
+							tag.td(fragment, id="vc-gang", class_="gang")) 
+
 				stream |= filter.append(gang_tag)
 		return stream
 
