@@ -101,7 +101,7 @@ class GangPlugin(Component):
 					elif (status != 'COMPLETED' and (status == 'NEW' or user_sponsorship.amount == 0) 
 							and user != None 
 							and user_sponsorship.status == None or user_sponsorship.status == 'PLEDGED'):
-						action = tag.form(tag.input(name="amount", type="text", size="3", value=user_sponsorship.amount), tag.input(type="submit", value="Pledge"), method="post", action="/ticket/%s/sponsor" % identifier)
+						action = tag.form(tag.input(name="amount", type="text", size="3", value=user_sponsorship.amount), tag.input(type="submit", value="Pledge"), method="get", action="/ticket/%s/sponsor" % identifier)
 					
 					if action != None:
 						fragment.append(" ")
@@ -112,15 +112,18 @@ class GangPlugin(Component):
 	
 				add_stylesheet(req, 'htdocs/styles/gang.css')
 
-				filter = Transformer('.//div[@id="ticket"]/table')
 				if not bloodhound:
+					filter = Transformer('.//div[@id="ticket"]/table')
 					gang_tag = tag.tr(tag.th("Bounty: ", id="h_gang"), 
 							tag.td(fragment, headers="h_gang", class_="gang")) 
+					stream |= filter.append(gang_tag)
 				else:
-					gang_tag = tag.tr(tag.td("Bounty", id="h_gang"), 
-							tag.td(fragment, id="vc-gang", class_="gang")) 
+					filter = Transformer('.//div[@class="description"]/')
+					gang_tag = tag.table(tag.tr(tag.td("Bounty", id="h_gang"), 
+							tag.td(fragment, id="vc-gang", class_="gang")), 
+							class_="table table-condensed ticket-properties gang") 
+					stream |= filter.before(gang_tag)
 
-				stream |= filter.append(gang_tag)
 		return stream
 
 	# IRequestHandler methods
