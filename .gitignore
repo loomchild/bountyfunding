@@ -5,3 +5,4 @@ doc/out
 plugins/gang_plugin_trac/src/build/
 plugins/gang_plugin_trac/src/dist/
 virtualenv
+logs/
