@@ -119,7 +119,7 @@ def post_status(issue_ref):
 		body_pledged = 'The task you have sponsored has been completed by the developer. Please deposit the promised amout and verify it. To do that please go to project issue tracker at %s, log in, find an issue ID %s and select Confirm and then Validate.' % (TRACKER_URL, issue.issue_ref)
 		notify_sponsors(issue.issue_id, Sponsorship.Status.PLEDGED, subject, body_pledged)
 
-	response = jsonify(message='Sponsorship updated')
+	response = jsonify(message='Issue updated')
 	return response
 
 
