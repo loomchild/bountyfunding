@@ -1,0 +1,12 @@
+@startuml
+
+Tracker -> Api: Confirm Payment
+Api -> Paypal: PreapprovalRequest
+Paypal -> Api: Return preapprovalKey
+Api -> Tracker: Redirect URL
+Tracker -> Paypal: Redirect to payment page
+Paypal -> Tracker: Redirect to return URL
+Tracker -> Api: Mark as success
+Api -> Paypal: Validate payment via PreapprovalDetails
+
+@enduml
