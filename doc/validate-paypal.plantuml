@@ -1,0 +1,10 @@
+@startuml
+
+Tracker -> Api: Validate Payment
+Api -> Paypal: Pay using preapproval key
+Paypal -> Api: Return success
+Api -> Api: [optional] Check my account balance
+Api -> Api: Mark as validated
+Api -> Tracker: Success
+
+@enduml
