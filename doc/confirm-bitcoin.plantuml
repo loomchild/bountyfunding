@@ -1,0 +1,20 @@
+@startuml
+
+Tracker -> Api: Confirm payment
+Api -> Bitpay: Create account and generate iframe link
+Api -> Api: Store account number
+Api -> Api: Sponsorship status PENDING
+Bitpay -> Api: Return link
+Api -> Tracker: Return link
+Tracker -> Tracker: Display iframe
+
+Bitpay -> Tracker: Instant Payment Notification
+Tracker -> Api: Payment notification
+Api -> Api: Check temporary account balance
+Api -> Api: Sponsorship status CONFIRMED
+Api -> Tracker: Success
+Tracker -> Tracker: Refresh page if needed
+
+Api -> Api: Delayed payment check after 1h, if fail status back to PLEDGED
+
+@enduml

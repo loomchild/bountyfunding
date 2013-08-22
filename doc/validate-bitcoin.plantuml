@@ -1,0 +1,8 @@
+@startuml
+
+Tracker -> Api: Validate Payment
+Api -> Bitpay: Transfer money to developer
+Bitpay -> Api: Success
+Api -> Tracker: Success
+
+@enduml
