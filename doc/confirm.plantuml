@@ -1,0 +1,15 @@
+@startuml
+
+Tracker -> Api: get payment Providers
+Api -> Api: get providers for instance and developer
+Api -> Tracker: return provider name list
+Tracker -> Tracker: display providers
+Tracker -> Api: confirm payment
+note right of Api: gateway specific code here, also may return iframe
+Api -> Tracker: return redirect URL
+Tracker -> Gateway: redirect to payment page
+Gateway -> Tracker: redirect to return URL
+Tracker -> Api: mark as success
+Api -> Tracker: success
+
+@enduml
