@@ -41,7 +41,7 @@ class User(db.Model):
 		self.name = name
 
 	def __repr__(self):
-		return '<User project_id: "%s", name: "%s">' % self.project_id, self.nae
+		return '<User project_id: "%s", name: "%s">' % self.project_id, self.name
 
 class Sponsorship(db.Model):
 	sponsorship_id = db.Column(db.Integer, primary_key=True)
@@ -66,6 +66,32 @@ class Sponsorship(db.Model):
 	def __repr__(self):
 		return '<Sponsorship issue_id: "%s", user_id: "%s">' % (self.issue_id, self.user_id)
 	
+class Payment(db.Model):
+	payment_id = db.Column(db.Integer, primary_key=True)
+	sponsorship_id = db.Column(db.Integer, db.ForeignKey(Sponsorship.sponsorship_id))
+	gateway_id = db.Column(db.String)
+	url = db.Column(db.String)
+	status = db.Column(db.Integer)
+	gateway = db.Column(db.Integer)
+
+	class Status(Enum):
+		INITIATED = 10
+		CONFIRMED = 20
+
+	class Gateway(Enum):
+		PLAIN = 10
+		PAYPAL = 20
+
+	def __init__(self, sponsorship_id, gateway):
+		self.sponsorship_id = sponsorship_id
+		self.gateway = gateway
+		self.gateway_id = ''
+		self.url = ''
+		self.status = Payment.Status.INITIATED
+
+	def __repr__(self):
+		return '<Payment payment_id: "%s">' % self.payment_id
+
 class Email(db.Model):
 	email_id = db.Column(db.Integer, primary_key=True)
 	project_id = db.Column(db.Integer)
