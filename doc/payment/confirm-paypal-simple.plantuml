@@ -1,12 +1,14 @@
 @startuml
 
-Tracker -> Api: confirm payment
+Tracker -> Api: create payment
 Api -> Paypal: payment
 Paypal -> Api: return approval URL
+Api > Tracker: return success
+Tracker -> Api: get redirect URL
 Api -> Tracker: return redirect URL
 Tracker -> Paypal: redirect to payment page
 Paypal -> Tracker: redirect to return URL
-Tracker -> Api: mark as success, pass confirmation
+Tracker -> Api: confirm payment
 Api -> Paypal: execute payment
 Paypal -> Api: return success
 Api -> Api: store transaction id for eventual refund
