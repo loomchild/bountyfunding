@@ -17,7 +17,10 @@ from pkg_resources import resource_filename
 
 
 API_URL='http://localhost:5000'
-GANG_PATTERN = re.compile("(?:/(?P<ticket>ticket)/(?P<ticket_id>[0-9]+)/(?P<ticket_action>sponsor|confirm|validate))|(?:/(?P<gang>gang)/(?P<gang_action>email))")
+GANG_PATTERN = re.compile("(?:/(?P<ticket>ticket)/(?P<ticket_id>[0-9]+)/(?P<ticket_action>sponsor|confirm|validate|pay))|(?:/(?P<gang>gang)/(?P<gang_action>email))")
+
+# TODO Retrieve automatically
+TRACKER_URL = 'http://localhost:8100'
 
 def call_gang_api(method, path, **kwargs):
 	url = API_URL + path
@@ -160,19 +163,24 @@ class GangPlugin(Component):
 						return "payment.html", {'error': error}, None
 	
 				elif gateway == 'PAYPAL':
-					response = call_gang_api('GET', 
-							'/issue/%s/sponsorship/%s/payment' % (ticket_id, req.authname), 
-							gateway='PAYPAL')
+					response = call_gang_api('POST', 
+							'/issue/%s/sponsorship/%s/payments' % (ticket_id, req.authname), 
+							gateway='PAYPAL', return_url= TRACKER_URL + '/ticket/%s/pay' % ticket_id)
 					if response.status_code == 200:
-						redirect_url = response.json().get('url')
-					elif response.status_code == 404:
-						response = call_gang_api('POST', 
-								'/issue/%s/sponsorship/%s/payments' % (ticket_id, req.authname), 
+						response = call_gang_api('GET', 
+								'/issue/%s/sponsorship/%s/payment' % (ticket_id, req.authname), 
 								gateway='PAYPAL')
-						if response.status_code != 200:
-							error = 'API cannot create paypal payment'
-					
-						
+						if response.status_code == 200:
+							redirect_url = response.json().get('url')
+							req.redirect(redirect_url)
+						else:
+							error = 'API cannot retrieve created paypal payment'
+					else:
+						error = 'API cannot create paypal payment'
+			
+			elif action == 'pay':
+				call_gang_api('PUT', '/issue/%s/sponsorship/%s/payment' % (ticket_id, req.authname), 
+						status='CONFIRMED')
 			elif action == 'validate':
 				call_gang_api('PUT', '/issue/%s/sponsorship/%s/status' % (ticket_id, req.authname), 
 						status='VALIDATED')
