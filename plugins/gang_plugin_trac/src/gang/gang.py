@@ -132,23 +132,47 @@ class GangPlugin(Component):
 				amount = req.args.get('amount')
 				call_gang_api('POST', '/issue/%s/sponsorships' % ticket_id, user=req.authname, amount=amount)
 			elif action == 'confirm':
-				pay = req.args.get('pay')
-				card_number = req.args.get('card_number')
-				card_date = req.args.get('card_date')
-				error = "" 
+				# Payment selection code goes here
+				gateway = 'PLAIN'
+
+				if gateway == 'PLAIN':
+					pay = req.args.get('pay')
+					card_number = req.args.get('card_number')
+					card_date = req.args.get('card_date')
+					error = "" 
 				
-				if pay != None:
-					if not card_number or not card_date:
-						error = 'Please specify card number and expiry date'
-					if card_number and card_date:
-						response = call_gang_api('PUT', 
-								'/issue/%s/sponsorship/%s/status' % (ticket_id, req.authname), 
-								status='CONFIRMED', card_number=card_number, card_date=card_date)
+					if pay != None:
+						if not card_number or not card_date:
+							error = 'Please specify card number and expiry date'
+						if card_number and card_date:
+							response = call_gang_api('POST', 
+									'/issue/%s/sponsorship/%s/payments' % (ticket_id, req.authname), 
+									gateway='PLAIN')
+							if response.status_code != 200:
+								error = 'API cannot create plain payment'
+							response = call_gang_api('PUT', 
+									'/issue/%s/sponsorship/%s/payment' % (ticket_id, req.authname), 
+									status='CONFIRMED', card_number=card_number, card_date=card_date)
+							if response.status_code != 200:
+								error = 'API refused your plain payment'
+							
+					if pay == None or error:
+						return "payment.html", {'error': error}, None
+	
+				elif gateway == 'PAYPAL':
+					response = call_gang_api('GET', 
+							'/issue/%s/sponsorship/%s/payment' % (ticket_id, req.authname), 
+							gateway='PAYPAL')
+					if response.status_code == 200:
+						redirect_url = response.json().get('url')
+					elif response.status_code == 404:
+						response = call_gang_api('POST', 
+								'/issue/%s/sponsorship/%s/payments' % (ticket_id, req.authname), 
+								gateway='PAYPAL')
 						if response.status_code != 200:
-							error = 'API refused your payment, error code: %d' % response.status_code
+							error = 'API cannot create paypal payment'
+					
 						
-				if pay == None or error:
-					return "payment.html", {'error': error}, None
 			elif action == 'validate':
 				call_gang_api('PUT', '/issue/%s/sponsorship/%s/status' % (ticket_id, req.authname), 
 						status='VALIDATED')
