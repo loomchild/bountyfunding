@@ -6,7 +6,7 @@ from genshi.builder import tag
 from trac.core import *
 from trac.util.html import html
 from trac.web import IRequestHandler
-from trac.web.chrome import INavigationContributor, ITemplateProvider, add_stylesheet
+from trac.web.chrome import INavigationContributor, ITemplateProvider, add_stylesheet, add_script
 from trac.web.api import ITemplateStreamFilter
 from trac.ticket.api import ITicketChangeListener
 
@@ -95,7 +95,7 @@ class GangPlugin(Component):
 						
 					if ((status == 'ASSIGNED' or status == 'COMPLETED') 
 							and user_sponsorship.status == 'PLEDGED'):
-						action = tag.form(tag.input(type="submit", value=u"Confirm %d\u20ac" % user_sponsorship.amount), method="post", action="/ticket/%s/confirm" % identifier)
+						action = tag.form(tag.input(type="button", value=u"Confirm %d\u20ac" % user_sponsorship.amount, id="confirm-button"), tag.span(tag.input(type="button", value="Cancel", id="confirm-cancel"), tag.input(type="submit", value="Payment Card", name='plain'), tag.input(type="submit", value="PayPal", name='paypal'), id="confirm-options"), method="post", action="/ticket/%s/confirm" % identifier)
 
 					elif status == 'COMPLETED' and user_sponsorship.status == 'CONFIRMED':
 						action = tag.form(tag.input(type="submit", name='accept', value=u"Validate %d\u20ac" % user_sponsorship.amount), method="post", action="/ticket/%s/validate" % identifier)
@@ -112,7 +112,11 @@ class GangPlugin(Component):
 				else:
 					fragment.append("Error occured")
 	
+				#chrome = Chrome(self.env)
+				#chrome.add_jquery_ui(req)
+				
 				add_stylesheet(req, 'htdocs/styles/gang.css')
+				add_script(req, 'htdocs/scripts/gang.js')
 
 				filter = Transformer('.//table[@class="properties"]	')
 				gang_tag = tag.tr(tag.th("Bounty: ", id="h_gang"), 
@@ -135,8 +139,10 @@ class GangPlugin(Component):
 				amount = req.args.get('amount')
 				call_gang_api('POST', '/issue/%s/sponsorships' % ticket_id, user=req.authname, amount=amount)
 			elif action == 'confirm':
-				# Payment selection code goes here
-				gateway = 'PLAIN'
+				if req.args.get('plain'):
+					gateway = 'PLAIN'
+				elif req.args.get('paypal'):
+					gateway = 'PAYPAL'
 
 				if gateway == 'PLAIN':
 					pay = req.args.get('pay')

@@ -10,5 +10,5 @@ setup(
             'gang = gang.gang',
         ],
     },
-	package_data={'gang': ['templates/*', 'htdocs/styles/*']},
+	package_data={'gang': ['templates/*', 'htdocs/styles/*', 'htdocs/scripts/*']},
 )
