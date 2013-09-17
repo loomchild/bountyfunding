@@ -19,8 +19,6 @@ from pkg_resources import resource_filename
 API_URL='http://localhost:5000'
 GANG_PATTERN = re.compile("(?:/(?P<ticket>ticket)/(?P<ticket_id>[0-9]+)/(?P<ticket_action>sponsor|confirm|validate|pay))|(?:/(?P<gang>gang)/(?P<gang_action>email))")
 
-# TODO Retrieve automatically
-TRACKER_URL = 'http://localhost:8100'
 
 def call_gang_api(method, path, **kwargs):
 	url = API_URL + path
@@ -169,9 +167,10 @@ class GangPlugin(Component):
 						return "payment.html", {'error': error}, None
 	
 				elif gateway == 'PAYPAL':
+					return_url = req.abs_href('ticket', ticket_id, 'pay')
 					response = call_gang_api('POST', 
 							'/issue/%s/sponsorship/%s/payments' % (ticket_id, req.authname), 
-							gateway='PAYPAL', return_url= TRACKER_URL + '/ticket/%s/pay' % ticket_id)
+							gateway='PAYPAL', return_url=return_url)
 					if response.status_code == 200:
 						response = call_gang_api('GET', 
 								'/issue/%s/sponsorship/%s/payment' % (ticket_id, req.authname), 
