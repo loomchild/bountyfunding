@@ -3,13 +3,13 @@ from flask import Flask, url_for, render_template, make_response, redirect, abor
 from models import db, Issue, User, Sponsorship, Email, Payment
 from pprint import pprint
 import paypal
+import config
 import re, requests, threading
 
 DEFAULT_PROJECT_ID = 1
 DATE_PATTERN = re.compile('^(0?[1-9]|1[012])/[0-9][0-9]$')
 
-TRACKER_URL = 'http://localhost:8100'
-NOTIFY_URL = TRACKER_URL + '/gang/'
+NOTIFY_URL = config.TRACKER_URL + '/gang/'
 NOTIFY_INTERVAL = 5
 
 @app.route("/issue/<issue_ref>", methods=['GET'])
@@ -174,17 +174,17 @@ def update_status(issue_ref):
 
 	if issue.status == Issue.Status.ASSIGNED:
 		subject = 'Task assigned %s' % issue.issue_ref
-		body = 'The task you have sponsored has been accepted by the developer. Please deposit the promised amount. To do that please go to project issue tracker at %s, log in, find an issue ID %s and select Confirm.' % (TRACKER_URL, issue.issue_ref)
+		body = 'The task you have sponsored has been accepted by the developer. Please deposit the promised amount. To do that please go to project issue tracker at %s, log in, find an issue ID %s and select Confirm.' % (config.TRACKER_URL, issue.issue_ref)
 		notify_sponsors(issue.issue_id, Sponsorship.Status.PLEDGED, subject, body)
 
 		sponsorships = Sponsorship.query.filter_by(issue_id=issue.issue_id, status=Sponsorship.Status.PLEDGED)
 	elif issue.status == Issue.Status.COMPLETED:
 		subject = 'Task completed %s' % issue.issue_ref
 		
-		body_confirmed = 'The task you have sponsored has been completed by the developer. Please verify it. To do that please go to project issue tracker at %s, log in, find an issue ID %s and select Validate.' % (TRACKER_URL, issue.issue_ref)
+		body_confirmed = 'The task you have sponsored has been completed by the developer. Please verify it. To do that please go to project issue tracker at %s, log in, find an issue ID %s and select Validate.' % (config.TRACKER_URL, issue.issue_ref)
 		notify_sponsors(issue.issue_id, Sponsorship.Status.CONFIRMED, subject, body_confirmed)
 		
-		body_pledged = 'The task you have sponsored has been completed by the developer. Please deposit the promised amout and verify it. To do that please go to project issue tracker at %s, log in, find an issue ID %s and select Confirm and then Validate.' % (TRACKER_URL, issue.issue_ref)
+		body_pledged = 'The task you have sponsored has been completed by the developer. Please deposit the promised amout and verify it. To do that please go to project issue tracker at %s, log in, find an issue ID %s and select Confirm and then Validate.' % (config.TRACKER_URL, issue.issue_ref)
 		notify_sponsors(issue.issue_id, Sponsorship.Status.PLEDGED, subject, body_pledged)
 
 	response = jsonify(message='Issue updated')

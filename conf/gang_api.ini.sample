@@ -1,0 +1,4 @@
+[general]
+# externally accessible location of bug tracker
+tracker_url = http://localhost:8100
+
