@@ -7,3 +7,4 @@ plugins/gang_plugin_trac/src/dist/
 virtualenv
 logs/
 conf/gang_api.ini
+private/
