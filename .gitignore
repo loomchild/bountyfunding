@@ -2,9 +2,9 @@
 .*.sw?
 *.egg-info
 doc/out
-plugins/gang_plugin_trac/src/build/
-plugins/gang_plugin_trac/src/dist/
+plugins/bountyfunding_plugin_trac/src/build/
+plugins/bountyfunding_plugin_trac/src/dist/
 virtualenv
 logs/
-conf/gang_api.ini
+conf/bountyfunding_api.ini
 private/
