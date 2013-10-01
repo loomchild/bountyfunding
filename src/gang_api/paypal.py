@@ -16,11 +16,11 @@ PAYPAL_CERTIFICATE_VERIFY=False
 PAYPAL_AUTHORIZE_BASE_URL = 'https://www.sandbox.paypal.com/cgi-bin/webscr'
 PAYPAL_AUTHORIZE_URL = PAYPAL_AUTHORIZE_BASE_URL + '?cmd=_ap-payment&paykey='
 
-PAYPAL_USERID = 'paypal-business_api1.gangfunding.org'
-PAYPAL_PASSWORD = '1377898278'
-PAYPAL_SIGNATURE = 'A--8MSCLabuvN8L.-MHjxC9uypBtAfV2vPwxoeI5CcF5duvwRtSUR.AO'
+PAYPAL_USERID = 'paypal-business_api1.bountyfunding.org'
+PAYPAL_PASSWORD = 'PRTQUFRE33AADNHW'
+PAYPAL_SIGNATURE = 'A381RCO10yoqbozM1Rmd.SSRX7XjATUXUDZoRv87AY83bFJiWXmwem0K'
 PAYPAL_APPLICATIONID = 'APP-80W284485P519543T'
-PAYPAL_RECEIVER_EMAIL = 'paypal-business@gangfunding.org'
+PAYPAL_RECEIVER_EMAIL = 'paypal-business@bountyfunding.org'
 
 HEADERS = {
 	"X-PAYPAL-SECURITY-USERID": PAYPAL_USERID,
