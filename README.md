@@ -87,4 +87,5 @@ Development
 ### Tips
 * During Trac plugin development it's useful to install a plugin link instead of deploying a full egg after every chage (however, trac still needs to be restarted). To do it execute (see [Trac Plugin Development](http://trac.edgewall.org/wiki/TracDev/PluginDevelopment) for more details):
 
-		setup.py develop -mxd /path/to/projenv/plugins
+		cd plugins/bountyfunding_api_plugin/src
+		./setup.py develop -mxd /path/to/trac/plugins
