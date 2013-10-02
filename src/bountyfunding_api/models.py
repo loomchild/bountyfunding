@@ -1,11 +1,11 @@
 
 from flask.ext.sqlalchemy import SQLAlchemy
-from gang_api import app, GANG_HOME
+from bountyfunding_api import app, BOUNTYFUNDING_HOME
 from utils import Enum 
 from os import path
 #import logging
 
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + path.join(GANG_HOME, 'db', 'test.db')
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + path.join(BOUNTYFUNDING_HOME, 'db', 'test.db')
 db = SQLAlchemy(app)
 
 #logging.basicConfig()

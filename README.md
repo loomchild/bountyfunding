@@ -1,10 +1,10 @@
-# Gang - Open-Source Funding Platform
+# BountyFunding - Open-Source Bounty Funding Platform
 ===================================
-Website (including live demo): [http://gang.loomchild.net](http://gang.loomchild.net)
+Website (including live demo): [http://bountyfunding.org](http://bountyfunding.org)
 
 Introduction
 ------------
-Gang is a bounty platform designed specifically for Free / Open-Source Software. It allows users to collectively sponsor most wanted features / bugfixes, and gives developers another source of income or maybe even a business model. Currently Gang only integrates with Trac, support for other issue tracking systems will be developed soon.
+BountyFunding is a bounty funding platform designed specifically for Free / Open-Source Software. It allows users to collectively sponsor most wanted features / bugfixes, and gives developers another source of income or maybe even a business model. Currently BountyFunding only integrates with Trac, support for other issue tracking systems will be developed soon.
  
 Requirements
 ------------
@@ -49,7 +49,7 @@ Install Trac, at least version 1.0 is required. Make the following changes to th
 		...
 		smtp_enabled = yes
 
-* All users or developers that want to use Gang need to specify their emails as notifications and speedy replies are very important
+* All users or developers that want to use BountyFunding need to specify their emails as notifications and speedy replies are very important
 * In case of problems you may consider enabling logging (to stderr or file) and increasing logging level to diagnose possible problems with configuration (in trac.ini):
 
 		[logging]
@@ -57,20 +57,20 @@ Install Trac, at least version 1.0 is required. Make the following changes to th
 		log_level = DEBUG
 		log_type = stderr
 
-### Download Gang
-Download the archive from github [gang-master.zip](https://github.com/loomchild/gang/archive/master.zip) or clone the repository:
+### Download BountyFunding
+Download the archive from github [master.zip](https://github.com/bountyfunding/bountyfunding/archive/master.zip) or clone the repository:
 	
-	git clone https://github.com/loomchild/gang.git
+	git clone https://github.com/bountyfunding/bountyfunding.git
 
 ### Deploy Trac Plugin
 * Build Python egg
 	
-		cd plugins/gang_api_plugin/src
+		cd plugins/bountyfunding_api_plugin/src
 		./setup.py bdist_egg
 
 * Put it in you Trac plugins directory
 
-		cp dist/Gang*.egg /<trac_home>/plugins
+		cp dist/BountyFunding*.egg /<trac_home>/plugins
 
 * Restart Trac
 * To check if plugin has been installed properly go to Trac Admin / Plugins. Also you should see Bounty field on each ticket. It's also a good idea to check if email notifications are sent - create a ticket, sponsor it by one user and assign it or complete it by another user - first user should receive a notification. 
@@ -78,6 +78,13 @@ Download the archive from github [gang-master.zip](https://github.com/loomchild/
 ### Deploy API
 * Run the API
 
-		cd src/gang_api
-		./gang_api.py >& ../log/gang_api.log
+		cd src/bountyfunding_api
+		./bountyfunding_api.py >& ../log/bountyfunding_api.log
 
+Development
+-----------
+
+### Tips
+* During Trac plugin development it's useful to install a plugin link instead of deploying a full egg after every chage (however, trac still needs to be restarted). To do it execute (see [Trac Plugin Development](http://trac.edgewall.org/wiki/TracDev/PluginDevelopment) for more details):
+
+		setup.py develop -mxd /path/to/projenv/plugins

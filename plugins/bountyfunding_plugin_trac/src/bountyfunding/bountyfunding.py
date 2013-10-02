@@ -17,10 +17,10 @@ from pkg_resources import resource_filename
 
 
 API_URL='http://localhost:5000'
-GANG_PATTERN = re.compile("(?:/(?P<ticket>ticket)/(?P<ticket_id>[0-9]+)/(?P<ticket_action>sponsor|confirm|validate|pay))|(?:/(?P<gang>gang)/(?P<gang_action>email))")
+BOUNTYFUNDING_PATTERN = re.compile("(?:/(?P<ticket>ticket)/(?P<ticket_id>[0-9]+)/(?P<ticket_action>sponsor|confirm|validate|pay))|(?:/(?P<bountyfunding>bountyfunding)/(?P<bountyfunding_action>email))")
 
 
-def call_gang_api(method, path, **kwargs):
+def call_api(method, path, **kwargs):
 	url = API_URL + path
 	return requests.request(method, url, params=kwargs)
 
@@ -47,7 +47,7 @@ def sum_amounts(sponsorships, statuses=None):
 	return total_amount
 
 
-class GangPlugin(Component):
+class BountyFundingPlugin(Component):
 	implements(ITemplateStreamFilter, IRequestHandler, ITemplateProvider, ITicketChangeListener)
 
 	# ITemplateStreamFilter methods
@@ -61,7 +61,7 @@ class GangPlugin(Component):
 			if ticket and ticket.exists:
 				identifier = ticket.id
 				user = req.authname if req.authname != 'anonymous' else None
-				request = call_gang_api('GET', '/issue/%s' % identifier)
+				request = call_api('GET', '/issue/%s' % identifier)
 				fragment = tag()
 				sponsorships = {}
 				status = convert_status(ticket.values['status'])
@@ -69,7 +69,7 @@ class GangPlugin(Component):
 				if request.status_code == 200 or request.status_code == 404:
 					
 					sponsorships = {}
-					request = call_gang_api('GET', '/issue/%s/sponsorships' % identifier)
+					request = call_api('GET', '/issue/%s/sponsorships' % identifier)
 					if request.status_code == 200:
 						sponsorships = dict(map(lambda (k,v): (k, Sponsorship(v)), request.json().items()))
 					
@@ -113,21 +113,21 @@ class GangPlugin(Component):
 				#chrome = Chrome(self.env)
 				#chrome.add_jquery_ui(req)
 				
-				add_stylesheet(req, 'htdocs/styles/gang.css')
-				add_script(req, 'htdocs/scripts/gang.js')
+				add_stylesheet(req, 'htdocs/styles/bountyfunding.css')
+				add_script(req, 'htdocs/scripts/bountyfunding.js')
 
 				filter = Transformer('.//table[@class="properties"]	')
-				gang_tag = tag.tr(tag.th("Bounty: ", id="h_gang"), 
-						tag.td(fragment, headers="h_gang", class_="gang")) 
-				stream |= filter.append(gang_tag)
+				bountyfunding_tag = tag.tr(tag.th("Bounty: ", id="h_bountyfunding"), 
+						tag.td(fragment, headers="h_bountyfunding", class_="bountyfunding")) 
+				stream |= filter.append(bountyfunding_tag)
 		return stream
 
 	# IRequestHandler methods
 	def match_request(self, req):
-		return GANG_PATTERN.match(req.path_info) != None
+		return BOUNTYFUNDING_PATTERN.match(req.path_info) != None
 	
 	def process_request(self, req):
-		match = GANG_PATTERN.match(req.path_info)
+		match = BOUNTYFUNDING_PATTERN.match(req.path_info)
 
 		if match.group('ticket'):
 			ticket_id = match.group('ticket_id')
@@ -135,7 +135,7 @@ class GangPlugin(Component):
 
 			if action == 'sponsor':
 				amount = req.args.get('amount')
-				call_gang_api('POST', '/issue/%s/sponsorships' % ticket_id, user=req.authname, amount=amount)
+				call_api('POST', '/issue/%s/sponsorships' % ticket_id, user=req.authname, amount=amount)
 			elif action == 'confirm':
 				if req.args.get('plain'):
 					gateway = 'PLAIN'
@@ -152,12 +152,12 @@ class GangPlugin(Component):
 						if not card_number or not card_date:
 							error = 'Please specify card number and expiry date'
 						if card_number and card_date:
-							response = call_gang_api('POST', 
+							response = call_api('POST', 
 									'/issue/%s/sponsorship/%s/payments' % (ticket_id, req.authname), 
 									gateway='PLAIN')
 							if response.status_code != 200:
 								error = 'API cannot create plain payment'
-							response = call_gang_api('PUT', 
+							response = call_api('PUT', 
 									'/issue/%s/sponsorship/%s/payment' % (ticket_id, req.authname), 
 									status='CONFIRMED', card_number=card_number, card_date=card_date)
 							if response.status_code != 200:
@@ -168,11 +168,11 @@ class GangPlugin(Component):
 	
 				elif gateway == 'PAYPAL':
 					return_url = req.abs_href('ticket', ticket_id, 'pay')
-					response = call_gang_api('POST', 
+					response = call_api('POST', 
 							'/issue/%s/sponsorship/%s/payments' % (ticket_id, req.authname), 
 							gateway='PAYPAL', return_url=return_url)
 					if response.status_code == 200:
-						response = call_gang_api('GET', 
+						response = call_api('GET', 
 								'/issue/%s/sponsorship/%s/payment' % (ticket_id, req.authname), 
 								gateway='PAYPAL')
 						if response.status_code == 200:
@@ -184,22 +184,22 @@ class GangPlugin(Component):
 						error = 'API cannot create paypal payment'
 			
 			elif action == 'pay':
-				call_gang_api('PUT', '/issue/%s/sponsorship/%s/payment' % (ticket_id, req.authname), 
+				call_api('PUT', '/issue/%s/sponsorship/%s/payment' % (ticket_id, req.authname), 
 						status='CONFIRMED')
 			elif action == 'validate':
-				call_gang_api('PUT', '/issue/%s/sponsorship/%s/status' % (ticket_id, req.authname), 
+				call_api('PUT', '/issue/%s/sponsorship/%s/status' % (ticket_id, req.authname), 
 						status='VALIDATED')
 			req.redirect('/ticket/%s' % ticket_id)
 		
-		elif match.group('gang'):
-			action = match.group('gang_action')
+		elif match.group('bountyfunding'):
+			action = match.group('bountyfunding_action')
 			if action == 'email':
-				request = call_gang_api('GET', '/emails')
+				request = call_api('GET', '/emails')
 				if request.status_code == 200:
 					emails = [Email(email) for email in request.json().get('data')]
 					for email in emails:
 						send_email(self.env, email.recipient, email.subject, email.body)
-						call_gang_api('DELETE', '/email/%s' % email.id), 
+						call_api('DELETE', '/email/%s' % email.id), 
 			req.send_no_content()
 
 	# ITicketChangeListener methods
@@ -209,7 +209,7 @@ class GangPlugin(Component):
 	def ticket_changed(self, ticket, comment, author, old_values):
 		if 'status' in old_values:
 			status = convert_status(ticket.values['status'])
-			call_gang_api('PUT', '/issue/%s/status' % ticket.id, status=status)
+			call_api('PUT', '/issue/%s/status' % ticket.id, status=status)
 
 	def ticket_deleted(self, ticket):
 		pass

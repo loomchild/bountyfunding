@@ -1,4 +1,4 @@
-from gang_api import app
+from bountyfunding_api import app
 from flask import Flask, url_for, render_template, make_response, redirect, abort, jsonify, request
 from models import db, Issue, User, Sponsorship, Email, Payment
 from pprint import pprint
@@ -9,7 +9,7 @@ import re, requests, threading
 DEFAULT_PROJECT_ID = 1
 DATE_PATTERN = re.compile('^(0?[1-9]|1[012])/[0-9][0-9]$')
 
-NOTIFY_URL = config.TRACKER_URL + '/gang/'
+NOTIFY_URL = config.TRACKER_URL + '/bountyfunding/'
 NOTIFY_INTERVAL = 5
 
 @app.route("/issue/<issue_ref>", methods=['GET'])

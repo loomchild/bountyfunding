@@ -3,12 +3,12 @@
 from setuptools import find_packages, setup
 
 setup(
-    name='Gang', version='0.1',
+    name='BountyFunding', version='0.2',
     packages=find_packages(),
     entry_points = {
         'trac.plugins': [
-            'gang = gang.gang',
+            'bountyfunding = bountyfunding.bountyfunding',
         ],
     },
-	package_data={'gang': ['templates/*', 'htdocs/styles/*', 'htdocs/scripts/*']},
+	package_data={'bountyfunding': ['templates/*', 'htdocs/styles/*', 'htdocs/scripts/*']},
 )
