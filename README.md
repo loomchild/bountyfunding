@@ -79,7 +79,7 @@ Download the archive from github [master.zip](https://github.com/bountyfunding/b
 * Run the API
 
 		cd src/bountyfunding_api
-		./bountyfunding_api.py >& ../log/bountyfunding_api.log
+		./bountyfunding_api.py >& ../log/bountyfunding_api.log &
 
 Development
 -----------
@@ -88,4 +88,4 @@ Development
 * During Trac plugin development it's useful to install a plugin link instead of deploying a full egg after every chage (however, trac still needs to be restarted). To do it execute (see [Trac Plugin Development](http://trac.edgewall.org/wiki/TracDev/PluginDevelopment) for more details):
 
 		cd plugins/bountyfunding_api_plugin/src
-		./setup.py develop -mxd /path/to/trac/plugins
+		./setup.py develop -mxd /<trac_home>/plugins
