@@ -1,6 +1,7 @@
 
 from flask.ext.sqlalchemy import SQLAlchemy
-from bountyfunding_api import app, BOUNTYFUNDING_HOME
+from bountyfunding_api import app
+from homer import BOUNTYFUNDING_HOME  
 from utils import Enum 
 from os import path
 #import logging

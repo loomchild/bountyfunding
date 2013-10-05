@@ -1,8 +1,8 @@
-import ConfigParser
 from os import path
+import ConfigParser
+from homer import BOUNTYFUNDING_HOME
 
-BOUNTYFUNDING_HOME = path.dirname(path.abspath(__file__))
-CONFIG_FILE = path.abspath(path.join(BOUNTYFUNDING_HOME, '..', '..', 'conf', 'bountyfunding_api.ini'))
+CONFIG_FILE = path.abspath(path.join(BOUNTYFUNDING_HOME, 'conf', 'bountyfunding_api.ini'))
 
 parser = ConfigParser.RawConfigParser()
 parser.readfp(open(CONFIG_FILE))
