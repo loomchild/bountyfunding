@@ -1,4 +1,8 @@
 [general]
+# SQLAlchemy database url.
+# See http://docs.sqlalchemy.org/en/latest/core/engines.html
+database_url = sqlite:///db/test.db
+
 # externally accessible location of bug tracker
 tracker_url = http://localhost:8100
 
