@@ -15,8 +15,6 @@ database_url = config.DATABASE_URL
 database_url = re.sub("(?<=sqlite://)/(?!/)", 
 		"/" + path.join(BOUNTYFUNDING_HOME, ""), database_url)
 
-# TODO: log
-print("Database: " + database_url)
 app.config['SQLALCHEMY_DATABASE_URI'] = database_url
 db = SQLAlchemy(app)
 
