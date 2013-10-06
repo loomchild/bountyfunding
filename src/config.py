@@ -10,26 +10,29 @@ defaults = dict(
 	database_url = "",
 )
 
+TRACKER_URL = ''
+DATABASE_URL = ''
+DATABASE_IN_MEMORY = False
 
-# Read file
-CONFIG_FILE = path.abspath(path.join(BOUNTYFUNDING_HOME, 'conf', 'bountyfunding_api.ini'))
-cfg_parser = ConfigParser.RawConfigParser(defaults)
-cfg_parser.readfp(open(CONFIG_FILE))
+def init(args):
+	config_file = args.config_file
+	if not path.isabs(config_file):
+		config_file = path.abspath(path.join(BOUNTYFUNDING_HOME, config_file))
 
+	# Read file
+	parser = ConfigParser.RawConfigParser(defaults)
+	parser.readfp(open(config_file))
 
-# Expose values
-TRACKER_URL = cfg_parser.get('general', 'tracker_url')
-DATABASE_URL = cfg_parser.get('general', 'database_url')
-DATABASE_IN_MEMORY = (DATABASE_URL == 'sqlite://')
+	# Expose values
+	global TRACKER_URL, DATABASE_URL, DATABASE_IN_MEMORY
+	TRACKER_URL = get(parser, 'general', 'tracker_url', '')
+	DATABASE_URL = get(parser, 'general', 'database_url', '', args.db_in_memory)
+	DATABASE_IN_MEMORY = (DATABASE_URL == 'sqlite://')
 
-
-# Override values by command-line arguments
-def override(args):
-	global DATABASE_URL
-	global DATABASE_IN_MEMORY
-		
-	if args.db_in_memory:
-		DATABASE_IN_MEMORY = True
-		DATABASE_URL = 'sqlite://'
-
-
+def get(parser, section, option, default, override=None):
+	if override:
+		return override
+	elif parser.has_option(section, option):
+		return parser.get(section, option)
+	else:
+		return default

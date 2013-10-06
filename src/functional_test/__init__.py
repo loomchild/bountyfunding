@@ -9,7 +9,11 @@ def setup():
 	global bountyfunding_process
 	print("Starting BountyFunding API...")
 	bountyfunding_process = subprocess.Popen(
-		["python", "src/bountyfunding_api.py", "--db-in-memory"], cwd=BOUNTYFUNDING_HOME, 
+		[
+			"python", "src/bountyfunding_api.py", "--db-in-memory", 
+			"--config-file", "conf/bountyfunding_api.ini.sample"
+		], 
+		cwd=BOUNTYFUNDING_HOME, 
 		preexec_fn=os.setsid
 	)
 	time.sleep(2)	
