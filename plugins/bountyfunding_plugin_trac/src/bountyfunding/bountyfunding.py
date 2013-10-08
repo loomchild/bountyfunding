@@ -184,8 +184,9 @@ class BountyFundingPlugin(Component):
 						error = 'API cannot create paypal payment'
 			
 			elif action == 'pay':
+				payer_id = req.args.get('PayerID')
 				call_api('PUT', '/issue/%s/sponsorship/%s/payment' % (ticket_id, req.authname), 
-						status='CONFIRMED')
+						status='CONFIRMED', payer_id=payer_id)
 			elif action == 'validate':
 				call_api('PUT', '/issue/%s/sponsorship/%s/status' % (ticket_id, req.authname), 
 						status='VALIDATED')

@@ -2,7 +2,7 @@ from bountyfunding_api import app
 from flask import Flask, url_for, render_template, make_response, redirect, abort, jsonify, request
 from models import db, Issue, User, Sponsorship, Email, Payment
 from pprint import pprint
-import paypal
+import paypal_rest
 import config
 import re, requests, threading
 
@@ -118,7 +118,9 @@ def update_payment(issue_ref, user_name):
 			if card_number != '4111111111111111' or DATE_PATTERN.match(card_date) == None:
 				return jsonify(error='Invalid card details'), 400
 		elif payment.gateway == Payment.Gateway.PAYPAL:
-			if not paypal.is_payment_completed(payment.gateway_id):
+			payer_id = request.values.get('payer_id')
+			approved = paypal_rest.execute_payment(payment.gateway_id, payer_id)
+			if not approved:
 				return jsonify(error='Payment not confirmed by PayPal'), 400
 		else:
 			return jsonify(error='Unknown gateway'), 400
@@ -150,8 +152,7 @@ def create_payment(issue_ref, user_name):
 	elif gateway == Payment.Gateway.PAYPAL:
 		if not return_url:
 			return jsonify(error='return_url cannot be blank'), 400
-		payment.gateway_id = paypal.create_payment(sponsorship.amount, return_url)
-		payment.url = paypal.get_authorization_url(payment.gateway_id)
+		payment.gateway_id, payment.url = paypal_rest.create_payment(sponsorship.amount, return_url)
 	else:
 		return jsonify(error='Unknown gateway'), 400
 	payment.gateway = gateway

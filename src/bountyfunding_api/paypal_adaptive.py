@@ -56,7 +56,7 @@ def create_payment(amount, return_url):
 	response = requests.post(url, data=json.dumps(payload), headers=HEADERS, 
 			verify=PAYPAL_CERTIFICATE_VERIFY)
 	
-	print(response.json())
+	#print(response.json())
 
 	pay_key = response.json()["payKey"]
 	return pay_key
@@ -81,7 +81,7 @@ def is_payment_completed(pay_key):
 	response = requests.post(url, data=json.dumps(payload), headers=HEADERS, 
 			verify=PAYPAL_CERTIFICATE_VERIFY)
 	
-	print(response.json())
+	#print(response.json())
 	
 	status = response.json()["status"]
 	
