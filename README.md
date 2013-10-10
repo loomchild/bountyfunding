@@ -13,7 +13,6 @@ Requirements
 * Message Transfer Agent, such as Postfix or Exim
 * Trac (1.0+)
 * All python packages listed in [requirements.txt](requirements.txt)
-* For development: all python packages listed in [requirements-dev.txt](requirements-dev.txt)
 * Recommended: pip and virtualenv
 
 Installation
@@ -25,10 +24,6 @@ Run below commands to install python dependencies if needed. I use [pip](http://
 * Install requirements
 
 		pip install -r requirements.txt
-
-* If you are a developer install development requirements instead
-
-		pip install -r requirements-dev.txt
 
 ### Install and Configure Trac
 Install Trac, at least version 1.0 is required. Make the following changes to the configuration:
@@ -76,6 +71,11 @@ Download the archive from github [master.zip](https://github.com/bountyfunding/b
 
 Development
 -----------
+
+### Requirements
+For development you will need all python packages listed in [requirements-dev.txt](requirements-dev.txt):
+	
+		pip install -r requirements-dev.txt
 
 ### Tips
 * During Trac plugin development it's useful to install a plugin link instead of deploying a full egg after every chage (however, trac still needs to be restarted). To do it execute (see [Trac Plugin Development](http://trac.edgewall.org/wiki/TracDev/PluginDevelopment) for more details):
