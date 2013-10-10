@@ -1,5 +1,4 @@
 Flask>=0.10.1
 Flask-SQLAlchemy>=1.0
-SQLAlchemy>=0.8.2
 requests>=2.0.0
 paypalrestsdk>=0.6.3

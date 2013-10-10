@@ -8,15 +8,13 @@ BountyFunding is a bounty funding platform designed specifically for Free / Open
  
 Requirements
 ------------
-* Python (2.6+)
-	* Flask
-	* Flask-SQLAlchemy 
-	* SQLAlchemy 
-	* requests
-* Database 
-	* SQLite / MySQL / PostgreSQL, anything supported SQLAlchemy
+* Python (2.7)
+* Database (SQLite / MySQL / PostgreSQL, anything supported SQLAlchemy)
 * Message Transfer Agent, such as Postfix or Exim
 * Trac (1.0+)
+* All python packages listed in [requirements.txt](requirements.txt)
+* For development: all python packages listed in [requirements-dev.txt](requirements-dev.txt)
+* Recommended: pip and virtualenv
 
 Installation
 ------------
@@ -24,17 +22,13 @@ Installation
 ### Install Python Libraries
 Run below commands to install python dependencies if needed. I use [pip](http://www.pip-installer.org), but they could also be installed with easy_install, packaging system native to your operating system or directly from source. You may consider using [virtualenv](http://www.virtualenv.org) to isolate the installation from other Python applications.
 
-* Install flask
+* Install requirements
 
-		pip install Flask
+		pip install -r requirements.txt
 
-* Install Flask-SQLAlchemy (includes SQLAlchemy)
+* If you are a developer install development requirements instead
 
-		pip install Flask-SQLAlchemy
-
-* Install requests library
-
-		pip install requests
+		pip install -r requirements-dev.txt
 
 ### Install and Configure Trac
 Install Trac, at least version 1.0 is required. Make the following changes to the configuration:
@@ -78,8 +72,7 @@ Download the archive from github [master.zip](https://github.com/bountyfunding/b
 ### Deploy API
 * Run the API
 
-		cd src/bountyfunding_api
-		./bountyfunding_api.py >& ../log/bountyfunding_api.log &
+		src/bountyfunding_api.py >& ../log/bountyfunding_api.log &
 
 Development
 -----------
