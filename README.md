@@ -54,7 +54,7 @@ Download the archive from github [master.zip](https://github.com/bountyfunding/b
 ### Deploy Trac Plugin
 * Build Python egg
 	
-		cd plugins/bountyfunding_api_plugin/src
+		cd plugins/bountyfunding_plugin_trac/src
 		./setup.py bdist_egg
 
 * Put it in you Trac plugins directory
