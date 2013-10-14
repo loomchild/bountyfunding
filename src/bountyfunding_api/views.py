@@ -12,6 +12,12 @@ DATE_PATTERN = re.compile('^(0?[1-9]|1[012])/[0-9][0-9]$')
 NOTIFY_URL = config.TRACKER_URL + '/bountyfunding/'
 NOTIFY_INTERVAL = 5
 
+
+@app.route('/status', methods=['GET'])
+def status():
+	return jsonify(status="OK")
+
+
 @app.route("/issue/<issue_ref>", methods=['GET'])
 def get_issue(issue_ref):
 	issue = retrieve_issue(DEFAULT_PROJECT_ID, issue_ref)

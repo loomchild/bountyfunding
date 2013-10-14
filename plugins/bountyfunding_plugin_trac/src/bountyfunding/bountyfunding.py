@@ -5,7 +5,7 @@ from genshi.builder import tag
 
 from trac.core import *
 from trac.util.html import html
-from trac.web import IRequestHandler
+from trac.web import IRequestHandler, HTTPInternalError
 from trac.web.chrome import INavigationContributor, ITemplateProvider, add_stylesheet, add_script
 from trac.web.api import ITemplateStreamFilter
 from trac.ticket.api import ITicketChangeListener
@@ -17,7 +17,7 @@ from pkg_resources import resource_filename
 
 
 API_URL='http://localhost:5000'
-BOUNTYFUNDING_PATTERN = re.compile("(?:/(?P<ticket>ticket)/(?P<ticket_id>[0-9]+)/(?P<ticket_action>sponsor|confirm|validate|pay))|(?:/(?P<bountyfunding>bountyfunding)/(?P<bountyfunding_action>email))")
+BOUNTYFUNDING_PATTERN = re.compile("(?:/(?P<ticket>ticket)/(?P<ticket_id>[0-9]+)/(?P<ticket_action>sponsor|confirm|validate|pay))|(?:/(?P<bountyfunding>bountyfunding)/(?P<bountyfunding_action>status|email))")
 
 
 def call_api(method, path, **kwargs):
@@ -201,7 +201,17 @@ class BountyFundingPlugin(Component):
 					for email in emails:
 						send_email(self.env, email.recipient, email.subject, email.body)
 						call_api('DELETE', '/email/%s' % email.id), 
-			req.send_no_content()
+				req.send_no_content()
+			if action == 'status':
+				try:
+					request = call_api('GET', '/status')
+				except requests.ConnectionError:
+					raise HTTPInternalError('Unable to connect to API')
+				if request.status_code != 200:
+					raise HTTPInternalError('Invalid status code when connection to API' 
+							% request.status_code)
+				else:
+					return "status.html", {'status': request.json().get('status')}, None
 
 	# ITicketChangeListener methods
 	def ticket_created(self, ticket):
