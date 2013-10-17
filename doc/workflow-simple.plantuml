@@ -1,0 +1,66 @@
+@startuml
+
+'!define TRANSPARENT
+
+!ifdef TRANSPARENT
+skinparam backgroundColor transparent
+!else
+skinparam backgroundColor #1E1E1E
+!endif
+
+skinparam shadowing false
+skinparam sequenceActorFontColor white
+skinparam sequenceParticipantFontColor white
+skinparam sequenceArrowFontColor white
+skinparam sequenceActorBackgroundColor black
+skinparam sequenceParticipantBackgroundColor black
+skinparam sequenceLifeLineBackgroundColor black
+skinparam sequenceArrowColor white
+skinparam sequenceActorBorderColor white
+skinparam sequenceParticipantBorderColor white
+skinparam sequenceLifeLineBorderColor white
+!define RET [#gray]
+
+
+actor User
+actor Developer
+actor Admin
+participant "Issue Tracker" as Tracker
+
+
+User -> Tracker: 1: pledge
+activate Tracker
+User <RET-- Tracker
+deactivate Tracker
+
+Developer -> Tracker: 2: accept
+activate Tracker
+User <<- Tracker: email
+Developer <RET-- Tracker
+deactivate Tracker
+
+User -> Tracker: 3: confirm
+activate Tracker
+Admin <- Tracker: pay
+User <RET-- Tracker
+deactivate Tracker
+
+Developer -> Tracker: 4: resolve
+activate Tracker
+User <<- Tracker: email
+Developer <RET-- Tracker
+deactivate Tracker
+
+User -> Tracker: 5: validate
+activate Tracker
+Admin <<- Tracker: email
+User <RET-- Tracker
+deactivate Tracker
+
+Developer <- Admin: 6: pay
+
+
+hide footbox
+|||
+
+@enduml

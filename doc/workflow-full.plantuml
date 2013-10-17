@@ -1,0 +1,130 @@
+@startuml
+
+'!define TRANSPARENT
+
+!ifdef TRANSPARENT
+skinparam backgroundColor transparent
+!else
+skinparam backgroundColor #1E1E1E
+!endif
+
+skinparam shadowing false
+skinparam sequenceActorFontColor white
+skinparam sequenceParticipantFontColor white
+skinparam sequenceArrowFontColor white
+skinparam sequenceActorBackgroundColor black
+skinparam sequenceParticipantBackgroundColor black
+skinparam sequenceLifeLineBackgroundColor black
+skinparam sequenceDividerBackgroundColor black
+skinparam sequenceArrowColor white
+skinparam sequenceActorBorderColor white
+skinparam sequenceParticipantBorderColor white
+skinparam sequenceLifeLineBorderColor white
+skinparam sequenceDividerFontColor white
+
+!define RET [#gray]
+
+
+actor User
+actor Developer
+actor Admin
+participant "Issue Tracker" as Tracker
+participant Api
+participant "Payment Gateway" as Gateway
+
+
+== 1: Pledge ==
+
+User -> Tracker: pledge
+activate Tracker
+Tracker -> Api: pledge
+activate Api
+Tracker <RET-- Api
+deactivate Api
+User <RET-- Tracker
+deactivate Tracker
+
+
+== 2: Accept ==
+
+Developer -> Tracker: accept
+activate Tracker
+Tracker -> Api: accept
+activate Api
+Tracker <RET-- Api
+deactivate Api
+User <<- Tracker: email
+Developer <RET-- Tracker
+deactivate Tracker
+
+
+== 3: Confirm ==
+
+User -> Tracker: confirm
+activate Tracker
+Tracker -> Api: confirm
+activate Api
+Tracker <RET-- Api: redirect URL
+deactivate Api
+User <RET-- Tracker: redirect URL
+deactivate Tracker
+User -> Gateway: pay admin
+activate Gateway
+Admin <<- Gateway: transfer funds
+Api <<- Gateway: notify
+User <RET-- Gateway: redirect URL
+deactivate Gateway
+User -> Tracker: get issue
+activate Tracker
+Tracker -> Api: get issue
+activate Api
+Api -> Gateway: get payment status
+activate Gateway
+Api <RET-- Gateway
+deactivate Gateway
+Api -> Api: update issue
+activate Api
+Api <RET-- Api
+deactivate Api
+Tracker <RET-- Api
+deactivate Api
+User <RET-- Tracker
+deactivate Tracker
+
+
+== 4: Resolve ==
+
+Developer -> Tracker: resolve
+activate Tracker
+Tracker -> Api: resolve
+activate Api
+Tracker <RET-- Api
+deactivate Api
+User <<- Tracker: email
+Developer <RET-- Tracker
+deactivate Tracker
+
+
+== 5: Validate ==
+
+User -> Tracker: validate
+activate Tracker
+Tracker -> Api: validate
+activate Api
+Tracker <RET-- Api
+deactivate Api
+Admin <<- Tracker: email
+User <RET-- Tracker
+deactivate Tracker
+
+
+== 6: Pay ==
+
+Admin -> Gateway: pay
+activate Gateway
+Developer <<- Gateway: transfer funds
+Admin <-- Gateway
+deactivate Gateway
+
+
+@enduml
