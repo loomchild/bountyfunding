@@ -1,7 +1,0 @@
-@startuml
-
-Tracker -> Api: validate payment
-Api -> Api: mark payment as validated
-Api -> Tracker: success
-
-@enduml
