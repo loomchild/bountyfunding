@@ -16,7 +16,6 @@ DATABASE_URL = ''
 DATABASE_IN_MEMORY = False
 DATABASE_CREATE = False
 VERSION = ''
-HASH = ''
 
 def init(args):
 	config_file = args.config_file
@@ -38,9 +37,12 @@ def init(args):
 
 
 def init_version():
-	global VERSION, HASH
-	VERSION = subprocess.check_output(["git", "describe"]).strip()
-	HASH = subprocess.check_output(["git", "rev-parse", "--short", "HEAD"]).strip()
+	global VERSION
+	try:
+		VERSION = subprocess.check_output(["git", "describe", "--long"]).strip()
+	except subprocess.CalledProcessError:
+		pass 
+
 
 def init_database(database_url):
 	global DATABASE_URL, DATABASE_IN_MEMORY, DATABASE_CREATE

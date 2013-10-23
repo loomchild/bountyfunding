@@ -15,7 +15,7 @@ NOTIFY_INTERVAL = 5
 
 @app.route('/version', methods=['GET'])
 def status():
-	return jsonify(version=config.VERSION, hash=config.HASH)
+	return jsonify(version=config.VERSION)
 
 @app.route("/issue/<issue_ref>", methods=['GET'])
 def get_issue(issue_ref):

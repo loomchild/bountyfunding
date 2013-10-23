@@ -211,8 +211,7 @@ class BountyFundingPlugin(Component):
 					raise HTTPInternalError('Invalid status code when connection to API' 
 							% request.status_code)
 				else:
-					data = request.json()
-					return "status.html", {'version': data.get('version'), 'hash': data.get('hash')}, None
+					return "status.html", {'version': request.json().get('version')}, None
 
 	# ITicketChangeListener methods
 	def ticket_created(self, ticket):
