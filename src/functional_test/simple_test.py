@@ -1,6 +1,5 @@
-from utils import api
+from utils import api, dict_to_object
 from nose.tools import *
-from collections import namedtuple
 
 
 def test_retrieving_nonexisting_issue_returns_404():
@@ -58,10 +57,4 @@ def test_sponsor_issue_by_same_user_updates_sponsorship():
 	sponsorship = dict_to_object(sponsorships[user])
 	eq_(sponsorship.amount, amount) 
 	eq_(sponsorship.status, 'PLEDGED') 
-
-
-def dict_to_object(d):
-	o = namedtuple('DictObject', d.keys())(*d.values())
-	return o
-
 

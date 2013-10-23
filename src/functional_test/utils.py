@@ -1,4 +1,6 @@
 import requests
+from collections import namedtuple
+
 
 # TODO: Covert to SDK and use in plugins
 class Api:
@@ -25,3 +27,10 @@ class Api:
 
 API_URL = 'http://localhost:5000'
 api = Api(API_URL)
+
+
+def dict_to_object(d):
+	o = namedtuple('DictObject', d.keys())(*d.values())
+	return o
+
+
