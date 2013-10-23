@@ -1,5 +1,5 @@
 import sys
-from os import path
+import os
 import ConfigParser
 import argparse
 from homer import BOUNTYFUNDING_HOME
@@ -13,21 +13,22 @@ defaults = dict(
 TRACKER_URL = ''
 DATABASE_URL = ''
 DATABASE_IN_MEMORY = False
+DATABASE_CREATE = False
 
 def init(args):
 	config_file = args.config_file
-	if not path.isabs(config_file):
-		config_file = path.abspath(path.join(BOUNTYFUNDING_HOME, config_file))
+	if not os.path.isabs(config_file):
+		config_file = os.path.abspath(os.path.join(BOUNTYFUNDING_HOME, config_file))
 
 	# Read file
 	parser = ConfigParser.RawConfigParser(defaults)
 	parser.readfp(open(config_file))
 
-	# Expose values
-	global TRACKER_URL, DATABASE_URL, DATABASE_IN_MEMORY
-	TRACKER_URL = get(parser, 'general', 'tracker_url', '')
-	DATABASE_URL = get(parser, 'general', 'database_url', '', args.db_in_memory)
-	DATABASE_IN_MEMORY = (DATABASE_URL == 'sqlite://')
+	global TRACKER_URL
+	TRACKER_URL = get(parser, 'general', 'tracker_url', '').strip()
+
+	database_url = get(parser, 'general', 'database_url', '', args.db_in_memory).strip()
+	init_database(database_url)
 
 def get(parser, section, option, default, override=None):
 	if override:
@@ -36,3 +37,23 @@ def get(parser, section, option, default, override=None):
 		return parser.get(section, option)
 	else:
 		return default
+
+def init_database(database_url):
+	global DATABASE_URL, DATABASE_IN_MEMORY, DATABASE_CREATE
+
+	DATABASE_URL = database_url
+
+	if DATABASE_URL == 'sqlite://':
+		DATABASE_IN_MEMORY = True
+		DATABASE_CREATE = True
+
+	elif DATABASE_URL.startswith('sqlite:///'):
+		path = database_url[10:]
+		
+		# Relative path for sqlite database should be based on home directory
+		if not os.path.isabs(path):
+			path = os.path.join(BOUNTYFUNDING_HOME, path)
+			DATABASE_URL = 'sqlite:///' + path
+
+		if not os.path.exists(path):
+			DATABASE_CREATE = True

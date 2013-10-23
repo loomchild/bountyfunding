@@ -65,6 +65,14 @@ Download the archive from github [master.zip](https://github.com/bountyfunding/b
 * To check if plugin has been installed properly go to Trac Admin / Plugins. Also you should see Bounty field on each ticket. It's also a good idea to check if email notifications are sent - create a ticket, sponsor it by one user and assign it or complete it by another user - first user should receive a notification. 
 
 ### Deploy API
+* Configure the API. Example configuration file can be found in conf/bountyfunding_api.ini.sample, for a simple installation it is enough to duplicate this file and remove the .sample extension, but it's a good idea to look inside to examine available options.
+
+		cp conf/bountyfunding_api.ini.sample conf/bountyfunding_api.ini
+
+* Populate the database. If you are using sqlite database backend (default) then database will be automatically created and populated on the first run. Otherwise you'll need to execute following command:
+
+		src/bountyfunding_api.py create-db
+
 * Run the API
 
 		src/bountyfunding_api.py >& ../log/bountyfunding_api.log &

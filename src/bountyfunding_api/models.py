@@ -1,21 +1,12 @@
 
 from flask.ext.sqlalchemy import SQLAlchemy
-from utils import Enum 
-from os import path
-import os
-import re
+from enum import Enum 
 from bountyfunding_api import app
-from homer import BOUNTYFUNDING_HOME
 import config
 #import logging
 
-database_url = config.DATABASE_URL
 
-# Relative path for sqlite database should be based on home directory
-database_url = re.sub("(?<=sqlite://)/(?!/)", 
-		"/" + path.join(BOUNTYFUNDING_HOME, ""), database_url)
-
-app.config['SQLALCHEMY_DATABASE_URI'] = database_url
+app.config['SQLALCHEMY_DATABASE_URI'] = config.DATABASE_URL
 db = SQLAlchemy(app)
 
 

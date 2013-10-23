@@ -282,14 +282,16 @@ def notify():
 
 @app.before_first_request
 def init():
+	# For in-memory DB need to initialize memory database in the same thread
+	if config.DATABASE_CREATE:
+		if not config.DATABASE_IN_MEMORY:
+			print "Creating database in %s" % config.DATABASE_URL
+		db.create_all()
+	
 	# Multiple threads do not work with memory database
 	if not config.DATABASE_IN_MEMORY:
 		notify()
 	
-	# Need to initialize memory database in the same thread
-	if config.DATABASE_IN_MEMORY:
-		db.create_all()
-
 
 # Examples
 @app.route('/user/static')
