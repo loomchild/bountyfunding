@@ -14,6 +14,8 @@ TRACKER_URL = ''
 DATABASE_URL = ''
 DATABASE_IN_MEMORY = False
 DATABASE_CREATE = False
+VERSION = ''
+HASH = ''
 
 def init(args):
 	config_file = args.config_file
@@ -23,6 +25,8 @@ def init(args):
 	# Read file
 	parser = ConfigParser.RawConfigParser(defaults)
 	parser.readfp(open(config_file))
+	
+	init_version()
 
 	global TRACKER_URL
 	TRACKER_URL = get(parser, 'general', 'tracker_url', '').strip()
@@ -30,13 +34,15 @@ def init(args):
 	database_url = get(parser, 'general', 'database_url', '', args.db_in_memory).strip()
 	init_database(database_url)
 
-def get(parser, section, option, default, override=None):
-	if override:
-		return override
-	elif parser.has_option(section, option):
-		return parser.get(section, option)
-	else:
-		return default
+
+
+def init_version():
+	global VERSION, HASH
+	version_path = os.path.join(BOUNTYFUNDING_HOME, 'version')
+	with open(version_path, "r") as version_file:
+		data = version_file.readlines()
+		VERSION = data[0].strip()
+		HASH = data[1].replace('$Id','').replace(':', '').replace('$', '').strip()
 
 def init_database(database_url):
 	global DATABASE_URL, DATABASE_IN_MEMORY, DATABASE_CREATE
@@ -57,3 +63,12 @@ def init_database(database_url):
 
 		if not os.path.exists(path):
 			DATABASE_CREATE = True
+
+		
+def get(parser, section, option, default, override=None):
+	if override:
+		return override
+	elif parser.has_option(section, option):
+		return parser.get(section, option)
+	else:
+		return default

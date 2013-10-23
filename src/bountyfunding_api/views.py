@@ -13,10 +13,9 @@ NOTIFY_URL = config.TRACKER_URL + '/bountyfunding/'
 NOTIFY_INTERVAL = 5
 
 
-@app.route('/status', methods=['GET'])
+@app.route('/version', methods=['GET'])
 def status():
-	return jsonify(status="OK")
-
+	return jsonify(version=config.VERSION, hash=config.HASH)
 
 @app.route("/issue/<issue_ref>", methods=['GET'])
 def get_issue(issue_ref):
