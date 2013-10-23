@@ -82,3 +82,4 @@ For development you will need all python packages listed in [requirements-dev.tx
 
 		cd plugins/bountyfunding_api_plugin/src
 		./setup.py develop -mxd /<trac_home>/plugins
+* Since the API does not offer any security layer, it is necessary to run it behind a firewall.
