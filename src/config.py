@@ -2,6 +2,7 @@ import sys
 import os
 import ConfigParser
 import argparse
+import subprocess
 from homer import BOUNTYFUNDING_HOME
 
 # Default values
@@ -38,11 +39,8 @@ def init(args):
 
 def init_version():
 	global VERSION, HASH
-	version_path = os.path.join(BOUNTYFUNDING_HOME, 'version')
-	with open(version_path, "r") as version_file:
-		data = version_file.readlines()
-		VERSION = data[0].strip()
-		HASH = data[1].replace('$Id','').replace(':', '').replace('$', '').strip()
+	VERSION = subprocess.check_output(["git", "describe"]).strip()
+	HASH = subprocess.check_output(["git", "rev-parse", "--short", "HEAD"]).strip()
 
 def init_database(database_url):
 	global DATABASE_URL, DATABASE_IN_MEMORY, DATABASE_CREATE
