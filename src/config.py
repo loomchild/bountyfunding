@@ -1,5 +1,6 @@
 import sys
 import os
+import re
 import ConfigParser
 import argparse
 import subprocess
@@ -39,8 +40,11 @@ def init(args):
 def init_version():
 	global VERSION
 	try:
-		VERSION = subprocess.check_output(["git", "describe", "--long"], 
-				stderr=subprocess.STDOUT).strip()
+		description = subprocess.check_output(["git", "describe", "--long"], 
+				stderr=subprocess.STDOUT)
+		m = re.match(r"v([\w\.]+)-\d+-g(\w+)", description)
+		if m:
+			VERSION = m.group(1) + "-" + m.group(2)
 	except subprocess.CalledProcessError:
 		pass 
 
