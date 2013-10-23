@@ -204,14 +204,15 @@ class BountyFundingPlugin(Component):
 				req.send_no_content()
 			if action == 'status':
 				try:
-					request = call_api('GET', '/status')
+					request = call_api('GET', '/version')
 				except requests.ConnectionError:
 					raise HTTPInternalError('Unable to connect to API')
 				if request.status_code != 200:
 					raise HTTPInternalError('Invalid status code when connection to API' 
 							% request.status_code)
 				else:
-					return "status.html", {'status': request.json().get('status')}, None
+					data = request.json()
+					return "status.html", {'version': data.get('version'), 'hash': data.get('hash')}, None
 
 	# ITicketChangeListener methods
 	def ticket_created(self, ticket):
