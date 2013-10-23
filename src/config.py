@@ -15,7 +15,7 @@ TRACKER_URL = ''
 DATABASE_URL = ''
 DATABASE_IN_MEMORY = False
 DATABASE_CREATE = False
-VERSION = ''
+VERSION = 'Unknown'
 
 def init(args):
 	config_file = args.config_file
@@ -39,7 +39,8 @@ def init(args):
 def init_version():
 	global VERSION
 	try:
-		VERSION = subprocess.check_output(["git", "describe", "--long"]).strip()
+		VERSION = subprocess.check_output(["git", "describe", "--long"], 
+				stderr=subprocess.STDOUT).strip()
 	except subprocess.CalledProcessError:
 		pass 
 
