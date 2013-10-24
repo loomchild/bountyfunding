@@ -293,17 +293,17 @@ def init():
 	
 
 # Examples
-@app.route('/user/static')
-def show_static_user():
-	response = make_response(url_for('static', filename='test.txt'))
-	return response
-
-@app.route('/director')
-def redirector():
-	return redirect(url_for('show_user_profile', username='Director'))
-
-@app.route('/error')
-def error():
-	app.logger.error('An error occurred')
-	abort(401)
+#@app.route('/user/static')
+#def show_static_user():
+#	response = make_response(url_for('static', filename='test.txt'))
+#	return response
+#
+#@app.route('/director')
+#def redirector():
+#	return redirect(url_for('show_user_profile', username='Director'))
+#
+#@app.route('/error')
+#def error():
+#	app.logger.error('An error occurred')
+#	abort(401)
 
