@@ -2,6 +2,12 @@ from utils import api, dict_to_object
 from nose.tools import *
 
 
+def teardown_module():
+	eq_(api.delete("/issue/1").status_code, 200)
+	eq_(api.delete("/user/loomchild").status_code, 200)
+	eq_(api.delete("/user/pralinka").status_code, 200)
+
+
 def test_retrieving_nonexisting_issue_returns_404():
 	r = api.get("/issue/1")
 	eq_(r.status_code, 404)

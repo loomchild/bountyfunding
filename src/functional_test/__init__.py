@@ -11,7 +11,8 @@ def setup():
 	bountyfunding_process = subprocess.Popen(
 		[
 			"python", "src/bountyfunding_api.py", "--db-in-memory", 
-			"--config-file", "conf/bountyfunding_api.ini.sample"
+			"--config-file", "conf/bountyfunding_api.ini.sample",
+			"--delete-allow",
 		], 
 		cwd=BOUNTYFUNDING_HOME, 
 		preexec_fn=os.setsid

@@ -27,13 +27,20 @@ def get_issue(issue_ref):
 		response = jsonify(error='Issue not found'), 404
 	return response
 
+@app.route("/issue/<issue_ref>", methods=['DELETE'])
+def delete_issue(issue_ref):
+	check_delete_permissions()
+	delete_issue(DEFAULT_PROJECT_ID, issue_ref)
+	response = jsonify(message="Issue deleted")
+	return response
+
 @app.route("/issue/<issue_ref>/sponsorships", methods=['GET'])
 def get_sponsorships(issue_ref):
 	sponsorships = []
 	issue = retrieve_issue(DEFAULT_PROJECT_ID, issue_ref)
 
 	if issue != None:
-		sponsorships = Sponsorship.query.filter_by(issue_id=issue.issue_id).all()
+		sponsorships = retrieve_all_sponsorships(issue.issue_id)
 		sponsorships = dict(map(\
 				lambda s: (s.user.name, \
 				{'amount': s.amount, 'status': Sponsorship.Status.to_string(s.status)}),\
@@ -197,6 +204,14 @@ def update_status(issue_ref):
 	return response
 
 
+@app.route('/user/<user_name>', methods=['DELETE'])
+def delete_user(user_name):
+	check_delete_permissions()
+	delete_user(DEFAULT_PROJECT_ID, user_name)
+	response = jsonify(message="User deleted")
+	return response
+
+
 @app.route('/emails', methods=['GET'])
 def get_emails():
 	emails = Email.query.all()
@@ -222,6 +237,16 @@ def delete_email(email_id):
 	return response
 
 
+class APIException(Exception):
+	def __init__(self, message="", status_code=400):
+		self.message = message
+		self.status_code = status_code
+
+@app.errorhandler(APIException)
+def handle_api_exception(exception):
+    return jsonify(message=exception.message), exception.status_code
+
+
 def retrieve_issue(project_id, issue_ref):
 	issue = Issue.query.filter_by(project_id=DEFAULT_PROJECT_ID, issue_ref=issue_ref).first()
 	return issue
@@ -233,6 +258,15 @@ def retrieve_create_issue(project_id, issue_ref):
 		db.session.add(issue)
 		db.session.commit()
 	return issue
+
+def delete_issue(project_id, issue_ref):
+	issue = retrieve_issue(project_id, issue_ref)
+	sponsorships = retrieve_all_sponsorships(issue.issue_id)
+	for sponsorship in sponsorships:
+		Payment.query.filter_by(sponsorship_id=sponsorship.sponsorship_id).delete()
+	Sponsorship.query.filter_by(issue_id=issue.issue_id).delete()
+	db.session.delete(issue)
+	db.session.commit()
 
 def retrieve_user(project_id, name):
 	user = User.query.filter_by(project_id=DEFAULT_PROJECT_ID, name=name).first()
@@ -246,9 +280,18 @@ def retrieve_create_user(project_id, name):
 		db.session.commit()
 	return user
 
+def delete_user(project_id, name):
+	user = retrieve_user(project_id, name)
+	db.session.delete(user)
+	db.session.commit()
+
 def retrieve_sponsorship(issue_id, user_id):
 	sponsorship = Sponsorship.query.filter_by(issue_id=issue_id, user_id=user_id).first()
 	return sponsorship
+
+def retrieve_all_sponsorships(issue_id):
+	sponsorships = Sponsorship.query.filter_by(issue_id=issue_id).all()
+	return sponsorships
 
 def retrieve_last_payment(sponsorship_id):
 	payment = Payment.query.filter_by(sponsorship_id=sponsorship_id) \
@@ -272,6 +315,12 @@ def send_emails():
 			requests.get(NOTIFY_URL + 'email', timeout=1)
 		except requests.exceptions.RequestException:
 			app.logger.warn('Unable to connect to issue tracker at ' + NOTIFY_URL)
+
+
+def check_delete_permissions():
+	if not config.DELETE_ALLOW:
+		raise APIException("Delete not allowed", 403)
+
 
 def notify():
 	send_emails()

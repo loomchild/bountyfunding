@@ -6,3 +6,5 @@ database_url = sqlite:///db/test.db
 # externally accessible location of bug tracker
 tracker_url = http://localhost:8100
 
+# allow delete operations (only for testing), True/False
+delete_allow = False

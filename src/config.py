@@ -6,17 +6,21 @@ import argparse
 import subprocess
 from homer import BOUNTYFUNDING_HOME
 
-# Default values
-defaults = dict(
-	tracker_url = "",
-	database_url = "",
-)
+
+VERSION = 'Unknown'
 
 TRACKER_URL = ''
+
 DATABASE_URL = ''
 DATABASE_IN_MEMORY = False
 DATABASE_CREATE = False
-VERSION = 'Unknown'
+
+DELETE_ALLOW = False
+
+
+class ConfigurationException:
+	def __init__(self, message):
+		self.message = message
 
 def init(args):
 	config_file = args.config_file
@@ -24,17 +28,19 @@ def init(args):
 		config_file = os.path.abspath(os.path.join(BOUNTYFUNDING_HOME, config_file))
 
 	# Read file
-	parser = ConfigParser.RawConfigParser(defaults)
+	parser = ConfigParser.RawConfigParser()
 	parser.readfp(open(config_file))
 	
 	init_version()
 
 	global TRACKER_URL
-	TRACKER_URL = get(parser, 'general', 'tracker_url', '').strip()
+	TRACKER_URL = get(parser, 'general', 'tracker_url', TRACKER_URL).strip()
 
-	database_url = get(parser, 'general', 'database_url', '', args.db_in_memory).strip()
+	database_url = get(parser, 'general', 'database_url', DATABASE_URL, args.db_in_memory).strip()
 	init_database(database_url)
 
+	global DELETE_ALLOW
+	DELETE_ALLOW = get(parser, 'general', 'delete_allow', DELETE_ALLOW, args.delete_allow, type=bool)
 
 
 def init_version():
@@ -70,10 +76,20 @@ def init_database(database_url):
 			DATABASE_CREATE = True
 
 		
-def get(parser, section, option, default, override=None):
+def get(parser, section, option, default, override=None, type=str):
 	if override:
 		return override
 	elif parser.has_option(section, option):
-		return parser.get(section, option)
+		if type == bool:
+			value = parser.getboolean(section, option)
+		elif type == int:
+			value = parser.getint(section, option)
+		elif type == float:
+			value = parser.getfloat(section, option)
+		elif type == str:
+			value = parser.get(section, option)
+		else:
+			raise ConfigurationException("Unknown type: %s" % type)
+		return value
 	else:
 		return default
