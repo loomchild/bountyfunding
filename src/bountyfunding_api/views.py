@@ -1,7 +1,7 @@
 from bountyfunding_api import app
 from flask import Flask, url_for, render_template, make_response, redirect, abort, jsonify, request
 from models import db, Issue, User, Sponsorship, Email, Payment
-from const import SponsorshipStatus, PaymentStatus, PaymentGateway
+from const import IssueStatus, SponsorshipStatus, PaymentStatus, PaymentGateway
 from pprint import pprint
 import paypal_rest
 import config
@@ -22,10 +22,31 @@ def status():
 def get_issue(issue_ref):
 	issue = retrieve_issue(DEFAULT_PROJECT_ID, issue_ref)
 	if issue != None:
-		status = Issue.Status.to_string(issue.status)
-		response = jsonify(status=status)
+		response = jsonify()
 	else:
 		response = jsonify(error='Issue not found'), 404
+	return response
+
+@app.route("/issue/<issue_ref>/status", methods=['PUT'])
+def update_status(issue_ref):
+	status = IssueStatus.from_string(request.values.get('status'))
+
+	if issue.status == IssueStatus.ASSIGNED:
+		subject = 'Task assigned %s' % issue.issue_ref
+		body = 'The task you have sponsored has been accepted by the developer. Please deposit the promised amount. To do that please go to project issue tracker at %s, log in, find an issue ID %s and select Confirm.' % (config.TRACKER_URL, issue.issue_ref)
+		notify_sponsors(issue.issue_id, SponsorshipStatus.PLEDGED, subject, body)
+
+		sponsorships = Sponsorship.query.filter_by(issue_id=issue.issue_id, status=SponsorshipStatus.PLEDGED)
+	elif issue.status == IssueStatus.COMPLETED:
+		subject = 'Task completed %s' % issue.issue_ref
+		
+		body_confirmed = 'The task you have sponsored has been completed by the developer. Please verify it. To do that please go to project issue tracker at %s, log in, find an issue ID %s and select Validate.' % (config.TRACKER_URL, issue.issue_ref)
+		notify_sponsors(issue.issue_id, SponsorshipStatus.CONFIRMED, subject, body_confirmed)
+		
+		body_pledged = 'The task you have sponsored has been completed by the developer. Please deposit the promised amout and verify it. To do that please go to project issue tracker at %s, log in, find an issue ID %s and select Confirm and then Validate.' % (config.TRACKER_URL, issue.issue_ref)
+		notify_sponsors(issue.issue_id, SponsorshipStatus.PLEDGED, subject, body_pledged)
+
+	response = jsonify(message='Issue updated')
 	return response
 
 @app.route("/issue/<issue_ref>", methods=['DELETE'])
@@ -210,34 +231,6 @@ def create_payment(issue_ref, user_name):
 	db.session.commit()
 	
 	response = jsonify(message='Payment created')
-	return response
-
-@app.route("/issue/<issue_ref>/status", methods=['PUT'])
-def update_status(issue_ref):
-	status = Issue.Status.from_string(request.values.get('status'))
-
-	issue = retrieve_create_issue(DEFAULT_PROJECT_ID, issue_ref)
-	
-	issue.status = status
-	db.session.add(issue)
-	db.session.commit()
-
-	if issue.status == Issue.Status.ASSIGNED:
-		subject = 'Task assigned %s' % issue.issue_ref
-		body = 'The task you have sponsored has been accepted by the developer. Please deposit the promised amount. To do that please go to project issue tracker at %s, log in, find an issue ID %s and select Confirm.' % (config.TRACKER_URL, issue.issue_ref)
-		notify_sponsors(issue.issue_id, SponsorshipStatus.PLEDGED, subject, body)
-
-		sponsorships = Sponsorship.query.filter_by(issue_id=issue.issue_id, status=SponsorshipStatus.PLEDGED)
-	elif issue.status == Issue.Status.COMPLETED:
-		subject = 'Task completed %s' % issue.issue_ref
-		
-		body_confirmed = 'The task you have sponsored has been completed by the developer. Please verify it. To do that please go to project issue tracker at %s, log in, find an issue ID %s and select Validate.' % (config.TRACKER_URL, issue.issue_ref)
-		notify_sponsors(issue.issue_id, SponsorshipStatus.CONFIRMED, subject, body_confirmed)
-		
-		body_pledged = 'The task you have sponsored has been completed by the developer. Please deposit the promised amout and verify it. To do that please go to project issue tracker at %s, log in, find an issue ID %s and select Confirm and then Validate.' % (config.TRACKER_URL, issue.issue_ref)
-		notify_sponsors(issue.issue_id, SponsorshipStatus.PLEDGED, subject, body_pledged)
-
-	response = jsonify(message='Issue updated')
 	return response
 
 

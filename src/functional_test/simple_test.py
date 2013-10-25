@@ -26,9 +26,6 @@ def test_sponsor_nonexisting_issue_creates_it():
 	r = api.post('/issue/1/sponsorships', user=user, amount=amount)
 	r = api.get("/issue/1")
 	eq_(r.status_code, 200)
-	issue = dict_to_object(r.json())
-	eq_(issue.status, 'NEW')
-
 	r = api.get("/issue/1/sponsorships")
 	eq_(r.status_code, 200)
 	sponsorships = r.json()
@@ -45,7 +42,6 @@ def test_sponsor_existing_issue_updates_it():
 	r = api.post('/issue/1/sponsorships', user=user, amount=amount)
 	r = api.get("/issue/1/sponsorships")
 	eq_(r.status_code, 200)
-
 	sponsorships = r.json()
 	eq_(len(sponsorships), 2)
 	sponsorship = dict_to_object(sponsorships[user])
@@ -60,9 +56,6 @@ def test_sponsor_issue_by_same_user_updates_sponsorship():
 	r = api.post('/issue/1/sponsorships', user=user, amount=amount)
 	r = api.get("/issue/1")
 	eq_(r.status_code, 200)
-	issue = dict_to_object(r.json())
-	eq_(issue.status, 'NEW')
-
 	r = api.get("/issue/1/sponsorships")
 	eq_(r.status_code, 200)
 	sponsorships = r.json()

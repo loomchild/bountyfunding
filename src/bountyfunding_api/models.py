@@ -18,17 +18,10 @@ class Issue(db.Model):
 	issue_id = db.Column(db.Integer, primary_key=True)
 	project_id = db.Column(db.Integer, nullable=False)
 	issue_ref = db.Column(db.String(256), nullable=False)
-	status = db.Column(db.Integer, nullable=False)
-
-	class Status(Enum):
-		NEW = 10
-		ASSIGNED = 20
-		COMPLETED = 30
 
 	def __init__(self, project_id, issue_ref):
 		self.project_id = project_id
 		self.issue_ref = issue_ref
-		self.status = Issue.Status.NEW
 
 	def __repr__(self):
 		return '<Issue project_id: "%s", issue_ref: "%s">' % self.project_id, self.issue_ref
