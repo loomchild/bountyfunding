@@ -31,23 +31,28 @@ def get_issue(issue_ref):
 def update_status(issue_ref):
 	status = IssueStatus.from_string(request.values.get('status'))
 
-	if issue.status == IssueStatus.ASSIGNED:
-		subject = 'Task assigned %s' % issue.issue_ref
-		body = 'The task you have sponsored has been accepted by the developer. Please deposit the promised amount. To do that please go to project issue tracker at %s, log in, find an issue ID %s and select Confirm.' % (config.TRACKER_URL, issue.issue_ref)
-		notify_sponsors(issue.issue_id, SponsorshipStatus.PLEDGED, subject, body)
+	issue = retrieve_issue(DEFAULT_PROJECT_ID, issue_ref)
 
-		sponsorships = Sponsorship.query.filter_by(issue_id=issue.issue_id, status=SponsorshipStatus.PLEDGED)
-	elif issue.status == IssueStatus.COMPLETED:
-		subject = 'Task completed %s' % issue.issue_ref
-		
-		body_confirmed = 'The task you have sponsored has been completed by the developer. Please verify it. To do that please go to project issue tracker at %s, log in, find an issue ID %s and select Validate.' % (config.TRACKER_URL, issue.issue_ref)
-		notify_sponsors(issue.issue_id, SponsorshipStatus.CONFIRMED, subject, body_confirmed)
-		
-		body_pledged = 'The task you have sponsored has been completed by the developer. Please deposit the promised amout and verify it. To do that please go to project issue tracker at %s, log in, find an issue ID %s and select Confirm and then Validate.' % (config.TRACKER_URL, issue.issue_ref)
-		notify_sponsors(issue.issue_id, SponsorshipStatus.PLEDGED, subject, body_pledged)
+	if issue != None:
+		if status == IssueStatus.ASSIGNED:
+			subject = 'Task assigned %s' % issue.issue_ref
+			body = 'The task you have sponsored has been accepted by the developer. Please deposit the promised amount. To do that please go to project issue tracker at %s, log in, find an issue ID %s and select Confirm.' % (config.TRACKER_URL, issue.issue_ref)
+			notify_sponsors(issue.issue_id, SponsorshipStatus.PLEDGED, subject, body)
 
-	response = jsonify(message='Issue updated')
-	return response
+			sponsorships = Sponsorship.query.filter_by(issue_id=issue.issue_id, status=SponsorshipStatus.PLEDGED)
+		elif status == IssueStatus.COMPLETED:
+			subject = 'Task completed %s' % issue.issue_ref
+			
+			body_confirmed = 'The task you have sponsored has been completed by the developer. Please verify it. To do that please go to project issue tracker at %s, log in, find an issue ID %s and select Validate.' % (config.TRACKER_URL, issue.issue_ref)
+			notify_sponsors(issue.issue_id, SponsorshipStatus.CONFIRMED, subject, body_confirmed)
+			
+			body_pledged = 'The task you have sponsored has been completed by the developer. Please deposit the promised amout and verify it. To do that please go to project issue tracker at %s, log in, find an issue ID %s and select Confirm and then Validate.' % (config.TRACKER_URL, issue.issue_ref)
+			notify_sponsors(issue.issue_id, SponsorshipStatus.PLEDGED, subject, body_pledged)
+		
+		else:
+			return jsonify(error="Unknown status"), 400
+
+	return jsonify(message='OK')
 
 @app.route("/issue/<issue_ref>", methods=['DELETE'])
 def delete_issue(issue_ref):
