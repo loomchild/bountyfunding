@@ -1,12 +1,17 @@
 from utils import api, dict_to_object
+from const import SponsorshipStatus, PaymentStatus, PaymentGateway
 from nose.tools import *
 
 
 def teardown_module():
-	eq_(api.delete("/issue/1").status_code, 200)
-	eq_(api.delete("/user/loomchild").status_code, 200)
-	eq_(api.delete("/user/pralinka").status_code, 200)
+	api.delete("/issue/1")
+	api.delete("/user/loomchild")
+	api.delete("/user/pralinka")
 
+
+def test_version():
+	r = api.get("/version")
+	eq_(r.status_code, 200)
 
 def test_retrieving_nonexisting_issue_returns_404():
 	r = api.get("/issue/1")
@@ -30,7 +35,8 @@ def test_sponsor_nonexisting_issue_creates_it():
 	eq_(len(sponsorships), 1)
 	sponsorship = dict_to_object(sponsorships[user])
 	eq_(sponsorship.amount, amount) 
-	eq_(sponsorship.status, 'PLEDGED') 
+	eq_(SponsorshipStatus.from_string(sponsorship.status), 
+			SponsorshipStatus.PLEDGED) 
 
 def test_sponsor_existing_issue_updates_it():
 	user = 'pralinka'
@@ -44,7 +50,8 @@ def test_sponsor_existing_issue_updates_it():
 	eq_(len(sponsorships), 2)
 	sponsorship = dict_to_object(sponsorships[user])
 	eq_(sponsorship.amount, amount) 
-	eq_(sponsorship.status, 'PLEDGED') 
+	eq_(SponsorshipStatus.from_string(sponsorship.status), 
+			SponsorshipStatus.PLEDGED) 
 
 def test_sponsor_issue_by_same_user_updates_sponsorship():
 	user = 'loomchild'
@@ -62,5 +69,6 @@ def test_sponsor_issue_by_same_user_updates_sponsorship():
 	eq_(len(sponsorships), 2)
 	sponsorship = dict_to_object(sponsorships[user])
 	eq_(sponsorship.amount, amount) 
-	eq_(sponsorship.status, 'PLEDGED') 
+	eq_(SponsorshipStatus.from_string(sponsorship.status), 
+			SponsorshipStatus.PLEDGED) 
 

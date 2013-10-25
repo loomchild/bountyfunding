@@ -17,6 +17,8 @@ class Enum:
 
 	@classmethod
 	def to_string(cls, val):
+		if val == None:
+			return None
 		for k,v in vars(cls).iteritems():
 			if v==val:
 				return k

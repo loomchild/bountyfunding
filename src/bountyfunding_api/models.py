@@ -3,6 +3,7 @@ from flask.ext.sqlalchemy import SQLAlchemy
 from enum import Enum 
 from bountyfunding_api import app
 import config
+from const import SponsorshipStatus, PaymentStatus, PaymentGateway
 #import logging
 
 
@@ -15,15 +16,14 @@ db = SQLAlchemy(app)
 
 class Issue(db.Model):
 	issue_id = db.Column(db.Integer, primary_key=True)
-	project_id = db.Column(db.Integer)
-	issue_ref = db.Column(db.String(256))
-	status = db.Column(db.Integer)
+	project_id = db.Column(db.Integer, nullable=False)
+	issue_ref = db.Column(db.String(256), nullable=False)
+	status = db.Column(db.Integer, nullable=False)
 
 	class Status(Enum):
 		NEW = 10
 		ASSIGNED = 20
 		COMPLETED = 30
-		DELETED = 90
 
 	def __init__(self, project_id, issue_ref):
 		self.project_id = project_id
@@ -35,8 +35,8 @@ class Issue(db.Model):
 
 class User(db.Model):
 	user_id = db.Column(db.Integer, primary_key=True)
-	project_id = db.Column(db.Integer)
-	name = db.Column(db.String(256))
+	project_id = db.Column(db.Integer, nullable=False)
+	name = db.Column(db.String(256), nullable=False)
 
 	def __init__(self, project_id, name):
 		self.project_id = project_id
@@ -47,57 +47,44 @@ class User(db.Model):
 
 class Sponsorship(db.Model):
 	sponsorship_id = db.Column(db.Integer, primary_key=True)
-	issue_id = db.Column(db.Integer, db.ForeignKey(Issue.issue_id))
-	user_id = db.Column(db.Integer, db.ForeignKey(User.user_id))
-	amount = db.Column(db.Integer)
-	status = db.Column(db.Integer)
+	issue_id = db.Column(db.Integer, db.ForeignKey(Issue.issue_id), nullable=False)
+	user_id = db.Column(db.Integer, db.ForeignKey(User.user_id), nullable=False)
+	amount = db.Column(db.Integer, nullable=False)
+	status = db.Column(db.Integer, nullable=False)
 
 	user = db.relation(User, lazy="joined")
 	
-	class Status(Enum):
-		PLEDGED = 10
-		CONFIRMED = 20
-		VALIDATED = 30
-
 	def __init__(self, issue_id, user_id, amount=0):
 		self.issue_id = issue_id
 		self.user_id = user_id
 		self.amount = amount
-		self.status = Sponsorship.Status.PLEDGED
+		self.status = SponsorshipStatus.PLEDGED
 
 	def __repr__(self):
 		return '<Sponsorship issue_id: "%s", user_id: "%s">' % (self.issue_id, self.user_id)
 	
 class Payment(db.Model):
 	payment_id = db.Column(db.Integer, primary_key=True)
-	sponsorship_id = db.Column(db.Integer, db.ForeignKey(Sponsorship.sponsorship_id))
+	sponsorship_id = db.Column(db.Integer, db.ForeignKey(Sponsorship.sponsorship_id), nullable=False)
 	gateway_id = db.Column(db.String)
 	url = db.Column(db.String)
-	status = db.Column(db.Integer)
+	status = db.Column(db.Integer, nullable=False)
 	gateway = db.Column(db.Integer)
-
-	class Status(Enum):
-		INITIATED = 10
-		CONFIRMED = 20
-
-	class Gateway(Enum):
-		PLAIN = 10
-		PAYPAL = 20
 
 	def __init__(self, sponsorship_id, gateway):
 		self.sponsorship_id = sponsorship_id
 		self.gateway = gateway
 		self.gateway_id = ''
 		self.url = ''
-		self.status = Payment.Status.INITIATED
+		self.status = PaymentStatus.INITIATED
 
 	def __repr__(self):
 		return '<Payment payment_id: "%s">' % self.payment_id
 
 class Email(db.Model):
 	email_id = db.Column(db.Integer, primary_key=True)
-	project_id = db.Column(db.Integer)
-	user_id = db.Column(db.Integer, db.ForeignKey(User.user_id))
+	project_id = db.Column(db.Integer, nullable=False)
+	user_id = db.Column(db.Integer, db.ForeignKey(User.user_id), nullable=False)
 	subject = db.Column(db.String(128))
 	body = db.Column(db.String(1024))
 

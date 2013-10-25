@@ -1,6 +1,7 @@
 from bountyfunding_api import app
 from flask import Flask, url_for, render_template, make_response, redirect, abort, jsonify, request
 from models import db, Issue, User, Sponsorship, Email, Payment
+from const import SponsorshipStatus, PaymentStatus, PaymentGateway
 from pprint import pprint
 import paypal_rest
 import config
@@ -43,13 +44,49 @@ def get_sponsorships(issue_ref):
 		sponsorships = retrieve_all_sponsorships(issue.issue_id)
 		sponsorships = dict(map(\
 				lambda s: (s.user.name, \
-				{'amount': s.amount, 'status': Sponsorship.Status.to_string(s.status)}),\
+				{'amount': s.amount, 'status': SponsorshipStatus.to_string(s.status)}),\
 				sponsorships))
 		response = jsonify(sponsorships)
 	else:
 		response = jsonify(error='Issue not found'), 404
 	return response
 
+@app.route("/issue/<issue_ref>/sponsorship/<user_name>", methods=['GET'])
+def get_sponsorship(issue_ref, user_name):
+	issue = retrieve_issue(DEFAULT_PROJECT_ID, issue_ref)
+	user = retrieve_user(DEFAULT_PROJECT_ID, user_name)
+
+	if issue == None:
+		response = jsonify(error='Issue not found'), 404
+
+	elif user == None:
+		response = jsonify(error='User not found'), 404
+
+	else:
+		sponsorship = retrieve_sponsorship(issue.issue_id, user.user_id)
+		status = SponsorshipStatus.to_string(sponsorship.status)
+		response = jsonify(status=status)
+	
+	return response
+
+@app.route("/issue/<issue_ref>/sponsorship/<user_name>", methods=['DELETE'])
+def delete_sponsorship(issue_ref, user_name):
+	check_delete_permissions()
+	
+	issue = retrieve_issue(DEFAULT_PROJECT_ID, issue_ref)
+	user = retrieve_user(DEFAULT_PROJECT_ID, user_name)
+
+	if issue == None:
+		response = jsonify(error='Issue not found'), 404
+
+	elif user == None:
+		response = jsonify(error='User not found'), 404
+
+	else:
+		delete_sponsorship(issue.issue_id, user.user_id)
+		response = jsonify(message="Issue deleted")
+	
+	return response
 
 @app.route("/issue/<issue_ref>/sponsorships", methods=['POST'])
 def post_sponsorship(issue_ref):
@@ -75,13 +112,13 @@ def post_sponsorship(issue_ref):
 
 @app.route("/issue/<issue_ref>/sponsorship/<user_name>/status", methods=['PUT'])
 def update_sponsorship(issue_ref, user_name):
-	status = Sponsorship.Status.from_string(request.values.get('status')) 
+	status = SponsorshipStatus.from_string(request.values.get('status')) 
 
 	issue = retrieve_create_issue(DEFAULT_PROJECT_ID, issue_ref)
 	user = retrieve_create_user(DEFAULT_PROJECT_ID, user_name)
 	sponsorship = retrieve_sponsorship(issue.issue_id, user.user_id)
 
-	if status == Sponsorship.Status.CONFIRMED:
+	if status == SponsorshipStatus.CONFIRMED:
 		response = jsonify(error='Confirm sponsorship by confirming the payment'), 400
 
 	sponsorship.status = status
@@ -101,8 +138,8 @@ def get_payment(issue_ref, user_name):
 	payment = retrieve_last_payment(sponsorship.sponsorship_id)
 
 	if payment != None:
-		gateway = Payment.Gateway.to_string(payment.gateway)
-		status = Payment.Status.to_string(payment.status)
+		gateway = PaymentGateway.to_string(payment.gateway)
+		status = PaymentStatus.to_string(payment.status)
 		response = jsonify(gateway=gateway, url=payment.url, status=status)
 	else:
 		response = jsonify(error='Payment not found'), 404
@@ -111,8 +148,8 @@ def get_payment(issue_ref, user_name):
 
 @app.route("/issue/<issue_ref>/sponsorship/<user_name>/payment", methods=['PUT'])
 def update_payment(issue_ref, user_name):
-	status = Payment.Status.from_string(request.values.get('status')) 
-	if status != Payment.Status.CONFIRMED:
+	status = PaymentStatus.from_string(request.values.get('status')) 
+	if status != PaymentStatus.CONFIRMED:
 		return jsonify(error='You can only change the status to CONFIRMED')
 	
 	issue = retrieve_issue(DEFAULT_PROJECT_ID, issue_ref)
@@ -124,12 +161,12 @@ def update_payment(issue_ref, user_name):
 	if payment != None:
 		if payment.status == status:
 			return jsonify(error='Payment already confirmed'), 400
-		if payment.gateway == Payment.Gateway.PLAIN:
+		if payment.gateway == PaymentGateway.PLAIN:
 			card_number = request.values.get('card_number')
 			card_date = request.values.get('card_date')
 			if card_number != '4111111111111111' or DATE_PATTERN.match(card_date) == None:
 				return jsonify(error='Invalid card details'), 400
-		elif payment.gateway == Payment.Gateway.PAYPAL:
+		elif payment.gateway == PaymentGateway.PAYPAL:
 			payer_id = request.values.get('payer_id')
 			approved = paypal_rest.execute_payment(payment.gateway_id, payer_id)
 			if not approved:
@@ -139,7 +176,7 @@ def update_payment(issue_ref, user_name):
 
 		payment.status = status
 		db.session.add(payment)
-		sponsorship.status = Sponsorship.Status.CONFIRMED
+		sponsorship.status = SponsorshipStatus.CONFIRMED
 		db.session.add(sponsorship)
 		db.session.commit()
 		response = jsonify(message='Payment updated')
@@ -150,7 +187,7 @@ def update_payment(issue_ref, user_name):
 
 @app.route("/issue/<issue_ref>/sponsorship/<user_name>/payments", methods=['POST'])
 def create_payment(issue_ref, user_name):
-	gateway = Payment.Gateway.from_string(request.values.get('gateway')) 
+	gateway = PaymentGateway.from_string(request.values.get('gateway')) 
 	return_url = request.values.get('return_url')
 	
 	issue = retrieve_issue(DEFAULT_PROJECT_ID, issue_ref)
@@ -159,9 +196,9 @@ def create_payment(issue_ref, user_name):
 	
 	payment = Payment(sponsorship.sponsorship_id, gateway)
 
-	if gateway == Payment.Gateway.PLAIN:
+	if gateway == PaymentGateway.PLAIN:
 		pass
-	elif gateway == Payment.Gateway.PAYPAL:
+	elif gateway == PaymentGateway.PAYPAL:
 		if not return_url:
 			return jsonify(error='return_url cannot be blank'), 400
 		payment.gateway_id, payment.url = paypal_rest.create_payment(sponsorship.amount, return_url)
@@ -188,17 +225,17 @@ def update_status(issue_ref):
 	if issue.status == Issue.Status.ASSIGNED:
 		subject = 'Task assigned %s' % issue.issue_ref
 		body = 'The task you have sponsored has been accepted by the developer. Please deposit the promised amount. To do that please go to project issue tracker at %s, log in, find an issue ID %s and select Confirm.' % (config.TRACKER_URL, issue.issue_ref)
-		notify_sponsors(issue.issue_id, Sponsorship.Status.PLEDGED, subject, body)
+		notify_sponsors(issue.issue_id, SponsorshipStatus.PLEDGED, subject, body)
 
-		sponsorships = Sponsorship.query.filter_by(issue_id=issue.issue_id, status=Sponsorship.Status.PLEDGED)
+		sponsorships = Sponsorship.query.filter_by(issue_id=issue.issue_id, status=SponsorshipStatus.PLEDGED)
 	elif issue.status == Issue.Status.COMPLETED:
 		subject = 'Task completed %s' % issue.issue_ref
 		
 		body_confirmed = 'The task you have sponsored has been completed by the developer. Please verify it. To do that please go to project issue tracker at %s, log in, find an issue ID %s and select Validate.' % (config.TRACKER_URL, issue.issue_ref)
-		notify_sponsors(issue.issue_id, Sponsorship.Status.CONFIRMED, subject, body_confirmed)
+		notify_sponsors(issue.issue_id, SponsorshipStatus.CONFIRMED, subject, body_confirmed)
 		
 		body_pledged = 'The task you have sponsored has been completed by the developer. Please deposit the promised amout and verify it. To do that please go to project issue tracker at %s, log in, find an issue ID %s and select Confirm and then Validate.' % (config.TRACKER_URL, issue.issue_ref)
-		notify_sponsors(issue.issue_id, Sponsorship.Status.PLEDGED, subject, body_pledged)
+		notify_sponsors(issue.issue_id, SponsorshipStatus.PLEDGED, subject, body_pledged)
 
 	response = jsonify(message='Issue updated')
 	return response
@@ -263,8 +300,8 @@ def delete_issue(project_id, issue_ref):
 	issue = retrieve_issue(project_id, issue_ref)
 	sponsorships = retrieve_all_sponsorships(issue.issue_id)
 	for sponsorship in sponsorships:
-		Payment.query.filter_by(sponsorship_id=sponsorship.sponsorship_id).delete()
-	Sponsorship.query.filter_by(issue_id=issue.issue_id).delete()
+		delete_all_payments(sponsorship.sponsorship_id)
+	delete_all_sponsorships(issue.issue_id)
 	db.session.delete(issue)
 	db.session.commit()
 
@@ -293,10 +330,23 @@ def retrieve_all_sponsorships(issue_id):
 	sponsorships = Sponsorship.query.filter_by(issue_id=issue_id).all()
 	return sponsorships
 
+def delete_sponsorship(issue_id, user_id):
+	sponsorship = retrieve_sponsorship(issue_id, user_id)
+	delete_all_payments(sponsorship.sponsorship_id)
+	db.session.delete(sponsorship)
+	db.session.commit()
+	
+def delete_all_sponsorships(issue_id):
+	Sponsorship.query.filter_by(issue_id=issue_id).delete()
+
+
 def retrieve_last_payment(sponsorship_id):
 	payment = Payment.query.filter_by(sponsorship_id=sponsorship_id) \
 			.order_by(Payment.payment_id.desc()).first()
 	return payment
+
+def delete_all_payments(sponsorship_id):
+	Payment.query.filter_by(sponsorship_id=sponsorship_id).delete()
 
 
 def notify_sponsors(issue_id, status, subject, body):
