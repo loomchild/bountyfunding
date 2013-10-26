@@ -125,9 +125,8 @@ def post_sponsorship(issue_ref):
 	sponsorship = retrieve_sponsorship(issue.issue_id, user.user_id)
 	if sponsorship == None:
 		sponsorship = Sponsorship(issue.issue_id, user.user_id)
-
-	if amount != None:
-		sponsorship.amount = int(max(amount, 0))
+	
+	sponsorship.amount = int(max(amount, 0))
 	
 	db.session.add(sponsorship)
 	db.session.commit()
