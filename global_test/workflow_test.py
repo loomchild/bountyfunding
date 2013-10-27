@@ -8,6 +8,7 @@ from nose.tools import *
 
 
 URL = 'http://localhost:8100'
+#URL = 'http://demo.bountyfunding.org'
 USER = ('user', 'user')
 DEV = ('dev', 'dev')
 
@@ -17,7 +18,7 @@ ticket_url = None
 def setup_module():
 	global browser
 	browser = webdriver.Firefox()
-	browser.implicitly_wait(3)
+	browser.implicitly_wait(10)
 
 def teardown_module():
 	global browser
