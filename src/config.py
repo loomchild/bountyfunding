@@ -15,7 +15,7 @@ DATABASE_URL = ''
 DATABASE_IN_MEMORY = False
 DATABASE_CREATE = False
 
-DELETE_ALLOW = False
+PROJECT_DELETE_ALLOW = False
 
 
 class ConfigurationException:
@@ -39,8 +39,8 @@ def init(args):
 	database_url = get(parser, 'general', 'database_url', DATABASE_URL, args.db_in_memory).strip()
 	init_database(database_url)
 
-	global DELETE_ALLOW
-	DELETE_ALLOW = get(parser, 'general', 'delete_allow', DELETE_ALLOW, args.delete_allow, type=bool)
+	global PROJECT_DELETE_ALLOW
+	PROJECT_DELETE_ALLOW = get(parser, 'general', 'project_delete_allow', PROJECT_DELETE_ALLOW, args.project_delete_allow, type=bool)
 
 
 def init_version():

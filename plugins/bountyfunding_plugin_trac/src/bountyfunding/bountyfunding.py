@@ -17,7 +17,7 @@ from pkg_resources import resource_filename
 
 
 API_URL='http://localhost:5000'
-BOUNTYFUNDING_PATTERN = re.compile("(?:/(?P<ticket>ticket)/(?P<ticket_id>[0-9]+)/(?P<ticket_action>sponsor|confirm|validate|pay))|(?:/(?P<bountyfunding>bountyfunding)/(?P<bountyfunding_action>status|email))")
+BOUNTYFUNDING_PATTERN = re.compile("(?:/(?P<ticket>ticket)/(?P<ticket_id>[0-9]+)/(?P<ticket_action>sponsor|update_sponsorship|confirm|validate|pay))|(?:/(?P<bountyfunding>bountyfunding)/(?P<bountyfunding_action>status|email))")
 
 
 def call_api(method, path, **kwargs):
@@ -99,9 +99,11 @@ class BountyFundingPlugin(Component):
 						action = tag.form(tag.input(type="submit", name='accept', value=u"Validate %d\u20ac" % user_sponsorship.amount), method="post", action="/ticket/%s/validate" % identifier)
 
 					elif (status != 'COMPLETED' and (status == 'NEW' or user_sponsorship.amount == 0) 
-							and user != None 
-							and user_sponsorship.status == None or user_sponsorship.status == 'PLEDGED'):
-						action = tag.form(tag.input(name="amount", type="text", size="3", value=user_sponsorship.amount), tag.input(type="submit", value="Pledge"), method="post", action="/ticket/%s/sponsor" % identifier)
+							and user != None):
+						if user_sponsorship.status == None:
+							action = tag.form(tag.input(name="amount", type="text", size="3", value=user_sponsorship.amount), tag.input(type="submit", value="Pledge"), method="post", action="/ticket/%s/sponsor" % identifier)
+						elif user_sponsorship.status == 'PLEDGED':
+							action = tag.form(tag.input(name="amount", type="text", size="3", value=user_sponsorship.amount), tag.input(type="submit", name="update", value="Update"), tag.input(type="submit", name="cancel", value="Cancel"), method="post", action="/ticket/%s/update_sponsorship" % identifier)
 					
 					if action != None:
 						fragment.append(" ")
@@ -136,6 +138,12 @@ class BountyFundingPlugin(Component):
 			if action == 'sponsor':
 				amount = req.args.get('amount')
 				call_api('POST', '/issue/%s/sponsorships' % ticket_id, user=req.authname, amount=amount)
+			if action == 'update_sponsorship':
+				if req.args.get('update'):
+					amount = req.args.get('amount')
+					call_api('PUT', '/issue/%s/sponsorship/%s' % (ticket_id, req.authname), amount=amount)
+				elif req.args.get('cancel'):
+					call_api('DELETE', '/issue/%s/sponsorship/%s' % (ticket_id, req.authname))
 			elif action == 'confirm':
 				if req.args.get('plain'):
 					gateway = 'PLAIN'
@@ -188,7 +196,7 @@ class BountyFundingPlugin(Component):
 				call_api('PUT', '/issue/%s/sponsorship/%s/payment' % (ticket_id, req.authname), 
 						status='CONFIRMED', payer_id=payer_id)
 			elif action == 'validate':
-				call_api('PUT', '/issue/%s/sponsorship/%s/status' % (ticket_id, req.authname), 
+				call_api('PUT', '/issue/%s/sponsorship/%s' % (ticket_id, req.authname), 
 						status='VALIDATED')
 			req.redirect('/ticket/%s' % ticket_id)
 		
@@ -220,7 +228,7 @@ class BountyFundingPlugin(Component):
 	def ticket_changed(self, ticket, comment, author, old_values):
 		if 'status' in old_values:
 			status = convert_status(ticket.values['status'])
-			call_api('PUT', '/issue/%s/status' % ticket.id, status=status)
+			call_api('PUT', '/issue/%s' % ticket.id, status=status)
 
 	def ticket_deleted(self, ticket):
 		pass

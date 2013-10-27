@@ -39,9 +39,9 @@ if __name__ == "__main__":
 			action='store_const', const='sqlite://',
 			help='Use empty in-memory database')
 
-	arg_parser.add_argument('--delete-allow', 
+	arg_parser.add_argument('--project-delete-allow', 
 			action='store_true', default=False,
-			help='Allow API delete operations')
+			help='Allow delete project operation (use only for testing)')
 
 	args = arg_parser.parse_args()
 	

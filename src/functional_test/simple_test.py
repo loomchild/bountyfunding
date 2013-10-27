@@ -4,9 +4,7 @@ from nose.tools import *
 
 
 def teardown_module():
-	api.delete("/issue/1")
-	api.delete("/user/loomchild")
-	api.delete("/user/pralinka")
+	api.delete('/project/1')
 
 
 def test_version():
@@ -49,12 +47,11 @@ def test_sponsor_existing_issue_updates_it():
 	eq_(SponsorshipStatus.from_string(sponsorship.status), 
 			SponsorshipStatus.PLEDGED) 
 
-def test_sponsor_issue_by_same_user_updates_sponsorship():
+def test_update_amount():
 	user = 'loomchild'
 	amount = 30
 
-	r = api.post('/issue/1/sponsorships', user=user, amount=amount)
-	r = api.get("/issue/1")
+	r = api.put('/issue/1/sponsorship/%s' % user, amount=amount)
 	eq_(r.status_code, 200)
 	r = api.get("/issue/1/sponsorships")
 	eq_(r.status_code, 200)

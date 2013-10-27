@@ -27,7 +27,7 @@ def get_issue(issue_ref):
 		response = jsonify(error='Issue not found'), 404
 	return response
 
-@app.route("/issue/<issue_ref>/status", methods=['PUT'])
+@app.route("/issue/<issue_ref>", methods=['PUT'])
 def update_status(issue_ref):
 	status = IssueStatus.from_string(request.values.get('status'))
 
@@ -54,13 +54,6 @@ def update_status(issue_ref):
 
 	return jsonify(message='OK')
 
-@app.route("/issue/<issue_ref>", methods=['DELETE'])
-def delete_issue(issue_ref):
-	check_delete_permissions()
-	delete_issue(DEFAULT_PROJECT_ID, issue_ref)
-	response = jsonify(message="Issue deleted")
-	return response
-
 @app.route("/issue/<issue_ref>/sponsorships", methods=['GET'])
 def get_sponsorships(issue_ref):
 	sponsorships = []
@@ -75,6 +68,31 @@ def get_sponsorships(issue_ref):
 		response = jsonify(sponsorships)
 	else:
 		response = jsonify(error='Issue not found'), 404
+	return response
+
+@app.route("/issue/<issue_ref>/sponsorships", methods=['POST'])
+def post_sponsorship(issue_ref):
+	user_name = request.values.get('user')
+	amount = int(request.values.get('amount'))
+
+	if amount <= 0:
+		return jsonify(error="Amount must be positive"), 400
+
+	issue = retrieve_create_issue(DEFAULT_PROJECT_ID, issue_ref)
+	user = retrieve_create_user(DEFAULT_PROJECT_ID, user_name)
+	
+	sponsorship = retrieve_sponsorship(issue.issue_id, user.user_id)
+	if sponsorship != None:
+		return jsonify(error="Sponsorship already exists"), 409
+
+	sponsorship = Sponsorship(DEFAULT_PROJECT_ID, issue.issue_id, user.user_id)
+	
+	sponsorship.amount = amount
+	
+	db.session.add(sponsorship)
+	db.session.commit()
+
+	response = jsonify(message='Sponsorship updated')
 	return response
 
 @app.route("/issue/<issue_ref>/sponsorship/<user_name>", methods=['GET'])
@@ -97,8 +115,6 @@ def get_sponsorship(issue_ref, user_name):
 
 @app.route("/issue/<issue_ref>/sponsorship/<user_name>", methods=['DELETE'])
 def delete_sponsorship(issue_ref, user_name):
-	check_delete_permissions()
-	
 	issue = retrieve_issue(DEFAULT_PROJECT_ID, issue_ref)
 	user = retrieve_user(DEFAULT_PROJECT_ID, user_name)
 
@@ -109,53 +125,49 @@ def delete_sponsorship(issue_ref, user_name):
 		response = jsonify(error='User not found'), 404
 
 	else:
+		sponsorship = retrieve_sponsorship(issue.issue_id, user.user_id)
+		if sponsorship.status != SponsorshipStatus.PLEDGED:
+			return jsonify(error='Can only delete sponsorhip in PLEDGED status'), 403
+
 		delete_sponsorship(issue.issue_id, user.user_id)
-		response = jsonify(message="Issue deleted")
+		response = jsonify(message="Sponsorship deleted")
 	
 	return response
 
-@app.route("/issue/<issue_ref>/sponsorships", methods=['POST'])
-def post_sponsorship(issue_ref):
-	user_name = request.values.get('user')
-	amount = request.values.get('amount')
-
-	issue = retrieve_create_issue(DEFAULT_PROJECT_ID, issue_ref)
-	user = retrieve_create_user(DEFAULT_PROJECT_ID, user_name)
-	
-	sponsorship = retrieve_sponsorship(issue.issue_id, user.user_id)
-	if sponsorship != None:
-		return jsonify(error="Sponsorship already exists"), 409
-
-	sponsorship = Sponsorship(issue.issue_id, user.user_id)
-	
-	sponsorship.amount = int(max(amount, 0))
-	
-	db.session.add(sponsorship)
-	db.session.commit()
-
-	response = jsonify(message='Sponsorship updated')
-	return response
-
-
-@app.route("/issue/<issue_ref>/sponsorship/<user_name>/status", methods=['PUT'])
+@app.route("/issue/<issue_ref>/sponsorship/<user_name>", methods=['PUT'])
 def update_sponsorship(issue_ref, user_name):
 	status = SponsorshipStatus.from_string(request.values.get('status')) 
-	if status == SponsorshipStatus.PLEDGED:
-		return jsonify(error='Can only change status to VALIDATED'), 400
-	if status == SponsorshipStatus.CONFIRMED:
-		return jsonify(error='Confirm sponsorship by confirming the payment'), 400
+	amount_string = request.values.get('amount')
 
-	issue = retrieve_create_issue(DEFAULT_PROJECT_ID, issue_ref)
-	user = retrieve_create_user(DEFAULT_PROJECT_ID, user_name)
+	issue = retrieve_issue(DEFAULT_PROJECT_ID, issue_ref)
+	user = retrieve_user(DEFAULT_PROJECT_ID, user_name)
 	sponsorship = retrieve_sponsorship(issue.issue_id, user.user_id)
 
-	if sponsorship.status != SponsorshipStatus.CONFIRMED:
-		return jsonify(error='Can only validate confirmed sponsorship'), 403
-	if status == sponsorship.status:
-		return jsonify(error='Status already set'), 403
+	if status == None and amount_string == None:
+		return jsonify(error="Nothing to update"), 400
 
-	sponsorship.status = status
-	
+	if status != None:
+		if status == SponsorshipStatus.PLEDGED:
+			return jsonify(error='Can only change status to VALIDATED'), 400
+		if status == SponsorshipStatus.CONFIRMED:
+			return jsonify(error='Confirm sponsorship by confirming the payment'), 400
+		if sponsorship.status != SponsorshipStatus.CONFIRMED:
+			return jsonify(error='Can only validate confirmed sponsorship'), 403
+		if status == sponsorship.status:
+			return jsonify(error='Status already set'), 403
+
+		sponsorship.status = status
+
+	if amount_string != None:
+		try:
+			amount = int(amount_string)
+		except ValueError:
+			return jsonify(error="amount is not a number"), 400
+		if amount <= 0:
+			return jsonify(error="amount must be greater than zero"), 400
+
+		sponsorship.amount = amount
+
 	db.session.add(sponsorship)
 	db.session.commit()
 
@@ -229,7 +241,7 @@ def create_payment(issue_ref, user_name):
 	if sponsorship.status != SponsorshipStatus.PLEDGED:
 		return jsonify(error="You can only create payment for PLEDGED sponsorship"), 403
 
-	payment = Payment(sponsorship.sponsorship_id, gateway)
+	payment = Payment(DEFAULT_PROJECT_ID, sponsorship.sponsorship_id, gateway)
 
 	if gateway == PaymentGateway.PLAIN:
 		pass
@@ -245,14 +257,6 @@ def create_payment(issue_ref, user_name):
 	db.session.commit()
 	
 	response = jsonify(message='Payment created')
-	return response
-
-
-@app.route('/user/<user_name>', methods=['DELETE'])
-def delete_user(user_name):
-	check_delete_permissions()
-	delete_user(DEFAULT_PROJECT_ID, user_name)
-	response = jsonify(message="User deleted")
 	return response
 
 
@@ -281,6 +285,24 @@ def delete_email(email_id):
 	return response
 
 
+@app.route('/project/<project_id>', methods=['DELETE'])
+def delete_project(project_id):
+	project_id = int(project_id)
+	if not config.PROJECT_DELETE_ALLOW:
+		return jsonify(error="You can't delete this project"), 403
+	if project_id != DEFAULT_PROJECT_ID:
+		return jsonify(error="Invalid project_id"), 400
+
+	Payment.query.filter_by(project_id=project_id).delete()
+	Sponsorship.query.filter_by(project_id=project_id).delete()
+	User.query.filter_by(project_id=project_id).delete()
+	Issue.query.filter_by(project_id=project_id).delete()
+	Email.query.filter_by(project_id=project_id).delete()
+	db.session.commit()
+
+	return jsonify(message="Project deleted")
+
+
 class APIException(Exception):
 	def __init__(self, message="", status_code=400):
 		self.message = message
@@ -303,15 +325,6 @@ def retrieve_create_issue(project_id, issue_ref):
 		db.session.commit()
 	return issue
 
-def delete_issue(project_id, issue_ref):
-	issue = retrieve_issue(project_id, issue_ref)
-	sponsorships = retrieve_all_sponsorships(issue.issue_id)
-	for sponsorship in sponsorships:
-		delete_all_payments(sponsorship.sponsorship_id)
-	delete_all_sponsorships(issue.issue_id)
-	db.session.delete(issue)
-	db.session.commit()
-
 def retrieve_user(project_id, name):
 	user = User.query.filter_by(project_id=DEFAULT_PROJECT_ID, name=name).first()
 	return user
@@ -324,11 +337,6 @@ def retrieve_create_user(project_id, name):
 		db.session.commit()
 	return user
 
-def delete_user(project_id, name):
-	user = retrieve_user(project_id, name)
-	db.session.delete(user)
-	db.session.commit()
-
 def retrieve_sponsorship(issue_id, user_id):
 	sponsorship = Sponsorship.query.filter_by(issue_id=issue_id, user_id=user_id).first()
 	return sponsorship
@@ -339,21 +347,15 @@ def retrieve_all_sponsorships(issue_id):
 
 def delete_sponsorship(issue_id, user_id):
 	sponsorship = retrieve_sponsorship(issue_id, user_id)
-	delete_all_payments(sponsorship.sponsorship_id)
+	Payment.query.filter_by(sponsorship_id=sponsorship.sponsorship_id).delete()
 	db.session.delete(sponsorship)
 	db.session.commit()
 	
-def delete_all_sponsorships(issue_id):
-	Sponsorship.query.filter_by(issue_id=issue_id).delete()
-
 
 def retrieve_last_payment(sponsorship_id):
 	payment = Payment.query.filter_by(sponsorship_id=sponsorship_id) \
 			.order_by(Payment.payment_id.desc()).first()
 	return payment
-
-def delete_all_payments(sponsorship_id):
-	Payment.query.filter_by(sponsorship_id=sponsorship_id).delete()
 
 
 def notify_sponsors(issue_id, status, subject, body):
@@ -372,11 +374,6 @@ def send_emails():
 			requests.get(NOTIFY_URL + 'email', timeout=1)
 		except requests.exceptions.RequestException:
 			app.logger.warn('Unable to connect to issue tracker at ' + NOTIFY_URL)
-
-
-def check_delete_permissions():
-	if not config.DELETE_ALLOW:
-		raise APIException("Delete not allowed", 403)
 
 
 def notify():

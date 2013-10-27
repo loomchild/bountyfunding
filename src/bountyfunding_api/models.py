@@ -40,6 +40,7 @@ class User(db.Model):
 
 class Sponsorship(db.Model):
 	sponsorship_id = db.Column(db.Integer, primary_key=True)
+	project_id = db.Column(db.Integer, nullable=False)
 	issue_id = db.Column(db.Integer, db.ForeignKey(Issue.issue_id), nullable=False)
 	user_id = db.Column(db.Integer, db.ForeignKey(User.user_id), nullable=False)
 	amount = db.Column(db.Integer, nullable=False)
@@ -47,7 +48,8 @@ class Sponsorship(db.Model):
 
 	user = db.relation(User, lazy="joined")
 	
-	def __init__(self, issue_id, user_id, amount=0):
+	def __init__(self, project_id, issue_id, user_id, amount=0):
+		self.project_id = project_id
 		self.issue_id = issue_id
 		self.user_id = user_id
 		self.amount = amount
@@ -58,13 +60,15 @@ class Sponsorship(db.Model):
 	
 class Payment(db.Model):
 	payment_id = db.Column(db.Integer, primary_key=True)
+	project_id = db.Column(db.Integer, nullable=False)
 	sponsorship_id = db.Column(db.Integer, db.ForeignKey(Sponsorship.sponsorship_id), nullable=False)
 	gateway_id = db.Column(db.String)
 	url = db.Column(db.String)
 	status = db.Column(db.Integer, nullable=False)
 	gateway = db.Column(db.Integer)
 
-	def __init__(self, sponsorship_id, gateway):
+	def __init__(self, project_id, sponsorship_id, gateway):
+		self.project_id = project_id
 		self.sponsorship_id = sponsorship_id
 		self.gateway = gateway
 		self.gateway_id = ''

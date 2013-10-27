@@ -13,7 +13,7 @@ def teardown_module():
 	api.delete("/user/%s" % USER)
 
 def teardown():
-	api.delete('/issue/1/sponsorship/%s' % USER)
+	api.delete('/project/1')
 
 
 def test_sponsorship_pledged_transitions():
@@ -21,24 +21,28 @@ def test_sponsorship_pledged_transitions():
 	yield TransitionCheck(sponsorship_pledged, payment_initiated, 200)
 	yield TransitionCheck(sponsorship_pledged, payment_confirmed, 404)
 	yield TransitionCheck(sponsorship_pledged, sponsorship_validated, 403)
+	yield TransitionCheck(sponsorship_pledged, sponsorship_deleted, 200)
 
 def test_payment_initiated_transitions():
 	yield TransitionCheck(payment_initiated, sponsorship_pledged, 409)
 	yield TransitionCheck(payment_initiated, payment_initiated, 200)
 	yield TransitionCheck(payment_initiated, payment_confirmed, 200)
 	yield TransitionCheck(payment_initiated, sponsorship_validated, 403)
+	yield TransitionCheck(payment_initiated, sponsorship_deleted, 200)
 
 def test_payment_confirmed_transitions():
 	yield TransitionCheck(payment_confirmed, sponsorship_pledged, 409)
 	yield TransitionCheck(payment_confirmed, payment_initiated, 403)
 	yield TransitionCheck(payment_confirmed, payment_confirmed, 403)
 	yield TransitionCheck(payment_confirmed, sponsorship_validated, 200)
+	yield TransitionCheck(payment_confirmed, sponsorship_deleted, 403)
 
 def test_sponsorship_validated_transitions():
 	yield TransitionCheck(sponsorship_validated, sponsorship_pledged, 409)
 	yield TransitionCheck(sponsorship_validated, payment_initiated, 403)
 	yield TransitionCheck(sponsorship_validated, payment_confirmed, 403)
 	yield TransitionCheck(sponsorship_validated, sponsorship_validated, 403)
+	yield TransitionCheck(sponsorship_validated, sponsorship_deleted, 403)
 
 
 def test_can_only_change_sponsorship_status_to_validated():
@@ -75,7 +79,10 @@ def sponsorship_validated():
 	return sponsorship_change_status(SponsorshipStatus.VALIDATED)
 
 def sponsorship_change_status(status):
-	return api.put('/issue/1/sponsorship/%s/status' % USER, status=SponsorshipStatus.to_string(status))
+	return api.put('/issue/1/sponsorship/%s' % USER, status=SponsorshipStatus.to_string(status))
+
+def sponsorship_deleted():
+	return api.delete('/issue/1/sponsorship/%s' % USER)
 
 
 class TransitionCheck:
