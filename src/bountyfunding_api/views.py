@@ -123,8 +123,10 @@ def post_sponsorship(issue_ref):
 	user = retrieve_create_user(DEFAULT_PROJECT_ID, user_name)
 	
 	sponsorship = retrieve_sponsorship(issue.issue_id, user.user_id)
-	if sponsorship == None:
-		sponsorship = Sponsorship(issue.issue_id, user.user_id)
+	if sponsorship != None:
+		return jsonify(error="Sponsorship already exists"), 409
+
+	sponsorship = Sponsorship(issue.issue_id, user.user_id)
 	
 	sponsorship.amount = int(max(amount, 0))
 	
@@ -138,21 +140,26 @@ def post_sponsorship(issue_ref):
 @app.route("/issue/<issue_ref>/sponsorship/<user_name>/status", methods=['PUT'])
 def update_sponsorship(issue_ref, user_name):
 	status = SponsorshipStatus.from_string(request.values.get('status')) 
+	if status == SponsorshipStatus.PLEDGED:
+		return jsonify(error='Can only change status to VALIDATED'), 400
+	if status == SponsorshipStatus.CONFIRMED:
+		return jsonify(error='Confirm sponsorship by confirming the payment'), 400
 
 	issue = retrieve_create_issue(DEFAULT_PROJECT_ID, issue_ref)
 	user = retrieve_create_user(DEFAULT_PROJECT_ID, user_name)
 	sponsorship = retrieve_sponsorship(issue.issue_id, user.user_id)
 
-	if status == SponsorshipStatus.CONFIRMED:
-		response = jsonify(error='Confirm sponsorship by confirming the payment'), 400
+	if sponsorship.status != SponsorshipStatus.CONFIRMED:
+		return jsonify(error='Can only validate confirmed sponsorship'), 403
+	if status == sponsorship.status:
+		return jsonify(error='Status already set'), 403
 
 	sponsorship.status = status
 	
 	db.session.add(sponsorship)
 	db.session.commit()
 
-	response = jsonify(message='Sponsorship updated')
-	return response
+	return jsonify(message='Sponsorship updated')
 
 @app.route("/issue/<issue_ref>/sponsorship/<user_name>/payment", methods=['GET'])
 def get_payment(issue_ref, user_name):
@@ -175,7 +182,7 @@ def get_payment(issue_ref, user_name):
 def update_payment(issue_ref, user_name):
 	status = PaymentStatus.from_string(request.values.get('status')) 
 	if status != PaymentStatus.CONFIRMED:
-		return jsonify(error='You can only change the status to CONFIRMED')
+		return jsonify(error='You can only change the status to CONFIRMED'), 403
 	
 	issue = retrieve_issue(DEFAULT_PROJECT_ID, issue_ref)
 	user = retrieve_user(DEFAULT_PROJECT_ID, user_name)
@@ -185,17 +192,17 @@ def update_payment(issue_ref, user_name):
 
 	if payment != None:
 		if payment.status == status:
-			return jsonify(error='Payment already confirmed'), 400
+			return jsonify(error='Payment already confirmed'), 403
 		if payment.gateway == PaymentGateway.PLAIN:
 			card_number = request.values.get('card_number')
 			card_date = request.values.get('card_date')
 			if card_number != '4111111111111111' or DATE_PATTERN.match(card_date) == None:
-				return jsonify(error='Invalid card details'), 400
+				return jsonify(error='Invalid card details'), 403
 		elif payment.gateway == PaymentGateway.PAYPAL:
 			payer_id = request.values.get('payer_id')
 			approved = paypal_rest.execute_payment(payment.gateway_id, payer_id)
 			if not approved:
-				return jsonify(error='Payment not confirmed by PayPal'), 400
+				return jsonify(error='Payment not confirmed by PayPal'), 403
 		else:
 			return jsonify(error='Unknown gateway'), 400
 
@@ -219,6 +226,9 @@ def create_payment(issue_ref, user_name):
 	user = retrieve_user(DEFAULT_PROJECT_ID, user_name)
 	sponsorship = retrieve_sponsorship(issue.issue_id, user.user_id)
 	
+	if sponsorship.status != SponsorshipStatus.PLEDGED:
+		return jsonify(error="You can only create payment for PLEDGED sponsorship"), 403
+
 	payment = Payment(sponsorship.sponsorship_id, gateway)
 
 	if gateway == PaymentGateway.PLAIN:
