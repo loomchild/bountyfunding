@@ -5,6 +5,7 @@ import ConfigParser
 import argparse
 import subprocess
 from homer import BOUNTYFUNDING_HOME
+from const import PaymentGateway
 
 
 VERSION = 'Unknown'
@@ -18,6 +19,8 @@ DATABASE_CREATE = False
 PROJECT_DELETE_ALLOW = False
 
 MAX_PLEDGE_AMOUNT = 100
+
+PAYMENT_GATEWAYS = PaymentGateway.keys()
 
 class ConfigurationException:
 	def __init__(self, message):
@@ -46,6 +49,9 @@ def init(args):
 	global MAX_PLEDGE_AMOUNT
 	MAX_PLEDGE_AMOUNT = get(parser, 'general', 'max_pledge_amount', MAX_PLEDGE_AMOUNT, type=int)
 
+	global PAYMENT_GATEWAYS
+	PAYMENT_GATEWAYS = get(parser, 'general', 'payment_gateways', PAYMENT_GATEWAYS, type=list)
+	PAYMENT_GATEWAYS = [PaymentGateway.from_string(pg) for pg in PAYMENT_GATEWAYS]
 
 def init_version():
 	global VERSION
@@ -92,6 +98,8 @@ def get(parser, section, option, default, override=None, type=str):
 			value = parser.getfloat(section, option)
 		elif type == str:
 			value = parser.get(section, option)
+		elif type == list:
+			value = filter(None, [v.strip() for v in parser.get(section, option).split(',')])
 		else:
 			raise ConfigurationException("Unknown type: %s" % type)
 		return value

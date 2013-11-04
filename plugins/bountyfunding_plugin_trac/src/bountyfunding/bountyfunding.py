@@ -93,7 +93,17 @@ class BountyFundingPlugin(Component):
 						
 					if ((status == 'ASSIGNED' or status == 'COMPLETED') 
 							and user_sponsorship.status == 'PLEDGED'):
-						action = tag.form(tag.input(type="button", value=u"Confirm %d\u20ac" % user_sponsorship.amount, id="confirm-button"), tag.span(tag.input(type="button", value="Cancel", id="confirm-cancel"), tag.input(type="submit", value="Payment Card", name='plain'), tag.input(type="submit", value="PayPal", name='paypal'), id="confirm-options"), method="post", action="/ticket/%s/confirm" % identifier)
+						
+						response = call_api('GET', '/config/payment_gateways')
+						gateways = response.json().get('gateways')
+						gateway_tags = []
+						if 'PLAIN' in gateways:
+							gateway_tags.append(tag.input(type="submit", value="Payment Card", name='plain'))
+						if 'PAYPAL' in gateways:
+							gateway_tags.append(tag.input(type="submit", value="PayPal", name='paypal'))
+						gateway_tags.append(tag.input(type="button", value="Cancel", id="confirm-cancel"))
+
+						action = tag.form(tag.input(type="button", value=u"Confirm %d\u20ac" % user_sponsorship.amount, id="confirm-button"), tag.span(gateway_tags, id="confirm-options"), method="post", action="/ticket/%s/confirm" % identifier)
 
 					elif status == 'COMPLETED' and user_sponsorship.status == 'CONFIRMED':
 						action = tag.form(tag.input(type="submit", name='accept', value=u"Validate %d\u20ac" % user_sponsorship.amount), method="post", action="/ticket/%s/validate" % identifier)

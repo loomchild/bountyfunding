@@ -230,6 +230,9 @@ def update_payment(issue_ref, user_name):
 @app.route("/issue/<issue_ref>/sponsorship/<user_name>/payments", methods=['POST'])
 def create_payment(issue_ref, user_name):
 	gateway = PaymentGateway.from_string(request.values.get('gateway')) 
+	if gateway not in config.PAYMENT_GATEWAYS:
+		return jsonify(error="Payment gateway not accepted"), 400
+
 	return_url = request.values.get('return_url')
 	
 	issue = retrieve_issue(DEFAULT_PROJECT_ID, issue_ref)
@@ -299,6 +302,12 @@ def delete_project(project_id):
 	db.session.commit()
 
 	return jsonify(message="Project deleted")
+
+
+@app.route('/config/payment_gateways', methods=['GET'])
+def get_config_payment_gateways():
+	gateways = [PaymentGateway.to_string(pg) for pg in config.PAYMENT_GATEWAYS]
+	return jsonify(gateways=gateways)
 
 
 class APIException(Exception):

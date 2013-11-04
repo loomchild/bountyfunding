@@ -11,3 +11,6 @@ project_delete_allow = False
 
 # Maximum pledge amount
 max_pledge_amount = 100
+
+# Available payment gateways
+payment_gateways = PLAIN, PAYPAL
