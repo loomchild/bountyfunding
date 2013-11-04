@@ -75,8 +75,7 @@ def post_sponsorship(issue_ref):
 	user_name = request.values.get('user')
 	amount = int(request.values.get('amount'))
 
-	if amount <= 0:
-		return jsonify(error="Amount must be positive"), 400
+	check_pledge_amount(amount)
 
 	issue = retrieve_create_issue(DEFAULT_PROJECT_ID, issue_ref)
 	user = retrieve_create_user(DEFAULT_PROJECT_ID, user_name)
@@ -163,8 +162,7 @@ def update_sponsorship(issue_ref, user_name):
 			amount = int(amount_string)
 		except ValueError:
 			return jsonify(error="amount is not a number"), 400
-		if amount <= 0:
-			return jsonify(error="amount must be greater than zero"), 400
+		check_pledge_amount(amount)
 
 		sponsorship.amount = amount
 
@@ -310,7 +308,7 @@ class APIException(Exception):
 
 @app.errorhandler(APIException)
 def handle_api_exception(exception):
-    return jsonify(message=exception.message), exception.status_code
+    return jsonify(error=exception.message), exception.status_code
 
 
 def retrieve_issue(project_id, issue_ref):
@@ -374,6 +372,13 @@ def send_emails():
 			requests.get(NOTIFY_URL + 'email', timeout=1)
 		except requests.exceptions.RequestException:
 			app.logger.warn('Unable to connect to issue tracker at ' + NOTIFY_URL)
+
+
+def check_pledge_amount(amount):
+	if amount <= 0:
+		raise APIException("Amount must be positive", 400)
+	if amount > config.MAX_PLEDGE_AMOUNT:
+		raise APIException("Amount must be less than %d" % config.MAX_PLEDGE_AMOUNT, 400)
 
 
 def notify():

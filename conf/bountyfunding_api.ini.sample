@@ -3,8 +3,11 @@
 # See http://docs.sqlalchemy.org/en/latest/core/engines.html
 database_url = sqlite:///db/test.db
 
-# externally accessible location of bug tracker
+# Externally accessible location of bug tracker
 tracker_url = http://localhost:8100
 
-# allow project delete operation (enable only for testing), True/False
+# Allow project delete operation (enable only for testing), True/False
 project_delete_allow = False
+
+# Maximum pledge amount
+max_pledge_amount = 100

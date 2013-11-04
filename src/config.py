@@ -17,6 +17,7 @@ DATABASE_CREATE = False
 
 PROJECT_DELETE_ALLOW = False
 
+MAX_PLEDGE_AMOUNT = 100
 
 class ConfigurationException:
 	def __init__(self, message):
@@ -41,6 +42,9 @@ def init(args):
 
 	global PROJECT_DELETE_ALLOW
 	PROJECT_DELETE_ALLOW = get(parser, 'general', 'project_delete_allow', PROJECT_DELETE_ALLOW, args.project_delete_allow, type=bool)
+
+	global MAX_PLEDGE_AMOUNT
+	MAX_PLEDGE_AMOUNT = get(parser, 'general', 'max_pledge_amount', MAX_PLEDGE_AMOUNT, type=int)
 
 
 def init_version():

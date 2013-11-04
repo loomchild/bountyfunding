@@ -6,7 +6,7 @@ from genshi.builder import tag
 from trac.core import *
 from trac.util.html import html
 from trac.web import IRequestHandler, HTTPInternalError
-from trac.web.chrome import INavigationContributor, ITemplateProvider, add_stylesheet, add_script
+from trac.web.chrome import INavigationContributor, ITemplateProvider, add_stylesheet, add_script, add_warning
 from trac.web.api import ITemplateStreamFilter
 from trac.ticket.api import ITicketChangeListener
 
@@ -137,11 +137,15 @@ class BountyFundingPlugin(Component):
 
 			if action == 'sponsor':
 				amount = req.args.get('amount')
-				call_api('POST', '/issue/%s/sponsorships' % ticket_id, user=req.authname, amount=amount)
+				response = call_api('POST', '/issue/%s/sponsorships' % ticket_id, user=req.authname, amount=amount)
+				if response.status_code != 200:
+					add_warning(req, "Unable to pledge - %s" % response.json().get('error', ''))
 			if action == 'update_sponsorship':
 				if req.args.get('update'):
 					amount = req.args.get('amount')
-					call_api('PUT', '/issue/%s/sponsorship/%s' % (ticket_id, req.authname), amount=amount)
+					response = call_api('PUT', '/issue/%s/sponsorship/%s' % (ticket_id, req.authname), amount=amount)
+					if response.status_code != 200:
+						add_warning(req, "Unable to pledge - %s" % response.json().get('error', ''))
 				elif req.args.get('cancel'):
 					call_api('DELETE', '/issue/%s/sponsorship/%s' % (ticket_id, req.authname))
 			elif action == 'confirm':
