@@ -22,6 +22,12 @@ MAX_PLEDGE_AMOUNT = 100
 
 PAYMENT_GATEWAYS = PaymentGateway.keys()
 
+
+PAYPAL_MODE = 'sandbox'
+PAYPAL_CLIENT_ID = ''
+PAYPAL_CLIENT_SECRET = ''
+
+
 class ConfigurationException:
 	def __init__(self, message):
 		self.message = message
@@ -52,6 +58,12 @@ def init(args):
 	global PAYMENT_GATEWAYS
 	PAYMENT_GATEWAYS = get(parser, 'general', 'payment_gateways', PAYMENT_GATEWAYS, type=list)
 	PAYMENT_GATEWAYS = [PaymentGateway.from_string(pg) for pg in PAYMENT_GATEWAYS]
+
+	global PAYPAL_MODE, PAYPAL_CLIENT_ID, PAYPAL_CLIENT_SECRET
+	PAYPAL_MODE = get(parser, 'paypal', 'mode', PAYPAL_MODE)
+	PAYPAL_CLIENT_ID = get(parser, 'paypal', 'client_id', PAYPAL_CLIENT_ID)
+	PAYPAL_CLIENT_SECRET = get(parser, 'paypal', 'client_secret', PAYPAL_CLIENT_SECRET)
+
 
 def init_version():
 	global VERSION

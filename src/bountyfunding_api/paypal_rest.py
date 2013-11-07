@@ -3,11 +3,12 @@ import paypalrestsdk
 import httplib2
 httplib2.debuglevel = 1
 
+import config
 
 paypalrestsdk.configure({
-  "mode": "sandbox",
-  "client_id": "AYVGkRAGQ2-viFkyzNBNLFowKO508IahpGaEHOO4UBAjeC8jEriWrUQ-jlQl",
-  "client_secret": "EElHKBBRaqqWA_fzUDoEz6OmLWCZ4hM7z53o518SY14gkWAGM5xLC4VGDHrP" })
+  "mode": config.PAYPAL_MODE,
+  "client_id": config.PAYPAL_CLIENT_ID,
+  "client_secret": config.PAYPAL_CLIENT_SECRET })
 
 
 def create_payment(amount, return_url):
