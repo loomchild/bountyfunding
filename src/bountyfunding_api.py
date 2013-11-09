@@ -51,6 +51,10 @@ if __name__ == "__main__":
 			action='store_true', default=False,
 			help='Allow delete project operation (use only for testing)')
 
+	arg_parser.add_argument('--id', 
+			action='store', default='',
+			help='Process ID to kill it easier; this parameter is ignored')
+	
 	args = arg_parser.parse_args()
 	
 	config.init(args)
