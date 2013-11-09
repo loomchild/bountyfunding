@@ -13,7 +13,7 @@ class Action(Enum):
 
 def run():
 	from bountyfunding_api import app
-	app.run(debug=True)
+	app.run(port=config.PORT, debug=config.DEBUG)
 
 def create_db():
 	from bountyfunding_api.models import db
@@ -35,6 +35,14 @@ if __name__ == "__main__":
 			metavar='FILE',
 			help='Specify config file location (default %(default)s)')
 
+	arg_parser.add_argument('--port', 
+			action='store', type=int, default=None,
+			help='Port number')
+	
+	arg_parser.add_argument('--debug', 
+			action='store_true', default=False,
+			help='Enable debug mode (use only for testing)')
+	
 	arg_parser.add_argument('--db-in-memory', 
 			action='store_const', const='sqlite://',
 			help='Use empty in-memory database')

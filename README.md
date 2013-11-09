@@ -61,6 +61,15 @@ Download the archive from github [master.zip](https://github.com/bountyfunding/b
 
 		cp dist/BountyFunding*.egg /<trac_home>/plugins
 
+* Configure the plugin - add the following to trac.ini in appriopriate sections
+  
+  		[components]
+		bountyfunding = enabled
+		
+		[bountyfunding]
+		# Optional, http://localhost:5000 by default
+		api_url = http://localhost:5000
+
 * Restart Trac
 * To check if plugin has been installed properly go to Trac Admin / Plugins. Also you should see Bounty field on each ticket. It's also a good idea to check if email notifications are sent - create a ticket, sponsor it by one user and assign it or complete it by another user - first user should receive a notification. 
 

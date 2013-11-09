@@ -10,6 +10,11 @@ from const import PaymentGateway
 
 VERSION = 'Unknown'
 
+
+PORT = 5000
+DEBUG = True
+
+
 TRACKER_URL = ''
 
 DATABASE_URL = ''
@@ -43,6 +48,12 @@ def init(args):
 	
 	init_version()
 
+	global PORT
+	PORT = get(parser, 'general', 'port', PORT, args.port, type=int)
+
+	global DEBUG
+	DEBUG = get(parser, 'general', 'debug', DEBUG, args.debug, type=bool)
+	
 	global TRACKER_URL
 	TRACKER_URL = get(parser, 'general', 'tracker_url', TRACKER_URL).strip()
 

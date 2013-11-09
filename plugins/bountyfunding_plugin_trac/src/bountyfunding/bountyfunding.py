@@ -16,13 +16,9 @@ import requests, re
 from pkg_resources import resource_filename
 
 
-API_URL='http://localhost:5000'
+DEFAULT_API_URL='http://localhost:5000'
 BOUNTYFUNDING_PATTERN = re.compile("(?:/(?P<ticket>ticket)/(?P<ticket_id>[0-9]+)/(?P<ticket_action>sponsor|update_sponsorship|confirm|validate|pay))|(?:/(?P<bountyfunding>bountyfunding)/(?P<bountyfunding_action>status|email))")
 
-
-def call_api(method, path, **kwargs):
-	url = API_URL + path
-	return requests.request(method, url, params=kwargs)
 
 class Sponsorship:
 	def __init__(self, dictionary={}):
@@ -50,6 +46,13 @@ def sum_amounts(sponsorships, statuses=None):
 class BountyFundingPlugin(Component):
 	implements(ITemplateStreamFilter, IRequestHandler, ITemplateProvider, ITicketChangeListener)
 
+	def __init__(self):
+		self.api_url = self.config.get('bountyfunding', 'api_url', DEFAULT_API_URL)
+
+	def call_api(self, method, path, **kwargs):
+		url = self.api_url + path
+		return requests.request(method, url, params=kwargs)
+	
 	# ITemplateStreamFilter methods
 	def filter_stream(self, req, method, filename, stream, data):
 		"""
@@ -61,7 +64,7 @@ class BountyFundingPlugin(Component):
 			if ticket and ticket.exists:
 				identifier = ticket.id
 				user = req.authname if req.authname != 'anonymous' else None
-				request = call_api('GET', '/issue/%s' % identifier)
+				request = self.call_api('GET', '/issue/%s' % identifier)
 				fragment = tag()
 				sponsorships = {}
 				status = convert_status(ticket.values['status'])
@@ -69,7 +72,7 @@ class BountyFundingPlugin(Component):
 				if request.status_code == 200 or request.status_code == 404:
 					
 					sponsorships = {}
-					request = call_api('GET', '/issue/%s/sponsorships' % identifier)
+					request = self.call_api('GET', '/issue/%s/sponsorships' % identifier)
 					if request.status_code == 200:
 						sponsorships = dict(map(lambda (k,v): (k, Sponsorship(v)), request.json().items()))
 					
@@ -94,7 +97,7 @@ class BountyFundingPlugin(Component):
 					if ((status == 'ASSIGNED' or status == 'COMPLETED') 
 							and user_sponsorship.status == 'PLEDGED'):
 						
-						response = call_api('GET', '/config/payment_gateways')
+						response = self.call_api('GET', '/config/payment_gateways')
 						gateways = response.json().get('gateways')
 						gateway_tags = []
 						if 'PLAIN' in gateways:
@@ -147,17 +150,17 @@ class BountyFundingPlugin(Component):
 
 			if action == 'sponsor':
 				amount = req.args.get('amount')
-				response = call_api('POST', '/issue/%s/sponsorships' % ticket_id, user=req.authname, amount=amount)
+				response = self.call_api('POST', '/issue/%s/sponsorships' % ticket_id, user=req.authname, amount=amount)
 				if response.status_code != 200:
 					add_warning(req, "Unable to pledge - %s" % response.json().get('error', ''))
 			if action == 'update_sponsorship':
 				if req.args.get('update'):
 					amount = req.args.get('amount')
-					response = call_api('PUT', '/issue/%s/sponsorship/%s' % (ticket_id, req.authname), amount=amount)
+					response = self.call_api('PUT', '/issue/%s/sponsorship/%s' % (ticket_id, req.authname), amount=amount)
 					if response.status_code != 200:
 						add_warning(req, "Unable to pledge - %s" % response.json().get('error', ''))
 				elif req.args.get('cancel'):
-					call_api('DELETE', '/issue/%s/sponsorship/%s' % (ticket_id, req.authname))
+					self.call_api('DELETE', '/issue/%s/sponsorship/%s' % (ticket_id, req.authname))
 			elif action == 'confirm':
 				if req.args.get('plain'):
 					gateway = 'PLAIN'
@@ -174,12 +177,12 @@ class BountyFundingPlugin(Component):
 						if not card_number or not card_date:
 							error = 'Please specify card number and expiry date'
 						if card_number and card_date:
-							response = call_api('POST', 
+							response = self.call_api('POST', 
 									'/issue/%s/sponsorship/%s/payments' % (ticket_id, req.authname), 
 									gateway='PLAIN')
 							if response.status_code != 200:
 								error = 'API cannot create plain payment'
-							response = call_api('PUT', 
+							response = self.call_api('PUT', 
 									'/issue/%s/sponsorship/%s/payment' % (ticket_id, req.authname), 
 									status='CONFIRMED', card_number=card_number, card_date=card_date)
 							if response.status_code != 200:
@@ -190,11 +193,11 @@ class BountyFundingPlugin(Component):
 	
 				elif gateway == 'PAYPAL':
 					return_url = req.abs_href('ticket', ticket_id, 'pay')
-					response = call_api('POST', 
+					response = self.call_api('POST', 
 							'/issue/%s/sponsorship/%s/payments' % (ticket_id, req.authname), 
 							gateway='PAYPAL', return_url=return_url)
 					if response.status_code == 200:
-						response = call_api('GET', 
+						response = self.call_api('GET', 
 								'/issue/%s/sponsorship/%s/payment' % (ticket_id, req.authname), 
 								gateway='PAYPAL')
 						if response.status_code == 200:
@@ -207,26 +210,26 @@ class BountyFundingPlugin(Component):
 			
 			elif action == 'pay':
 				payer_id = req.args.get('PayerID')
-				call_api('PUT', '/issue/%s/sponsorship/%s/payment' % (ticket_id, req.authname), 
+				self.call_api('PUT', '/issue/%s/sponsorship/%s/payment' % (ticket_id, req.authname), 
 						status='CONFIRMED', payer_id=payer_id)
 			elif action == 'validate':
-				call_api('PUT', '/issue/%s/sponsorship/%s' % (ticket_id, req.authname), 
+				self.call_api('PUT', '/issue/%s/sponsorship/%s' % (ticket_id, req.authname), 
 						status='VALIDATED')
 			req.redirect('/ticket/%s' % ticket_id)
 		
 		elif match.group('bountyfunding'):
 			action = match.group('bountyfunding_action')
 			if action == 'email':
-				request = call_api('GET', '/emails')
+				request = self.call_api('GET', '/emails')
 				if request.status_code == 200:
 					emails = [Email(email) for email in request.json().get('data')]
 					for email in emails:
 						send_email(self.env, email.recipient, email.subject, email.body)
-						call_api('DELETE', '/email/%s' % email.id), 
+						self.call_api('DELETE', '/email/%s' % email.id), 
 				req.send_no_content()
 			if action == 'status':
 				try:
-					request = call_api('GET', '/version')
+					request = self.call_api('GET', '/version')
 				except requests.ConnectionError:
 					raise HTTPInternalError('Unable to connect to API')
 				if request.status_code != 200:
@@ -242,7 +245,7 @@ class BountyFundingPlugin(Component):
 	def ticket_changed(self, ticket, comment, author, old_values):
 		if 'status' in old_values:
 			status = convert_status(ticket.values['status'])
-			call_api('PUT', '/issue/%s' % ticket.id, status=status)
+			self.call_api('PUT', '/issue/%s' % ticket.id, status=status)
 
 	def ticket_deleted(self, ticket):
 		pass

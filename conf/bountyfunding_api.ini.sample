@@ -1,5 +1,11 @@
 [general]
 
+# API port
+port = 5000
+
+# Enable debug error messages; True/False, for security reasons in production it should be False
+debug = True
+
 # SQLAlchemy database url.
 # See http://docs.sqlalchemy.org/en/latest/core/engines.html
 database_url = sqlite:///db/test.db
