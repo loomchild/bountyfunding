@@ -28,6 +28,6 @@ payment_gateways = PLAIN, PAYPAL
 # Paypal REST API mode, can be sandbox or live
 mode = sandbox
 
-# Paypal REST API creadentials, copy from your paypal account
-client_id = 
-client_secret = 
+# Paypal REST API creadentials, copy from your paypal account; by default I use project's test ones
+client_id = AYVGkRAGQ2-viFkyzNBNLFowKO508IahpGaEHOO4UBAjeC8jEriWrUQ-jlQl
+client_secret = EElHKBBRaqqWA_fzUDoEz6OmLWCZ4hM7z53o518SY14gkWAGM5xLC4VGDHrP
