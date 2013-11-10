@@ -25,15 +25,24 @@ def teardown_module():
 	browser.quit()
 
 def login(who):
-	url = URL.replace('http://', 'http://%s:%s@' % (who[0], who[1])) + "/login"
-	browser.get(url)
+	browser.get(URL + '/login')
+	user_input = browser.find_element_by_id('user')
+	password_input = browser.find_element_by_id('password')
+	user_input.send_keys(who[0])
+	password_input.send_keys(who[1])
+	password_input.send_keys(Keys.ENTER)
+
+def logout():
+	browser.get(URL + '/logout')
 
 def get_bountyfunding():
 	bf = browser.find_element_by_class_name('bountyfunding')
 	return bf
 
-def test_create():
+
+def test_create_and_pledge():
 	login(USER)
+	
 	browser.get(URL + '/newticket')
 	summary = browser.find_element_by_id('field-summary')
 	summary.send_keys('Test Ticket')
@@ -44,8 +53,6 @@ def test_create():
 	global ticket_url
 	ticket_url = browser.current_url
 
-def test_pledge():
-	login(USER)
 	browser.get(ticket_url)
 	bf = get_bountyfunding()
 	amount = bf.find_element_by_name('amount')
@@ -59,8 +66,12 @@ def test_pledge():
 	label_amount = re.sub(r'[^\d]+$', '', re.sub(r'^[^\d]+', '', label.text))
 	eq_(label_amount, "10")
 
+	logout()
+
+
 def test_assign():
 	login(DEV)
+	
 	browser.get(ticket_url)
 	modify_ticket = browser.find_element_by_partial_link_text('Modify Ticket')
 	modify_ticket.click()
@@ -69,8 +80,12 @@ def test_assign():
 	submit = browser.find_element_by_name('submit')
 	submit.click()
 
+	logout()
+
+
 def test_confirm():
 	login(USER)
+	
 	browser.get(ticket_url)
 	confirm_button = browser.find_element_by_id('confirm-button')
 	confirm_button.click()
@@ -92,9 +107,13 @@ def test_confirm():
 	m = re.search(r'Confirmed:[^\d]*(\d+)', title)
 	title_amount = m.group(1)
 	eq_(title_amount, "10")
+	
+	logout()
+
 
 def test_resolve():
 	login(DEV)
+	
 	browser.get(ticket_url)
 	modify_ticket = browser.find_element_by_partial_link_text('Modify Ticket')
 	modify_ticket.click()
@@ -102,9 +121,13 @@ def test_resolve():
 	action.click()	
 	submit = browser.find_element_by_name('submit')
 	submit.click()
+	
+	logout()
+
 
 def test_validate():
 	login(USER)
+
 	browser.get(ticket_url)
 	bf = get_bountyfunding()
 	validate_button = bf.find_element_by_name('accept')
@@ -117,3 +140,5 @@ def test_validate():
 	title_amount = m.group(1)
 	eq_(title_amount, "10")
 	
+	logout()
+
