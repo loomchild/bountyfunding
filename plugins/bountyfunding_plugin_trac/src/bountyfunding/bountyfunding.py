@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from pprint import pprint
 
 from genshi.filters import Transformer
@@ -9,6 +11,7 @@ from trac.web import IRequestHandler, HTTPInternalError
 from trac.web.chrome import INavigationContributor, ITemplateProvider, add_stylesheet, add_script, add_warning
 from trac.web.api import ITemplateStreamFilter
 from trac.ticket.api import ITicketChangeListener
+from trac.ticket.model import Ticket
 
 from trac.notification import NotifyEmail
 
@@ -43,6 +46,7 @@ def sum_amounts(sponsorships, statuses=None):
 	return total_amount
 
 
+
 class BountyFundingPlugin(Component):
 	implements(ITemplateStreamFilter, IRequestHandler, ITemplateProvider, ITicketChangeListener)
 
@@ -52,6 +56,11 @@ class BountyFundingPlugin(Component):
 	def call_api(self, method, path, **kwargs):
 		url = self.api_url + path
 		return requests.request(method, url, params=kwargs)
+	
+	def comment(self, ticket_id, author, content):
+		ticket = Ticket(self.env, ticket_id)
+		ticket.save_changes(author, content)
+	
 	
 	# ITemplateStreamFilter methods
 	def filter_stream(self, req, method, filename, stream, data):
@@ -147,20 +156,25 @@ class BountyFundingPlugin(Component):
 		if match.group('ticket'):
 			ticket_id = match.group('ticket_id')
 			action = match.group('ticket_action')
+			user = req.authname
 
 			if action == 'sponsor':
 				amount = req.args.get('amount')
-				response = self.call_api('POST', '/issue/%s/sponsorships' % ticket_id, user=req.authname, amount=amount)
+				response = self.call_api('POST', '/issue/%s/sponsorships' % ticket_id, user=user, amount=amount)
 				if response.status_code != 200:
 					add_warning(req, "Unable to pledge - %s" % response.json().get('error', ''))
+				else:
+					self.comment(ticket_id, user, 'Sponsored.')
 			if action == 'update_sponsorship':
 				if req.args.get('update'):
 					amount = req.args.get('amount')
-					response = self.call_api('PUT', '/issue/%s/sponsorship/%s' % (ticket_id, req.authname), amount=amount)
+					response = self.call_api('PUT', '/issue/%s/sponsorship/%s' % (ticket_id, user), amount=amount)
 					if response.status_code != 200:
 						add_warning(req, "Unable to pledge - %s" % response.json().get('error', ''))
 				elif req.args.get('cancel'):
-					self.call_api('DELETE', '/issue/%s/sponsorship/%s' % (ticket_id, req.authname))
+					response = self.call_api('DELETE', '/issue/%s/sponsorship/%s' % (ticket_id, user))
+					if response.status_code == 200:
+						self.comment(ticket_id, user, 'Cancelled sponsorship.')
 			elif action == 'confirm':
 				if req.args.get('plain'):
 					gateway = 'PLAIN'
@@ -178,15 +192,17 @@ class BountyFundingPlugin(Component):
 							error = 'Please specify card number and expiry date'
 						if card_number and card_date:
 							response = self.call_api('POST', 
-									'/issue/%s/sponsorship/%s/payments' % (ticket_id, req.authname), 
+									'/issue/%s/sponsorship/%s/payments' % (ticket_id, user), 
 									gateway='PLAIN')
 							if response.status_code != 200:
 								error = 'API cannot create plain payment'
 							response = self.call_api('PUT', 
-									'/issue/%s/sponsorship/%s/payment' % (ticket_id, req.authname), 
+									'/issue/%s/sponsorship/%s/payment' % (ticket_id, user), 
 									status='CONFIRMED', card_number=card_number, card_date=card_date)
 							if response.status_code != 200:
 								error = 'API refused your plain payment'
+							else:
+								self.comment(ticket_id, user, 'Confirmed sponsorship.')
 							
 					if pay == None or error:
 						return "payment.html", {'error': error}, None
@@ -194,11 +210,11 @@ class BountyFundingPlugin(Component):
 				elif gateway == 'PAYPAL':
 					return_url = req.abs_href('ticket', ticket_id, 'pay')
 					response = self.call_api('POST', 
-							'/issue/%s/sponsorship/%s/payments' % (ticket_id, req.authname), 
+							'/issue/%s/sponsorship/%s/payments' % (ticket_id, user), 
 							gateway='PAYPAL', return_url=return_url)
 					if response.status_code == 200:
 						response = self.call_api('GET', 
-								'/issue/%s/sponsorship/%s/payment' % (ticket_id, req.authname), 
+								'/issue/%s/sponsorship/%s/payment' % (ticket_id, user), 
 								gateway='PAYPAL')
 						if response.status_code == 200:
 							redirect_url = response.json().get('url')
@@ -210,11 +226,16 @@ class BountyFundingPlugin(Component):
 			
 			elif action == 'pay':
 				payer_id = req.args.get('PayerID')
-				self.call_api('PUT', '/issue/%s/sponsorship/%s/payment' % (ticket_id, req.authname), 
+				response = self.call_api('PUT', '/issue/%s/sponsorship/%s/payment' % (ticket_id, user), 
 						status='CONFIRMED', payer_id=payer_id)
+				if response.status_code == 200:
+					self.comment(ticket_id, user, 'Confirmed sponsorship.')
 			elif action == 'validate':
-				self.call_api('PUT', '/issue/%s/sponsorship/%s' % (ticket_id, req.authname), 
+				response = self.call_api('PUT', '/issue/%s/sponsorship/%s' % (ticket_id, user), 
 						status='VALIDATED')
+				if response.status_code == 200:
+					self.comment(ticket_id, user, 'Validated sponsorship.')
+
 			req.redirect('/ticket/%s' % ticket_id)
 		
 		elif match.group('bountyfunding'):
