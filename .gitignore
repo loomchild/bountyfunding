@@ -8,3 +8,4 @@ virtualenv
 logs/
 conf/bountyfunding_api.ini
 private/
+tags
