@@ -208,9 +208,8 @@ def update_payment(issue_ref, user_name):
 			card_date = request.values.get('card_date')
 			if card_number != '4111111111111111' or DATE_PATTERN.match(card_date) == None:
 				return jsonify(error='Invalid card details'), 403
-		elif payment.gateway == PaymentGateway.PAYPAL:
-			payer_id = request.values.get('payer_id')
-			approved = paypal_rest.execute_payment(payment.gateway_id, payer_id)
+		elif payment.gateway == PaymentGateway.PAYPAL_REST:
+			approved = paypal_rest.process_payment(sponsorship, payment, request.values)
 			if not approved:
 				return jsonify(error='Payment not confirmed by PayPal'), 403
 		else:
@@ -242,17 +241,14 @@ def create_payment(issue_ref, user_name):
 	if sponsorship.status != SponsorshipStatus.PLEDGED:
 		return jsonify(error="You can only create payment for PLEDGED sponsorship"), 403
 
-	payment = Payment(DEFAULT_PROJECT_ID, sponsorship.sponsorship_id, gateway)
-
 	if gateway == PaymentGateway.PLAIN:
-		pass
-	elif gateway == PaymentGateway.PAYPAL:
+		payment = Payment(DEFAULT_PROJECT_ID, sponsorship.sponsorship_id, gateway)
+	elif gateway == PaymentGateway.PAYPAL_REST:
 		if not return_url:
 			return jsonify(error='return_url cannot be blank'), 400
-		payment.gateway_id, payment.url = paypal_rest.create_payment(sponsorship.amount, return_url)
+		payment = paypal_rest.create_payment(sponsorship, return_url)
 	else:
 		return jsonify(error='Unknown gateway'), 400
-	payment.gateway = gateway
 
 	db.session.add(payment)
 	db.session.commit()

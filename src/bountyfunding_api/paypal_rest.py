@@ -4,32 +4,40 @@ import httplib2
 httplib2.debuglevel = 1
 
 import config
+from models import Payment
+from const import PaymentGateway
 
-paypalrestsdk.configure({
-  "mode": config.PAYPAL_MODE,
-  "client_id": config.PAYPAL_CLIENT_ID,
-  "client_secret": config.PAYPAL_CLIENT_SECRET })
+def init_sdk():
+	if config.PAYPAL_SANDBOX:
+		mode = 'sandbox'
+	else:
+		mode = 'live' 
+
+	paypalrestsdk.configure({
+	  "mode": mode,
+	  "client_id": config.PAYPAL_CLIENT_ID,
+	  "client_secret": config.PAYPAL_CLIENT_SECRET })
 
 
-def create_payment(amount, return_url):
+def create_payment(sponsorship, return_url):
 	"""
 	Returns authorization URL
 	"""
-	payment = paypalrestsdk.Payment({
+	created_payment = paypalrestsdk.Payment({
 		"intent": "sale",
 		"payer": {
 			"payment_method": "paypal",
 		},
 		"transactions": [{
     		"amount": {
-				"total": "%d.00" % amount,
+				"total": "%d.00" % sponsorship.amount,
 				"currency": "EUR", 
 			},
 			"item_list": { 
 				"items":[{
                         "quantity": "1", 
                         "name": "BountyFunding deposit", 
-                        "price": "%d.00" % amount,  
+                        "price": "%d.00" % sponsorship.amount,  
                         "currency":"EUR"
 				}]
             },
@@ -40,25 +48,24 @@ def create_payment(amount, return_url):
 		},
 	})
 
-	if payment.create():
-		payment_id = payment.id
-		payment_url = filter(lambda link : link.rel == 'approval_url', payment.links)[0].href
-		#print(payment_url)
-		return payment_id, payment_url
+	if created_payment.create():
+		payment_url = filter(lambda link : link.rel == 'approval_url', created_payment.links)[0].href
+
+		payment = Payment(sponsorship.project_id, sponsorship.sponsorship_id, PaymentGateway.PAYPAL_REST)
+		payment.gateway_id = created_payment.id
+		payment.url = payment_url
+		return payment
 	else:
 		print payment.error
 		return None
 
-def execute_payment(payment_id, payer_id):
-	payment = paypalrestsdk.Payment.find(payment_id)
-	payment.execute({"payer_id": payer_id})
-	return payment.state == 'approved'
 
-def is_payment_completed(payment_id):
-	"""
-	Retrieves payment status
-	"""
-	payment = paypalrestsdk.Payment.find(payment_id)
-	#print payment
-	return payment.state == 'approved'
+def process_payment(sponsorship, payment, details):
+	payer_id = details.get('payer_id')
+	retrieved_payment = paypalrestsdk.Payment.find(payment.gateway_id)
+	retrieved_payment.execute({"payer_id": payer_id})
+	# TODO: Validate details otherwise someone can reuse a transaction
+	return retrieved_payment.state == 'approved'
 
+
+init_sdk()

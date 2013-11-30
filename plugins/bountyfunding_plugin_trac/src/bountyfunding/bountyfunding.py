@@ -110,9 +110,9 @@ class BountyFundingPlugin(Component):
 						gateways = response.json().get('gateways')
 						gateway_tags = []
 						if 'PLAIN' in gateways:
-							gateway_tags.append(tag.input(type="submit", value="Payment Card", name='plain'))
-						if 'PAYPAL' in gateways:
-							gateway_tags.append(tag.input(type="submit", value="PayPal", name='paypal'))
+							gateway_tags.append(tag.input(type="submit", value="Payment Card", name='PLAIN'))
+						if 'PAYPAL_REST' in gateways:
+							gateway_tags.append(tag.input(type="submit", value="PayPal", name='PAYPAL_REST'))
 						gateway_tags.append(tag.input(type="button", value="Cancel", id="confirm-cancel"))
 
 						action = tag.form(tag.input(type="button", value=u"Confirm %d\u20ac" % user_sponsorship.amount, id="confirm-button"), tag.span(gateway_tags, id="confirm-options"), method="post", action="/ticket/%s/confirm" % identifier)
@@ -176,10 +176,13 @@ class BountyFundingPlugin(Component):
 					if response.status_code == 200:
 						self.comment(ticket_id, user, 'Cancelled sponsorship.')
 			elif action == 'confirm':
-				if req.args.get('plain'):
+				if req.args.get('PLAIN'):
 					gateway = 'PLAIN'
-				elif req.args.get('paypal'):
-					gateway = 'PAYPAL'
+				elif req.args.get('PAYPAL_REST'):
+					gateway = 'PAYPAL_REST'
+				else:
+					#TODO: raise exception instead
+					gateway = None
 
 				if gateway == 'PLAIN':
 					pay = req.args.get('pay')
@@ -207,22 +210,22 @@ class BountyFundingPlugin(Component):
 					if pay == None or error:
 						return "payment.html", {'error': error}, None
 	
-				elif gateway == 'PAYPAL':
+				elif gateway == 'PAYPAL_REST':
 					return_url = req.abs_href('ticket', ticket_id, 'pay')
 					response = self.call_api('POST', 
 							'/issue/%s/sponsorship/%s/payments' % (ticket_id, user), 
-							gateway='PAYPAL', return_url=return_url)
+							gateway=gateway, return_url=return_url)
 					if response.status_code == 200:
 						response = self.call_api('GET', 
 								'/issue/%s/sponsorship/%s/payment' % (ticket_id, user), 
-								gateway='PAYPAL')
+								gateway=gateway)
 						if response.status_code == 200:
 							redirect_url = response.json().get('url')
 							req.redirect(redirect_url)
 						else:
-							error = 'API cannot retrieve created paypal payment'
+							error = 'API cannot retrieve created PayPal payment'
 					else:
-						error = 'API cannot create paypal payment'
+						error = 'API cannot create PayPal payment'
 			
 			elif action == 'pay':
 				payer_id = req.args.get('PayerID')

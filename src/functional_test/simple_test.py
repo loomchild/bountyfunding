@@ -35,9 +35,10 @@ def test_sponsor_nonexisting_issue_creates_it():
 
 def test_sponsor_existing_issue_updates_it():
 	user = 'pralinka'
-	amount = 20
+	amount = 5
 	
 	r = api.post('/issue/1/sponsorships', user=user, amount=amount)
+	eq_(r.status_code, 200)
 	r = api.get("/issue/1/sponsorships")
 	eq_(r.status_code, 200)
 	sponsorships = r.json()
@@ -49,7 +50,7 @@ def test_sponsor_existing_issue_updates_it():
 
 def test_update_amount():
 	user = 'loomchild'
-	amount = 30
+	amount = 8
 
 	r = api.put('/issue/1/sponsorship/%s' % user, amount=amount)
 	eq_(r.status_code, 200)

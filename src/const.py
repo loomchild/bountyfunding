@@ -15,6 +15,7 @@ class PaymentStatus(Enum):
 
 class PaymentGateway(Enum):
 	PLAIN = 10
-	PAYPAL = 20
+	PAYPAL_REST = 20
+	PAYPAL_STANDARD = 21
 
 

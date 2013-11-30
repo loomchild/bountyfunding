@@ -17,16 +17,16 @@ tracker_url = http://localhost:8100
 project_delete_allow = False
 
 # Maximum pledge amount
-max_pledge_amount = 100
+max_pledge_amount = 10
 
-# Available payment gateways
-payment_gateways = PLAIN, PAYPAL
+# Available payment gateways; PLAIN, PAYPAL_STANDARD, PAYPAL_REST
+payment_gateways = PLAIN
 
 
 [paypal]
 
-# Paypal REST API mode, can be sandbox or live
-mode = sandbox
+# Use Paypal sandbox or live system; True by default
+sandbox = True
 
 # Paypal REST API creadentials, copy from your paypal account; by default I use project's test ones
 client_id = AYVGkRAGQ2-viFkyzNBNLFowKO508IahpGaEHOO4UBAjeC8jEriWrUQ-jlQl

@@ -25,12 +25,16 @@ PROJECT_DELETE_ALLOW = False
 
 MAX_PLEDGE_AMOUNT = 100
 
-PAYMENT_GATEWAYS = PaymentGateway.keys()
+PAYMENT_GATEWAYS = [PaymentGateway.PLAIN]
 
 
-PAYPAL_MODE = 'sandbox'
+PAYPAL_SANDBOX = True
+PAYPAL_RECEIVER_EMAIL = ''
+
 PAYPAL_CLIENT_ID = ''
 PAYPAL_CLIENT_SECRET = ''
+
+PAYPAL_PDT_ACCESS_TOKEN = ''
 
 
 class ConfigurationException:
@@ -70,10 +74,16 @@ def init(args):
 	PAYMENT_GATEWAYS = get(parser, 'general', 'payment_gateways', PAYMENT_GATEWAYS, type=list)
 	PAYMENT_GATEWAYS = [PaymentGateway.from_string(pg) for pg in PAYMENT_GATEWAYS]
 
-	global PAYPAL_MODE, PAYPAL_CLIENT_ID, PAYPAL_CLIENT_SECRET
-	PAYPAL_MODE = get(parser, 'paypal', 'mode', PAYPAL_MODE)
+	global PAYPAL_SANDBOX, PAYPAL_RECEIVER_EMAIL
+	PAYPAL_SANDBOX = get(parser, 'paypal', 'sandbox', PAYPAL_SANDBOX, type=bool)
+	PAYPAL_RECEIVER_EMAIL = get(parser, 'paypal', 'receiver_email', PAYPAL_RECEIVER_EMAIL)
+	
+	global PAYPAL_CLIENT_ID, PAYPAL_CLIENT_SECRET
 	PAYPAL_CLIENT_ID = get(parser, 'paypal', 'client_id', PAYPAL_CLIENT_ID)
 	PAYPAL_CLIENT_SECRET = get(parser, 'paypal', 'client_secret', PAYPAL_CLIENT_SECRET)
+
+	global PAYPAL_PDT_ACCESS_TOKEN
+	PAYPAL_PDT_ACCESS_TOKEN = get(parser, 'paypal', 'pdt_access_token', PAYPAL_PDT_ACCESS_TOKEN)
 
 
 def init_version():
