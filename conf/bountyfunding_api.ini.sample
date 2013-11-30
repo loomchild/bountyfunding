@@ -17,7 +17,7 @@ tracker_url = http://localhost:8100
 project_delete_allow = False
 
 # Maximum pledge amount
-max_pledge_amount = 10
+max_pledge_amount = 100
 
 # Available payment gateways; PLAIN, PAYPAL_STANDARD, PAYPAL_REST
 payment_gateways = PLAIN
@@ -28,6 +28,13 @@ payment_gateways = PLAIN
 # Use Paypal sandbox or live system; True by default
 sandbox = True
 
-# Paypal REST API creadentials, copy from your paypal account; by default I use project's test ones
+# Email of the entity receiving payments; must match with other details like tokens, etc
+receiver_email = paypal-business@bountyfunding.org
+
+# RESTful API creadentials, copy from your paypal account
 client_id = AYVGkRAGQ2-viFkyzNBNLFowKO508IahpGaEHOO4UBAjeC8jEriWrUQ-jlQl
 client_secret = EElHKBBRaqqWA_fzUDoEz6OmLWCZ4hM7z53o518SY14gkWAGM5xLC4VGDHrP
+
+# Paypal Payment Data Transfer (PDT) access token
+pdt_access_token = FKTGVLLw3LXxveS9hx0sfDms_e7B7gYHiZ7RnFdfu22GX5KHMQm_OtH6bWS
+
