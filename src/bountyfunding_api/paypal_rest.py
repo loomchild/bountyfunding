@@ -61,7 +61,7 @@ def create_payment(sponsorship, return_url):
 
 
 def process_payment(sponsorship, payment, details):
-	payer_id = details.get('payer_id')
+	payer_id = details.get('PayerID')
 	retrieved_payment = paypalrestsdk.Payment.find(payment.gateway_id)
 	retrieved_payment.execute({"payer_id": payer_id})
 	# TODO: Validate details otherwise someone can reuse a transaction

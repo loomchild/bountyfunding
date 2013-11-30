@@ -4,6 +4,7 @@ from models import db, Issue, User, Sponsorship, Email, Payment
 from const import IssueStatus, SponsorshipStatus, PaymentStatus, PaymentGateway
 from pprint import pprint
 import paypal_rest
+import paypal_standard
 import config
 import re, requests, threading
 
@@ -212,6 +213,10 @@ def update_payment(issue_ref, user_name):
 			approved = paypal_rest.process_payment(sponsorship, payment, request.values)
 			if not approved:
 				return jsonify(error='Payment not confirmed by PayPal'), 403
+		elif payment.gateway == PaymentGateway.PAYPAL_STANDARD:
+			approved = paypal_standard.process_payment(sponsorship, payment, request.values)
+			if not approved:
+				return jsonify(error='Payment not confirmed by PayPal'), 403
 		else:
 			return jsonify(error='Unknown gateway'), 400
 
@@ -247,6 +252,10 @@ def create_payment(issue_ref, user_name):
 		if not return_url:
 			return jsonify(error='return_url cannot be blank'), 400
 		payment = paypal_rest.create_payment(sponsorship, return_url)
+	elif gateway == PaymentGateway.PAYPAL_STANDARD:
+		if not return_url:
+			return jsonify(error='return_url cannot be blank'), 400
+		payment = paypal_standard.create_payment(sponsorship, return_url)
 	else:
 		return jsonify(error='Unknown gateway'), 400
 

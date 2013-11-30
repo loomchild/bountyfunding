@@ -113,6 +113,8 @@ class BountyFundingPlugin(Component):
 							gateway_tags.append(tag.input(type="submit", value="Payment Card", name='PLAIN'))
 						if 'PAYPAL_REST' in gateways:
 							gateway_tags.append(tag.input(type="submit", value="PayPal", name='PAYPAL_REST'))
+						if 'PAYPAL_STANDARD' in gateways:
+							gateway_tags.append(tag.input(type="submit", value="PayPal", name='PAYPAL_STANDARD'))
 						gateway_tags.append(tag.input(type="button", value="Cancel", id="confirm-cancel"))
 
 						action = tag.form(tag.input(type="button", value=u"Confirm %d\u20ac" % user_sponsorship.amount, id="confirm-button"), tag.span(gateway_tags, id="confirm-options"), method="post", action="/ticket/%s/confirm" % identifier)
@@ -180,6 +182,8 @@ class BountyFundingPlugin(Component):
 					gateway = 'PLAIN'
 				elif req.args.get('PAYPAL_REST'):
 					gateway = 'PAYPAL_REST'
+				elif req.args.get('PAYPAL_STANDARD'):
+					gateway = 'PAYPAL_STANDARD'
 				else:
 					#TODO: raise exception instead
 					gateway = None
@@ -210,15 +214,14 @@ class BountyFundingPlugin(Component):
 					if pay == None or error:
 						return "payment.html", {'error': error}, None
 	
-				elif gateway == 'PAYPAL_REST':
+				elif gateway == 'PAYPAL_REST' or gateway == 'PAYPAL_STANDARD':
 					return_url = req.abs_href('ticket', ticket_id, 'pay')
 					response = self.call_api('POST', 
 							'/issue/%s/sponsorship/%s/payments' % (ticket_id, user), 
 							gateway=gateway, return_url=return_url)
 					if response.status_code == 200:
 						response = self.call_api('GET', 
-								'/issue/%s/sponsorship/%s/payment' % (ticket_id, user), 
-								gateway=gateway)
+								'/issue/%s/sponsorship/%s/payment' % (ticket_id, user))
 						if response.status_code == 200:
 							redirect_url = response.json().get('url')
 							req.redirect(redirect_url)
@@ -228,9 +231,10 @@ class BountyFundingPlugin(Component):
 						error = 'API cannot create PayPal payment'
 			
 			elif action == 'pay':
-				payer_id = req.args.get('PayerID')
+				args = dict(req.args)
+				args['status'] = 'CONFIRMED'
 				response = self.call_api('PUT', '/issue/%s/sponsorship/%s/payment' % (ticket_id, user), 
-						status='CONFIRMED', payer_id=payer_id)
+						**args)
 				if response.status_code == 200:
 					self.comment(ticket_id, user, 'Confirmed sponsorship.')
 			elif action == 'validate':
