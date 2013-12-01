@@ -8,7 +8,7 @@ from genshi.builder import tag
 from trac.core import *
 from trac.util.html import html
 from trac.web import IRequestHandler, HTTPInternalError
-from trac.web.chrome import INavigationContributor, ITemplateProvider, add_stylesheet, add_script, add_warning
+from trac.web.chrome import INavigationContributor, ITemplateProvider, add_stylesheet, add_script, add_warning, add_notice
 from trac.web.api import ITemplateStreamFilter
 from trac.ticket.api import ITicketChangeListener
 from trac.ticket.model import Ticket
@@ -229,6 +229,7 @@ class BountyFundingPlugin(Component):
 							error = 'API cannot retrieve created PayPal payment'
 					else:
 						error = 'API cannot create PayPal payment'
+					add_warning(req, error)
 			
 			elif action == 'pay':
 				args = dict(req.args)
@@ -237,6 +238,7 @@ class BountyFundingPlugin(Component):
 						**args)
 				if response.status_code == 200:
 					self.comment(ticket_id, user, 'Confirmed sponsorship.')
+					add_notice(req, "Thank you for your payment. Your transaction has been completed, and a receipt for your purchase has been emailed to you.")
 			elif action == 'validate':
 				response = self.call_api('PUT', '/issue/%s/sponsorship/%s' % (ticket_id, user), 
 						status='VALIDATED')
