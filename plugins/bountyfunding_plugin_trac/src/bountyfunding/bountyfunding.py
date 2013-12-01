@@ -104,8 +104,7 @@ class BountyFundingPlugin(Component):
 					action = None
 						
 					if ((status == 'ASSIGNED' or status == 'COMPLETED') 
-							and user_sponsorship.status == 'PLEDGED'):
-						
+							and (user_sponsorship.status == 'PLEDGED' or user_sponsorship.status == None)):
 						response = self.call_api('GET', '/config/payment_gateways')
 						gateways = response.json().get('gateways')
 						gateway_tags = []
@@ -117,17 +116,23 @@ class BountyFundingPlugin(Component):
 							gateway_tags.append(tag.input(type="submit", value="PayPal", name='PAYPAL_STANDARD'))
 						gateway_tags.append(tag.input(type="button", value="Cancel", id="confirm-cancel"))
 
-						action = tag.form(tag.input(type="button", value=u"Confirm %d\u20ac" % user_sponsorship.amount, id="confirm-button"), tag.span(gateway_tags, id="confirm-options"), method="post", action="/ticket/%s/confirm" % identifier)
+						if user_sponsorship.status == 'PLEDGED':
+							action = tag.form(tag.input(type="button", value=u"Confirm %d\u20ac" % user_sponsorship.amount, id="confirm-button"), tag.span(gateway_tags, id="confirm-options"), method="post", action="/ticket/%s/confirm" % identifier)
+						else:
+							#TODO: should be separate action
+							action = tag.form(tag.input(name="amount", type="text", size="3", value="0"), tag.input(type="button", value="Pledge & Confirm", id="confirm-button"), tag.span(gateway_tags, id="confirm-options"), method="post", action="/ticket/%s/confirm" % identifier)
 
 					elif status == 'COMPLETED' and user_sponsorship.status == 'CONFIRMED':
 						action = tag.form(tag.input(type="submit", name='accept', value=u"Validate %d\u20ac" % user_sponsorship.amount), method="post", action="/ticket/%s/validate" % identifier)
 
-					elif (status != 'COMPLETED' and (status == 'NEW' or user_sponsorship.amount == 0) 
-							and user != None):
+					elif (status == 'NEW' and user != None):
 						if user_sponsorship.status == None:
 							action = tag.form(tag.input(name="amount", type="text", size="3", value=user_sponsorship.amount), tag.input(type="submit", value="Pledge"), method="post", action="/ticket/%s/sponsor" % identifier)
 						elif user_sponsorship.status == 'PLEDGED':
 							action = tag.form(tag.input(name="amount", type="text", size="3", value=user_sponsorship.amount), tag.input(type="submit", name="update", value="Update"), tag.input(type="submit", name="cancel", value="Cancel"), method="post", action="/ticket/%s/update_sponsorship" % identifier)
+					
+					elif (user == None):
+						action = tag.span(u"\u00A0", tag.a("Login", href="/login"), " or ", tag.a("Register", href="/register"), " to sponsor")
 					
 					if action != None:
 						fragment.append(" ")
@@ -187,6 +192,21 @@ class BountyFundingPlugin(Component):
 				else:
 					#TODO: raise exception instead
 					gateway = None
+				
+				response = self.call_api('GET', '/issue/%s/sponsorship/%s' % (ticket_id, user))
+				if response.status_code == 404:
+					ticket = Ticket(self.env, ticket_id)
+					# Security: can't sponsor new tickets
+					if ticket['status'] == 'NEW':
+						#TODO: prevent confirming, exception would be much nicer
+						gateway = None
+					else:
+						amount = req.args.get('amount')
+						response = self.call_api('POST', '/issue/%s/sponsorships' % ticket_id, user=user, amount=amount)
+						if response.status_code != 200:
+							add_warning(req, "Unable to pledge - %s" % response.json().get('error', ''))
+							#TODO: prevent confirming, exception would be much nicer
+							gateway = None
 
 				if gateway == 'PLAIN':
 					pay = req.args.get('pay')
