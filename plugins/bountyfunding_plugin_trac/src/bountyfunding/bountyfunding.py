@@ -131,8 +131,10 @@ class BountyFundingPlugin(Component):
 					# Action
 					action = None
 						
-					if ((status == 'STARTED' or status == 'COMPLETED') 
-							and (user_sponsorship.status == 'PLEDGED' or user_sponsorship.status == None)):
+					if (((status == 'STARTED' or status == 'COMPLETED') 
+							and user_sponsorship.status == 'PLEDGED') 
+						or (status == 'STARTED' and user != None and user != owner
+							and user_sponsorship.status == None)):
 						response = self.call_api('GET', '/config/payment_gateways')
 						gateways = response.json().get('gateways')
 						gateway_tags = []
