@@ -19,7 +19,14 @@ import requests, re
 from pkg_resources import resource_filename
 
 
+
+# Configuration
 DEFAULT_API_URL='http://localhost:5000'
+DEFAULT_MAPPING_NEW = ['new', 'accepted', 'reopened']
+DEFAULT_MAPPING_ASSIGNED = ['assigned']
+DEFAULT_MAPPING_COMPLETED = ['closed']
+
+
 BOUNTYFUNDING_PATTERN = re.compile("(?:/(?P<ticket>ticket)/(?P<ticket_id>[0-9]+)/(?P<ticket_action>sponsor|update_sponsorship|confirm|validate|pay))|(?:/(?P<bountyfunding>bountyfunding)/(?P<bountyfunding_action>status|email))")
 
 
@@ -35,9 +42,6 @@ class Email:
 		self.subject = dictionary.get('subject')
 		self.body = dictionary.get('body')
 
-def convert_status(status):
-	table = {'new':'NEW', 'accepted':'ASSIGNED', 'assigned':'ASSIGNED', 'reopened':'NEW', 'closed':'COMPLETED'}
-	return table[status]
 
 def sum_amounts(sponsorships, statuses=None):
 	if statuses != None:
@@ -51,11 +55,35 @@ class BountyFundingPlugin(Component):
 	implements(ITemplateStreamFilter, IRequestHandler, ITemplateProvider, ITicketChangeListener)
 
 	def __init__(self):
+		self.configure()
+
+	def configure(self):
 		self.api_url = self.config.get('bountyfunding', 'api_url', DEFAULT_API_URL)
+		
+		self.status_mapping = {}
+		for m in self.get_config_array(
+					'bountyfunding', 'status_mapping_new', DEFAULT_MAPPING_NEW):
+			self.status_mapping[m] = 'NEW'
+		for m in self.get_config_array(
+					'bountyfunding', 'status_mapping_assigned', DEFAULT_MAPPING_ASSIGNED):
+			self.status_mapping[m] = 'ASSIGNED'
+		for m in self.get_config_array(
+					'bountyfunding', 'status_mapping_completed', DEFAULT_MAPPING_COMPLETED):
+			self.status_mapping[m] = 'COMPLETED'
+
+	def get_config_array(self, section, option, default):
+		value = self.config.get(section, option, None)
+		if value != None:
+			return [v.strip() for v in value.split(",")]
+		else:
+			return default
 
 	def call_api(self, method, path, **kwargs):
 		url = self.api_url + path
 		return requests.request(method, url, params=kwargs)
+	
+	def convert_status(self, status):
+		return self.status_mapping[status]
 	
 	def comment(self, ticket_id, author, content):
 		ticket = Ticket(self.env, ticket_id)
@@ -76,7 +104,7 @@ class BountyFundingPlugin(Component):
 				request = self.call_api('GET', '/issue/%s' % identifier)
 				fragment = tag()
 				sponsorships = {}
-				status = convert_status(ticket.values['status'])
+				status = self.convert_status(ticket.values['status'])
 				owner = ticket.values['owner']
 				if request.status_code == 200 or request.status_code == 404:
 					
@@ -294,7 +322,7 @@ class BountyFundingPlugin(Component):
 
 	def ticket_changed(self, ticket, comment, author, old_values):
 		if 'status' in old_values:
-			status = convert_status(ticket.values['status'])
+			status = self.convert_status(ticket.values['status'])
 			self.call_api('PUT', '/issue/%s' % ticket.id, status=status)
 
 	def ticket_deleted(self, ticket):
