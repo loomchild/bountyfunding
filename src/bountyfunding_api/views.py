@@ -35,9 +35,9 @@ def update_status(issue_ref):
 	issue = retrieve_issue(DEFAULT_PROJECT_ID, issue_ref)
 
 	if issue != None:
-		if status == IssueStatus.ASSIGNED:
-			subject = 'Task assigned %s' % issue.issue_ref
-			body = 'The task you have sponsored has been accepted by the developer. Please deposit the promised amount. To do that please go to project issue tracker at %s, log in, find an issue ID %s and select Confirm.' % (config.TRACKER_URL, issue.issue_ref)
+		if status == IssueStatus.STARTED:
+			subject = 'Task started %s' % issue.issue_ref
+			body = 'The task you have sponsored is ready to be sponsored. Please deposit the promised amount. To do that please go to project issue tracker at %s, log in, find an issue ID %s and select Confirm.' % (config.TRACKER_URL, issue.issue_ref)
 			notify_sponsors(issue.issue_id, SponsorshipStatus.PLEDGED, subject, body)
 
 			sponsorships = Sponsorship.query.filter_by(issue_id=issue.issue_id, status=SponsorshipStatus.PLEDGED)

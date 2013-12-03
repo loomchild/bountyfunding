@@ -16,7 +16,7 @@ def test_email():
 	r = api.get("/issue/1")
 	eq_(r.status_code, 200)
 
-	r = api.put('/issue/1', status=IssueStatus.to_string(IssueStatus.ASSIGNED))
+	r = api.put('/issue/1', status=IssueStatus.to_string(IssueStatus.STARTED))
 	eq_(r.status_code, 200)
 
 	emails = get_emails()

@@ -1,7 +1,8 @@
 from enum import Enum
 
 class IssueStatus(Enum):
-	ASSIGNED = 20
+	READY = 10
+	STARTED = 20
 	COMPLETED = 30
 
 class SponsorshipStatus(Enum):

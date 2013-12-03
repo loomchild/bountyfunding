@@ -22,8 +22,8 @@ from pkg_resources import resource_filename
 
 # Configuration
 DEFAULT_API_URL='http://localhost:5000'
-DEFAULT_MAPPING_NEW = ['new', 'accepted', 'reopened']
-DEFAULT_MAPPING_ASSIGNED = ['assigned']
+DEFAULT_MAPPING_READY = ['new', 'accepted', 'reopened']
+DEFAULT_MAPPING_STARTED = ['assigned']
 DEFAULT_MAPPING_COMPLETED = ['closed']
 
 
@@ -62,11 +62,11 @@ class BountyFundingPlugin(Component):
 		
 		self.status_mapping = {}
 		for m in self.get_config_array(
-					'bountyfunding', 'status_mapping_new', DEFAULT_MAPPING_NEW):
-			self.status_mapping[m] = 'NEW'
+					'bountyfunding', 'status_mapping_ready', DEFAULT_MAPPING_READY):
+			self.status_mapping[m] = 'READY'
 		for m in self.get_config_array(
-					'bountyfunding', 'status_mapping_assigned', DEFAULT_MAPPING_ASSIGNED):
-			self.status_mapping[m] = 'ASSIGNED'
+					'bountyfunding', 'status_mapping_started', DEFAULT_MAPPING_STARTED):
+			self.status_mapping[m] = 'STARTED'
 		for m in self.get_config_array(
 					'bountyfunding', 'status_mapping_completed', DEFAULT_MAPPING_COMPLETED):
 			self.status_mapping[m] = 'COMPLETED'
@@ -119,7 +119,7 @@ class BountyFundingPlugin(Component):
 					# Bounty
 					tooltip = u"Pledged: %d\u20ac" % pledged_amount
 					
-					if status == 'ASSIGNED' or status == 'COMPLETED':
+					if status == 'STARTED' or status == 'COMPLETED':
 						confirmed_amount = sum_amounts(sponsorships.values(), ('CONFIRMED', 'VALIDATED'))
 						tooltip += u" \nConfirmed: %d\u20ac" % confirmed_amount
 					if status == 'COMPLETED':
@@ -131,7 +131,7 @@ class BountyFundingPlugin(Component):
 					# Action
 					action = None
 						
-					if ((status == 'ASSIGNED' or status == 'COMPLETED') 
+					if ((status == 'STARTED' or status == 'COMPLETED') 
 							and (user_sponsorship.status == 'PLEDGED' or user_sponsorship.status == None)):
 						response = self.call_api('GET', '/config/payment_gateways')
 						gateways = response.json().get('gateways')
@@ -153,7 +153,7 @@ class BountyFundingPlugin(Component):
 					elif status == 'COMPLETED' and user_sponsorship.status == 'CONFIRMED':
 						action = tag.form(tag.input(type="submit", name='accept', value=u"Validate %d\u20ac" % user_sponsorship.amount), method="post", action="/ticket/%s/validate" % identifier)
 
-					elif (status == 'NEW' and user != None):
+					elif (status == 'READY' and user != None):
 						if user_sponsorship.status == None:
 							action = tag.form(tag.input(name="amount", type="text", size="3", value=user_sponsorship.amount), tag.input(type="submit", value="Pledge"), method="post", action="/ticket/%s/sponsor" % identifier)
 						elif user_sponsorship.status == 'PLEDGED':
@@ -224,8 +224,9 @@ class BountyFundingPlugin(Component):
 				response = self.call_api('GET', '/issue/%s/sponsorship/%s' % (ticket_id, user))
 				if response.status_code == 404:
 					ticket = Ticket(self.env, ticket_id)
-					# Security: can't sponsor new tickets
-					if ticket['status'] == 'NEW':
+					# Security: can't sponsor not started tickets
+					status = self.convert_status(ticket['status'])
+					if status != 'STARTED':
 						#TODO: prevent confirming, exception would be much nicer
 						gateway = None
 					else:

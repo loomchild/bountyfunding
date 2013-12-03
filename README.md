@@ -70,12 +70,12 @@ Download the archive from github [master.zip](https://github.com/bountyfunding/b
 		[bountyfunding]
 		api_url = http://localhost:5000
 
-* You can also change the mapping between Trac statuses and bountyfunding statuses. This controls when user can pledge, confirm the payment and validate the ticket. One variation to simplify the funding process could be to allow users to confirm the payment when the ticket is accepted, without waiting for it to be assigned to specific developer - this can be achieved by moving 'accepted' Trac status to status_mapping_assigned setting. See below the default configuration:
+* You can also change the mapping between Trac statuses and bountyfunding statuses. This controls when user can pledge, confirm the payment and validate the ticket. One variation to simplify the funding process could be to allow users to confirm the payment when the ticket is accepted, without waiting for it to be assigned to specific developer - this can be achieved by moving 'accepted' Trac status to status_mapping_started setting. See below the default configuration:
 
 		[bountyfunding]
 		...
-		status_mapping_new = new, accepted, reopened
-		status_mapping_assigned = assigned
+		status_mapping_ready = new, accepted, reopened
+		status_mapping_started = assigned
 		status_mapping_completed = closed
 
 * Restart Trac
