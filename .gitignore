@@ -7,5 +7,4 @@ plugins/bountyfunding_plugin_trac/src/dist/
 virtualenv/
 logs/
 conf/bountyfunding_api.ini
-private/
 tags
