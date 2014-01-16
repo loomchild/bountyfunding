@@ -9,7 +9,7 @@ from trac.core import *
 from trac.util.html import html
 from trac.web import IRequestHandler, HTTPInternalError
 from trac.web.chrome import INavigationContributor, ITemplateProvider, add_stylesheet, add_script, add_warning, add_notice
-from trac.web.api import ITemplateStreamFilter
+from trac.web.api import IRequestFilter, ITemplateStreamFilter
 from trac.ticket.api import ITicketChangeListener
 from trac.ticket.model import Ticket
 
@@ -52,7 +52,7 @@ def sum_amounts(sponsorships, statuses=None):
 
 
 class BountyFundingPlugin(Component):
-	implements(ITemplateStreamFilter, IRequestHandler, ITemplateProvider, ITicketChangeListener)
+	implements(ITemplateStreamFilter, IRequestFilter, IRequestHandler, ITemplateProvider, ITicketChangeListener)
 
 	def __init__(self):
 		self.configure()
@@ -85,9 +85,26 @@ class BountyFundingPlugin(Component):
 	def convert_status(self, status):
 		return self.status_mapping[status]
 	
-	def comment(self, ticket_id, author, content):
+	def get_sponsorships(self, ticket_id):
+		sponsorships = {}
+		request = self.call_api('GET', '/issue/%s/sponsorships' % ticket_id)
+		if request.status_code == 200:
+			sponsorships = dict(map(lambda (k,v): (k, Sponsorship(v)), request.json().items()))
+		return sponsorships
+
+	def update_ticket(self, ticket_id, refresh_amount=True, author=None, comment=None):
 		ticket = Ticket(self.env, ticket_id)
-		ticket.save_changes(author, content)
+		
+		if refresh_amount:
+			sponsorships = self.get_sponsorships(ticket_id)	
+			amount = sum_amounts(sponsorships.values())
+			if amount == 0:
+				amount = None
+			else:
+				amount = str(amount)
+			ticket["bounty"] = amount
+
+		ticket.save_changes(author, comment)
 	
 	
 	# ITemplateStreamFilter methods
@@ -107,11 +124,7 @@ class BountyFundingPlugin(Component):
 				status = self.convert_status(ticket.values['status'])
 				owner = ticket.values['owner']
 				if request.status_code == 200 or request.status_code == 404:
-					
-					sponsorships = {}
-					request = self.call_api('GET', '/issue/%s/sponsorships' % identifier)
-					if request.status_code == 200:
-						sponsorships = dict(map(lambda (k,v): (k, Sponsorship(v)), request.json().items()))
+					sponsorships = self.get_sponsorships(identifier)
 					
 					pledged_amount = sum_amounts(sponsorships.values())
 					user_sponsorship = sponsorships.get(user, Sponsorship())
@@ -183,6 +196,19 @@ class BountyFundingPlugin(Component):
 				stream |= filter.append(bountyfunding_tag)
 		return stream
 
+	
+	# IRequestFilter methods
+	def pre_process_request(self, req, handler):
+		return handler
+
+	def post_process_request(self, req, template, data, content_type):
+		#if template == 'ticket.html':
+		#	ticket = data.get('ticket')
+		#	if ticket and ticket.exists:
+		#		ticket.values['bounty'] = '100'
+		return template, data, content_type
+
+	
 	# IRequestHandler methods
 	def match_request(self, req):
 		return BOUNTYFUNDING_PATTERN.match(req.path_info) != None
@@ -201,17 +227,21 @@ class BountyFundingPlugin(Component):
 				if response.status_code != 200:
 					add_warning(req, "Unable to pledge - %s" % response.json().get('error', ''))
 				else:
-					self.comment(ticket_id, user, 'Sponsored.')
+					self.update_ticket(ticket_id)
 			if action == 'update_sponsorship':
 				if req.args.get('update'):
 					amount = req.args.get('amount')
 					response = self.call_api('PUT', '/issue/%s/sponsorship/%s' % (ticket_id, user), amount=amount)
 					if response.status_code != 200:
 						add_warning(req, "Unable to pledge - %s" % response.json().get('error', ''))
+					else:
+						self.update_ticket(ticket_id)
 				elif req.args.get('cancel'):
 					response = self.call_api('DELETE', '/issue/%s/sponsorship/%s' % (ticket_id, user))
-					if response.status_code == 200:
-						self.comment(ticket_id, user, 'Cancelled sponsorship.')
+					if response.status_code != 200:
+						add_warning(req, "Unable to cancel pledge - %s" % response.json().get('error', ''))
+					else:
+						self.update_ticket(ticket_id)
 			elif action == 'confirm':
 				if req.args.get('PLAIN'):
 					gateway = 'PLAIN'
@@ -260,7 +290,7 @@ class BountyFundingPlugin(Component):
 							if response.status_code != 200:
 								error = 'API refused your plain payment'
 							else:
-								self.comment(ticket_id, user, 'Confirmed sponsorship.')
+								self.update_ticket(ticket_id, False, user, 'Confirmed sponsorship.')
 							
 					if pay == None or error:
 						return "payment.html", {'error': error}, None
@@ -288,13 +318,13 @@ class BountyFundingPlugin(Component):
 				response = self.call_api('PUT', '/issue/%s/sponsorship/%s/payment' % (ticket_id, user), 
 						**args)
 				if response.status_code == 200:
-					self.comment(ticket_id, user, 'Confirmed sponsorship.')
+					self.update_ticket(ticket_id, False, user, 'Confirmed sponsorship.')
 					add_notice(req, "Thank you for your payment. Your transaction has been completed, and a receipt for your purchase has been emailed to you.")
 			elif action == 'validate':
 				response = self.call_api('PUT', '/issue/%s/sponsorship/%s' % (ticket_id, user), 
 						status='VALIDATED')
 				if response.status_code == 200:
-					self.comment(ticket_id, user, 'Validated sponsorship.')
+					self.update_ticket(ticket_id, False, user, 'Validated sponsorship.')
 
 			req.redirect('/ticket/%s' % ticket_id)
 		
