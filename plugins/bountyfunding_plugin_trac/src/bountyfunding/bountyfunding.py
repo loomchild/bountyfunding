@@ -102,12 +102,14 @@ class BountyFundingPlugin(Component):
 			sponsorships = self.get_sponsorships(ticket_id)	
 			amount = sum_amounts(sponsorships.values())
 			if amount == 0:
-				amount = ''
+				if ticket["bounty"]:
+					ticket["bounty"] = None
+					update = True
 			else:
 				amount = u"%d\u20ac" % amount
-			if ticket["bounty"] != amount:
-				ticket["bounty"] = amount
-				update = True
+				if ticket["bounty"] != amount:
+					ticket["bounty"] = amount
+					update = True
 
 		if update:
 			ticket.save_changes(author, comment)
