@@ -73,6 +73,7 @@ Download the archive from github [master.zip](https://github.com/bountyfunding/b
 		
 		[bountyfunding]
 		api_url = http://localhost:5000
+
 * You can add new bounty field to your existing reports using [TracQuery](http://trac.edgewall.org/wiki/TracQuery) or [TracReports](http://trac.edgewall.org/wiki/TracReports). Due to technical limitations this field can be only sorted in alphabetical order which is not ideal - there is small workaround for TracReports to cast it as INTEGER. For example Active Tickets By Milestone report can look like this:
 		
 		SELECT p.value AS __color__,
@@ -89,7 +90,7 @@ Download the archive from github [master.zip](https://github.com/bountyfunding/b
 		WHERE status <> 'closed'
 		ORDER BY (milestone IS NULL),milestone, CAST(p.value AS integer), t.type, time
 
- * You can also change the mapping between Trac statuses and bountyfunding statuses. This controls when user can pledge, confirm the payment and validate the ticket. One variation to simplify the funding process could be to allow users to confirm the payment when the ticket is accepted, without waiting for it to be assigned to specific developer - this can be achieved by moving 'accepted' Trac status to status_mapping_started setting. See below the default configuration:
+* You can also change the mapping between Trac statuses and bountyfunding statuses. This controls when user can pledge, confirm the payment and validate the ticket. One variation to simplify the funding process could be to allow users to confirm the payment when the ticket is accepted, without waiting for it to be assigned to specific developer - this can be achieved by moving 'accepted' Trac status to status_mapping_started setting. See below the default configuration:
 
 		[bountyfunding]
 		...
@@ -127,4 +128,4 @@ For development you will need all python packages listed in [requirements-dev.tx
 		cd plugins/bountyfunding_api_plugin/src
 		./setup.py develop -mxd /<trac_home>/plugins
 * Since the API does not offer any security layer, it is necessary to run it behind a firewall.
-* When Trac and API tickets become out of sync (due to manual modification, temporary API downtime, etc.), go to the following URL: http://<trac_url>/bountyfunding/sync - this will refresh local Trac cache. This operation will be automated in the future.
+* When Trac and API tickets become out of sync (due to manual modification, temporary API downtime, etc.), go to the following URL: http://\<trac_url\>/bountyfunding/sync - this will refresh local Trac cache. This operation will be automated in the future.
