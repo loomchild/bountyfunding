@@ -304,7 +304,7 @@ class BountyFundingPlugin(Component):
 							if response.status_code != 200:
 								error = 'API refused your plain payment'
 							else:
-								self.update_ticket(ticket_id, False, user, 'Confirmed sponsorship.')
+								self.update_ticket(ticket_id, True, user, 'Confirmed sponsorship.')
 							
 					if pay == None or error:
 						return "payment.html", {'error': error}, None
@@ -332,13 +332,13 @@ class BountyFundingPlugin(Component):
 				response = self.call_api('PUT', '/issue/%s/sponsorship/%s/payment' % (ticket_id, user), 
 						**args)
 				if response.status_code == 200:
-					self.update_ticket(ticket_id, False, user, 'Confirmed sponsorship.')
+					self.update_ticket(ticket_id, True, user, 'Confirmed sponsorship.')
 					add_notice(req, "Thank you for your payment. Your transaction has been completed, and a receipt for your purchase has been emailed to you.")
 			elif action == 'validate':
 				response = self.call_api('PUT', '/issue/%s/sponsorship/%s' % (ticket_id, user), 
 						status='VALIDATED')
 				if response.status_code == 200:
-					self.update_ticket(ticket_id, False, user, 'Validated sponsorship.')
+					self.update_ticket(ticket_id, True, user, 'Validated sponsorship.')
 
 			req.redirect('/ticket/%s' % ticket_id)
 		
