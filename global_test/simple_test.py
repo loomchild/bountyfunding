@@ -9,6 +9,7 @@ def setup():
 	global browser
 	browser = webdriver.Firefox()
 	browser.implicitly_wait(3)
+	browser.maximize_window()
 
 def teardown():
 	global browser
@@ -19,5 +20,5 @@ def test_trac_plugin_registered():
 	browser.get('http://localhost:8100/ticket/1')
 	
 	# Check if it contains BountyFunding field
-	header = browser.find_element_by_id('h_bountyfunding')
+	header = browser.find_element_by_id('h_bounty')
 	assert header.text.find('Bounty') == 0, "Header text does not start with Bounty"
