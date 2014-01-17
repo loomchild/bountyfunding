@@ -363,6 +363,7 @@ class BountyFundingPlugin(Component):
 				else:
 					return "status.html", {'version': request.json().get('version')}, None
 			if action == 'sync':
+				#TODO: optimize by calling /issues, setting amount to 0 if not found
 				updated_ids = []
 				user = req.authname
 				if 'TICKET_ADMIN' in req.perm:
