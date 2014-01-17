@@ -19,6 +19,13 @@ NOTIFY_INTERVAL = 5
 def status():
 	return jsonify(version=config.VERSION)
 
+@app.route("/issues", methods=['GET'])
+def get_issues():
+	issues = retrieve_issues(DEFAULT_PROJECT_ID)
+	issues = dict(map(lambda i: (i.issue_ref, {}), issues))
+	response = jsonify(issues)
+	return response
+
 @app.route("/issue/<issue_ref>", methods=['GET'])
 def get_issue(issue_ref):
 	issue = retrieve_issue(DEFAULT_PROJECT_ID, issue_ref)
@@ -324,6 +331,10 @@ class APIException(Exception):
 def handle_api_exception(exception):
     return jsonify(error=exception.message), exception.status_code
 
+
+def retrieve_issues(project_id):
+	issues = Issue.query.filter_by(project_id=DEFAULT_PROJECT_ID).all()
+	return issues
 
 def retrieve_issue(project_id, issue_ref):
 	issue = Issue.query.filter_by(project_id=DEFAULT_PROJECT_ID, issue_ref=issue_ref).first()

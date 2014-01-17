@@ -1,12 +1,8 @@
-.bountyfunding form {
-	display: inline;
-}
-
-.bountyfunding form div {
+.bountyfunding form, .bountyfunding form div {
 	display: inline;
 }
 
 .bountyfunding form input {
-	font-size: 100%; 
+	font-size: 100%;  
 	vertical-align: baseline;
 }
