@@ -3,6 +3,7 @@ from flask.ext.sqlalchemy import SQLAlchemy
 from enum import Enum 
 from bountyfunding_api import app
 import config
+from datetime import datetime
 from const import SponsorshipStatus, PaymentStatus, PaymentGateway
 #import logging
 
@@ -96,4 +97,21 @@ class Email(db.Model):
 	def __repr__(self):
 		return '<Email project_id: "%s", user_id: "%s", subject: "%s">' %\
 				(self.project_id, self.user_id, self.subject)
+
+
+class Change(db.Model):
+	change_id = db.Column(db.Integer, primary_key=True)
+	timestamp = db.Column(db.DateTime, nullable=False)
+	method = db.Column(db.String(10), nullable=False)
+	path = db.Column(db.String(256), nullable=False)
+	arguments = db.Column(db.Text(), nullable=False)
+
+	def __init__(self, method, path, arguments):
+		self.timestamp = datetime.now()
+		self.method = method
+		self.path = path
+		self.arguments = arguments
+
+	def __repr__(self):
+		return '<Change change_id: "%s"' % (self.change_id,)
 

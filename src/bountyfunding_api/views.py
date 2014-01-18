@@ -1,6 +1,6 @@
 from bountyfunding_api import app
 from flask import Flask, url_for, render_template, make_response, redirect, abort, jsonify, request
-from models import db, Issue, User, Sponsorship, Email, Payment
+from models import db, Issue, User, Sponsorship, Email, Payment, Change
 from const import IssueStatus, SponsorshipStatus, PaymentStatus, PaymentGateway
 from pprint import pprint
 import paypal_rest
@@ -297,7 +297,7 @@ def delete_email(email_id):
 	
 	return response
 
-
+#TODO: change url to /, retrieve project from access token
 @app.route('/project/<project_id>', methods=['DELETE'])
 def delete_project(project_id):
 	project_id = int(project_id)
@@ -320,6 +320,27 @@ def delete_project(project_id):
 def get_config_payment_gateways():
 	gateways = [PaymentGateway.to_string(pg) for pg in config.PAYMENT_GATEWAYS]
 	return jsonify(gateways=gateways)
+
+
+@app.before_request
+def before_request():
+	if request.method == 'POST' or request.method == 'PUT' or request.method == 'DELETE':
+		arguments = ", ".join(map(lambda (k, v): '%s:%s' % (k, v),\
+				sorted(request.values.iteritems(True))))
+		create_change(request.method, request.path, arguments)
+
+
+@app.before_first_request
+def init():
+	# For in-memory DB need to initialize memory database in the same thread
+	if config.DATABASE_CREATE:
+		if not config.DATABASE_IN_MEMORY:
+			print "Creating database in %s" % config.DATABASE_URL
+		db.create_all()
+	
+	# Multiple threads do not work with memory database
+	if not config.DATABASE_IN_MEMORY:
+		notify()
 
 
 class APIException(Exception):
@@ -381,6 +402,12 @@ def retrieve_last_payment(sponsorship_id):
 	return payment
 
 
+def create_change(method, path, arguments):
+	change = Change(method, path, arguments)
+	db.session.add(change)
+	db.session.commit()
+
+
 def notify_sponsors(issue_id, status, subject, body):
 	sponsorships = Sponsorship.query.filter_by(issue_id=issue_id, status=status)
 	for sponsorship in sponsorships:
@@ -412,18 +439,6 @@ def notify():
 	t.daemon = True
 	t.start()
 
-@app.before_first_request
-def init():
-	# For in-memory DB need to initialize memory database in the same thread
-	if config.DATABASE_CREATE:
-		if not config.DATABASE_IN_MEMORY:
-			print "Creating database in %s" % config.DATABASE_URL
-		db.create_all()
-	
-	# Multiple threads do not work with memory database
-	if not config.DATABASE_IN_MEMORY:
-		notify()
-	
 
 # Examples
 #@app.route('/user/static')
