@@ -37,6 +37,9 @@ Install Trac, at least version 1.0 is required. Make the following changes to th
 		[notification]
 		...
 		smtp_enabled = yes
+		...
+		smtp_from = <valid email address with domain name>
+		...
 
 * All users or developers that want to use BountyFunding need to specify their emails as notifications and speedy replies are very important
 * Install Trac [Account Manager Plugin](http://trac-hacks.org/wiki/AccountManagerPlugin) to allow new user registration

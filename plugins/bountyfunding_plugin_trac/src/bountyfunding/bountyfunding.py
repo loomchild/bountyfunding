@@ -138,7 +138,7 @@ class BountyFundingPlugin(Component):
 		link = self.env.abs_href.ticket(ticket_id)
 
 		email = GenericNotifyEmail(self.env, recipient, body, link)
-		email.notify('loomchild', subject)
+		email.notify('', subject)
 
 	def format_email_subject(self, ticket):
 		template = self.config.get('notification','ticket_subject_template')
