@@ -23,7 +23,7 @@ def test_email():
 	eq_(len(emails), 1)
 	email = emails[0]
 	eq_(email.recipient, USER)
-	ok_(email.subject)
+	ok_(email.issue_id)
 	ok_(email.body)
 
 

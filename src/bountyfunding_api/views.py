@@ -1,6 +1,6 @@
 from bountyfunding_api import app
 from flask import Flask, url_for, render_template, make_response, redirect, abort, jsonify, request
-from models import db, Issue, User, Sponsorship, Email, Payment
+from models import db, Issue, User, Sponsorship, Email, Payment, Change
 from const import IssueStatus, SponsorshipStatus, PaymentStatus, PaymentGateway
 from pprint import pprint
 import paypal_rest
@@ -19,6 +19,13 @@ NOTIFY_INTERVAL = 5
 def status():
 	return jsonify(version=config.VERSION)
 
+@app.route("/issues", methods=['GET'])
+def get_issues():
+	issues = retrieve_issues(DEFAULT_PROJECT_ID)
+	issues = dict(map(lambda i: (i.issue_ref, {}), issues))
+	response = jsonify(issues)
+	return response
+
 @app.route("/issue/<issue_ref>", methods=['GET'])
 def get_issue(issue_ref):
 	issue = retrieve_issue(DEFAULT_PROJECT_ID, issue_ref)
@@ -36,19 +43,14 @@ def update_status(issue_ref):
 
 	if issue != None:
 		if status == IssueStatus.STARTED:
-			subject = 'Task started %s' % issue.issue_ref
-			body = 'The task you have sponsored is ready to be sponsored. Please deposit the promised amount. To do that please go to project issue tracker at %s, log in, find an issue ID %s and select Confirm.' % (config.TRACKER_URL, issue.issue_ref)
-			notify_sponsors(issue.issue_id, SponsorshipStatus.PLEDGED, subject, body)
-
-			sponsorships = Sponsorship.query.filter_by(issue_id=issue.issue_id, status=SponsorshipStatus.PLEDGED)
+			body = 'The task you have sponsored has been started. Please deposit the promised amount. To do that please go to project issue tracker, log in, find this issue and select Confirm.'
+			notify_sponsors(issue.issue_id, SponsorshipStatus.PLEDGED, body)
 		elif status == IssueStatus.COMPLETED:
-			subject = 'Task completed %s' % issue.issue_ref
+			body_confirmed = 'The task you have sponsored has been completed by the developer. Please validate it. To do that please go to project issue tracker, log in, find an issue and select Validate.'
+			notify_sponsors(issue.issue_id, SponsorshipStatus.CONFIRMED, body_confirmed)
 			
-			body_confirmed = 'The task you have sponsored has been completed by the developer. Please verify it. To do that please go to project issue tracker at %s, log in, find an issue ID %s and select Validate.' % (config.TRACKER_URL, issue.issue_ref)
-			notify_sponsors(issue.issue_id, SponsorshipStatus.CONFIRMED, subject, body_confirmed)
-			
-			body_pledged = 'The task you have sponsored has been completed by the developer. Please deposit the promised amout and verify it. To do that please go to project issue tracker at %s, log in, find an issue ID %s and select Confirm and then Validate.' % (config.TRACKER_URL, issue.issue_ref)
-			notify_sponsors(issue.issue_id, SponsorshipStatus.PLEDGED, subject, body_pledged)
+			body_pledged = 'The task you have sponsored has been completed by the developer. Please deposit the promised amout and validate it. To do that please go to project issue tracker, log in, find an issue and select Confirm and then Validate.'
+			notify_sponsors(issue.issue_id, SponsorshipStatus.PLEDGED, body_pledged)
 		
 		else:
 			return jsonify(error="Unknown status"), 400
@@ -272,7 +274,7 @@ def get_emails():
 
 	response = []
 	for email in emails:
-		response.append({'id': email.email_id, 'recipient':email.user.name, 'subject':email.subject, 'body':email.body})
+		response.append({'id': email.email_id, 'recipient':email.user.name, 'issue_id':email.issue.issue_ref, 'body':email.body})
 		
 	response = jsonify(data=response)
 	return response 
@@ -290,7 +292,7 @@ def delete_email(email_id):
 	
 	return response
 
-
+#TODO: change url to /, retrieve project from access token
 @app.route('/project/<project_id>', methods=['DELETE'])
 def delete_project(project_id):
 	project_id = int(project_id)
@@ -315,6 +317,27 @@ def get_config_payment_gateways():
 	return jsonify(gateways=gateways)
 
 
+@app.before_request
+def before_request():
+	if request.method == 'POST' or request.method == 'PUT' or request.method == 'DELETE':
+		arguments = ", ".join(map(lambda (k, v): '%s:%s' % (k, v),\
+				sorted(request.values.iteritems(True))))
+		create_change(request.method, request.path, arguments)
+
+
+@app.before_first_request
+def init():
+	# For in-memory DB need to initialize memory database in the same thread
+	if config.DATABASE_CREATE:
+		if not config.DATABASE_IN_MEMORY:
+			print "Creating database in %s" % config.DATABASE_URL
+		db.create_all()
+	
+	# Multiple threads do not work with memory database
+	if not config.DATABASE_IN_MEMORY:
+		notify()
+
+
 class APIException(Exception):
 	def __init__(self, message="", status_code=400):
 		self.message = message
@@ -324,6 +347,10 @@ class APIException(Exception):
 def handle_api_exception(exception):
     return jsonify(error=exception.message), exception.status_code
 
+
+def retrieve_issues(project_id):
+	issues = Issue.query.filter_by(project_id=DEFAULT_PROJECT_ID).all()
+	return issues
 
 def retrieve_issue(project_id, issue_ref):
 	issue = Issue.query.filter_by(project_id=DEFAULT_PROJECT_ID, issue_ref=issue_ref).first()
@@ -370,13 +397,19 @@ def retrieve_last_payment(sponsorship_id):
 	return payment
 
 
-def notify_sponsors(issue_id, status, subject, body):
+def create_change(method, path, arguments):
+	change = Change(method, path, arguments)
+	db.session.add(change)
+	db.session.commit()
+
+
+def notify_sponsors(issue_id, status, body):
 	sponsorships = Sponsorship.query.filter_by(issue_id=issue_id, status=status)
 	for sponsorship in sponsorships:
-		create_email(sponsorship.user.user_id, subject, body)
+		create_email(sponsorship.user.user_id, issue_id, body)
 
-def create_email(user_id, subject, body):
-	email = Email(DEFAULT_PROJECT_ID, user_id, subject, body)
+def create_email(user_id, issue_id, body):
+	email = Email(DEFAULT_PROJECT_ID, user_id, issue_id, body)
 	db.session.add(email)
 	db.session.commit()
 
@@ -401,18 +434,6 @@ def notify():
 	t.daemon = True
 	t.start()
 
-@app.before_first_request
-def init():
-	# For in-memory DB need to initialize memory database in the same thread
-	if config.DATABASE_CREATE:
-		if not config.DATABASE_IN_MEMORY:
-			print "Creating database in %s" % config.DATABASE_URL
-		db.create_all()
-	
-	# Multiple threads do not work with memory database
-	if not config.DATABASE_IN_MEMORY:
-		notify()
-	
 
 # Examples
 #@app.route('/user/static')

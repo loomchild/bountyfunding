@@ -19,6 +19,7 @@ def setup_module():
 	global browser
 	browser = webdriver.Firefox()
 	browser.implicitly_wait(10)
+	browser.maximize_window()
 
 def teardown_module():
 	global browser

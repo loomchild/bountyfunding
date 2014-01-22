@@ -9,15 +9,16 @@ from trac.core import *
 from trac.util.html import html
 from trac.web import IRequestHandler, HTTPInternalError
 from trac.web.chrome import INavigationContributor, ITemplateProvider, add_stylesheet, add_script, add_warning, add_notice
-from trac.web.api import ITemplateStreamFilter
-from trac.ticket.api import ITicketChangeListener
+from trac.web.api import IRequestFilter, ITemplateStreamFilter
+from trac.ticket.api import ITicketChangeListener, ITicketManipulator
 from trac.ticket.model import Ticket
 
 from trac.notification import NotifyEmail
 
+from genshi.template.text import NewTextTemplate
+
 import requests, re
 from pkg_resources import resource_filename
-
 
 
 # Configuration
@@ -27,7 +28,7 @@ DEFAULT_MAPPING_STARTED = ['assigned']
 DEFAULT_MAPPING_COMPLETED = ['closed']
 
 
-BOUNTYFUNDING_PATTERN = re.compile("(?:/(?P<ticket>ticket)/(?P<ticket_id>[0-9]+)/(?P<ticket_action>sponsor|update_sponsorship|confirm|validate|pay))|(?:/(?P<bountyfunding>bountyfunding)/(?P<bountyfunding_action>status|email))")
+BOUNTYFUNDING_PATTERN = re.compile("(?:/(?P<ticket>ticket)/(?P<ticket_id>[0-9]+)/(?P<ticket_action>sponsor|update_sponsorship|confirm|validate|pay))|(?:/(?P<bountyfunding>bountyfunding)/(?P<bountyfunding_action>status|email|sync))")
 
 
 class Sponsorship:
@@ -39,9 +40,24 @@ class Email:
 	def __init__(self, dictionary):
 		self.id = dictionary.get('id')
 		self.recipient = dictionary.get('recipient')
-		self.subject = dictionary.get('subject')
+		self.issue_id = dictionary.get('issue_id')
 		self.body = dictionary.get('body')
 
+class GenericNotifyEmail(NotifyEmail):
+	template_name = 'email.txt'
+
+	def __init__(self, env, recipient, body, link):
+		NotifyEmail.__init__(self, env)
+		self.recipient = recipient
+		self.data = {
+			'body': body,
+			'link': link,
+			'project_name': env.project_name,
+			'project_url': env.project_url or self.env.abs_href(),
+		}
+
+	def get_recipients(self, resid):
+		return ([self.recipient], [])	
 
 def sum_amounts(sponsorships, statuses=None):
 	if statuses != None:
@@ -52,7 +68,7 @@ def sum_amounts(sponsorships, statuses=None):
 
 
 class BountyFundingPlugin(Component):
-	implements(ITemplateStreamFilter, IRequestHandler, ITemplateProvider, ITicketChangeListener)
+	implements(ITemplateStreamFilter, IRequestFilter, IRequestHandler, ITemplateProvider, ITicketChangeListener, ITicketManipulator)
 
 	def __init__(self):
 		self.configure()
@@ -85,10 +101,62 @@ class BountyFundingPlugin(Component):
 	def convert_status(self, status):
 		return self.status_mapping[status]
 	
-	def comment(self, ticket_id, author, content):
+	def get_sponsorships(self, ticket_id):
+		sponsorships = {}
+		request = self.call_api('GET', '/issue/%s/sponsorships' % ticket_id)
+		if request.status_code == 200:
+			sponsorships = dict(map(lambda (k,v): (k, Sponsorship(v)), request.json().items()))
+		return sponsorships
+
+	#TODO: not entirely safe from race conditions, fix it
+	def update_ticket(self, ticket_id, refresh_amount=True, author=None, comment=None):
 		ticket = Ticket(self.env, ticket_id)
-		ticket.save_changes(author, content)
+		
+		update = (comment != None)
+
+		if refresh_amount:
+			sponsorships = self.get_sponsorships(ticket_id)	
+			amount = sum_amounts(sponsorships.values())
+			if amount == 0:
+				if ticket["bounty"]:
+					ticket["bounty"] = None
+					update = True
+			else:
+				amount = u"%d\u20ac" % amount
+				if ticket["bounty"] != amount:
+					ticket["bounty"] = amount
+					update = True
+
+		if update:
+			ticket.save_changes(author, comment)
 	
+		return update
+    
+	def send_email(self, recipient, ticket_id, body):
+		ticket = Ticket(self.env, ticket_id)
+		subject = self.format_email_subject(ticket)
+		link = self.env.abs_href.ticket(ticket_id)
+
+		email = GenericNotifyEmail(self.env, recipient, body, link)
+		email.notify('loomchild', subject)
+
+	def format_email_subject(self, ticket):
+		template = self.config.get('notification','ticket_subject_template')
+		template = NewTextTemplate(template.encode('utf8'))
+
+		prefix = self.config.get('notification', 'smtp_subject_prefix')
+		if prefix == '__default__':
+			prefix = '[%s]' % self.env.project_name
+
+		data = {
+			'prefix': prefix,
+			'summary': ticket['summary'],
+			'ticket': ticket,
+			'env': self.env,
+		}
+
+		return template.generate(**data).render('text', encoding=None).strip()
+
 	
 	# ITemplateStreamFilter methods
 	def filter_stream(self, req, method, filename, stream, data):
@@ -97,6 +165,10 @@ class BountyFundingPlugin(Component):
 		nicer if we can do it by creating custom field as this depends on page structure.
 		"""
 		if filename == 'ticket.html':
+			# Disable any direct bounty input
+			filter = Transformer('.//input[@id="field-bounty"]')
+			stream |= filter.attr("disabled", "disabled")
+			
 			ticket = data.get('ticket')
 			if ticket and ticket.exists:
 				identifier = ticket.id
@@ -107,11 +179,7 @@ class BountyFundingPlugin(Component):
 				status = self.convert_status(ticket.values['status'])
 				owner = ticket.values['owner']
 				if request.status_code == 200 or request.status_code == 404:
-					
-					sponsorships = {}
-					request = self.call_api('GET', '/issue/%s/sponsorships' % identifier)
-					if request.status_code == 200:
-						sponsorships = dict(map(lambda (k,v): (k, Sponsorship(v)), request.json().items()))
+					sponsorships = self.get_sponsorships(identifier)
 					
 					pledged_amount = sum_amounts(sponsorships.values())
 					user_sponsorship = sponsorships.get(user, Sponsorship())
@@ -126,8 +194,6 @@ class BountyFundingPlugin(Component):
 						validated_amount = sum_amounts(sponsorships.values(), 'VALIDATED')
 						tooltip += u" \nValidated: %d\u20ac" % validated_amount
 					
-					fragment.append(tag.span(u"%d\u20ac" % pledged_amount, title=tooltip))
-
 					# Action
 					action = None
 						
@@ -177,12 +243,27 @@ class BountyFundingPlugin(Component):
 				add_stylesheet(req, 'htdocs/styles/bountyfunding.css')
 				add_script(req, 'htdocs/scripts/bountyfunding.js')
 
-				filter = Transformer('.//table[@class="properties"]	')
-				bountyfunding_tag = tag.tr(tag.th("Bounty: ", id="h_bountyfunding"), 
-						tag.td(fragment, headers="h_bountyfunding", class_="bountyfunding")) 
-				stream |= filter.append(bountyfunding_tag)
+				filter = Transformer('.//td[@headers="h_bounty"]/text()')
+				stream |= filter.wrap(tag.span(title=tooltip))
+				filter = Transformer('.//td[@headers="h_bounty"]')
+				stream |= filter.attr("class", "bountyfunding")
+				stream |= filter.append(fragment)
+				
 		return stream
 
+	
+	# IRequestFilter methods
+	def pre_process_request(self, req, handler):
+		return handler
+
+	def post_process_request(self, req, template, data, content_type):
+		#if template == 'ticket.html':
+		#	ticket = data.get('ticket')
+		#	if ticket and ticket.exists:
+		#		ticket.values['bounty'] = '100'
+		return template, data, content_type
+
+	
 	# IRequestHandler methods
 	def match_request(self, req):
 		return BOUNTYFUNDING_PATTERN.match(req.path_info) != None
@@ -201,17 +282,21 @@ class BountyFundingPlugin(Component):
 				if response.status_code != 200:
 					add_warning(req, "Unable to pledge - %s" % response.json().get('error', ''))
 				else:
-					self.comment(ticket_id, user, 'Sponsored.')
+					self.update_ticket(ticket_id, True, user)
 			if action == 'update_sponsorship':
 				if req.args.get('update'):
 					amount = req.args.get('amount')
 					response = self.call_api('PUT', '/issue/%s/sponsorship/%s' % (ticket_id, user), amount=amount)
 					if response.status_code != 200:
 						add_warning(req, "Unable to pledge - %s" % response.json().get('error', ''))
+					else:
+						self.update_ticket(ticket_id, True, user)
 				elif req.args.get('cancel'):
 					response = self.call_api('DELETE', '/issue/%s/sponsorship/%s' % (ticket_id, user))
-					if response.status_code == 200:
-						self.comment(ticket_id, user, 'Cancelled sponsorship.')
+					if response.status_code != 200:
+						add_warning(req, "Unable to cancel pledge - %s" % response.json().get('error', ''))
+					else:
+						self.update_ticket(ticket_id, True, user)
 			elif action == 'confirm':
 				if req.args.get('PLAIN'):
 					gateway = 'PLAIN'
@@ -260,7 +345,7 @@ class BountyFundingPlugin(Component):
 							if response.status_code != 200:
 								error = 'API refused your plain payment'
 							else:
-								self.comment(ticket_id, user, 'Confirmed sponsorship.')
+								self.update_ticket(ticket_id, True, user, 'Confirmed sponsorship.')
 							
 					if pay == None or error:
 						return "payment.html", {'error': error}, None
@@ -288,13 +373,13 @@ class BountyFundingPlugin(Component):
 				response = self.call_api('PUT', '/issue/%s/sponsorship/%s/payment' % (ticket_id, user), 
 						**args)
 				if response.status_code == 200:
-					self.comment(ticket_id, user, 'Confirmed sponsorship.')
+					self.update_ticket(ticket_id, True, user, 'Confirmed sponsorship.')
 					add_notice(req, "Thank you for your payment. Your transaction has been completed, and a receipt for your purchase has been emailed to you.")
 			elif action == 'validate':
 				response = self.call_api('PUT', '/issue/%s/sponsorship/%s' % (ticket_id, user), 
 						status='VALIDATED')
 				if response.status_code == 200:
-					self.comment(ticket_id, user, 'Validated sponsorship.')
+					self.update_ticket(ticket_id, True, user, 'Validated sponsorship.')
 
 			req.redirect('/ticket/%s' % ticket_id)
 		
@@ -305,7 +390,7 @@ class BountyFundingPlugin(Component):
 				if request.status_code == 200:
 					emails = [Email(email) for email in request.json().get('data')]
 					for email in emails:
-						send_email(self.env, email.recipient, email.subject, email.body)
+						self.send_email(email.recipient, int(email.issue_id), email.body)
 						self.call_api('DELETE', '/email/%s' % email.id), 
 				req.send_no_content()
 			if action == 'status':
@@ -318,6 +403,19 @@ class BountyFundingPlugin(Component):
 							% request.status_code)
 				else:
 					return "status.html", {'version': request.json().get('version')}, None
+			if action == 'sync':
+				#TODO: optimize by calling /issues, setting amount to 0 if not found
+				updated_ids = []
+				user = req.authname
+				if 'TICKET_ADMIN' in req.perm:
+					for ticket_id in self.env.db_query("SELECT id from ticket ORDER BY id ASC"):
+						if self.update_ticket(ticket_id[0], True, user):
+							updated_ids.append(ticket_id[0])
+				else:		
+					add_warning(req, "You are not permitted to sync")
+
+				return "sync.html", {"ids": updated_ids}, None
+
 
 	# ITicketChangeListener methods
 	def ticket_created(self, ticket):
@@ -330,6 +428,22 @@ class BountyFundingPlugin(Component):
 
 	def ticket_deleted(self, ticket):
 		pass
+
+
+	# ITicketManipulator methods
+	def prepare_ticket(self, req, ticket, fields, actions):
+		pass
+   
+	def validate_ticket(self, req, ticket):
+		if ticket.exists:
+			old_ticket = Ticket(self.env, ticket.id)
+			if ticket['bounty'] != old_ticket['bounty']:
+				return [('bounty', 'Bounty cannot be changed')]
+		else:
+			if ticket['bounty']:
+				return [('bounty', 'Bounty cannot be set')]
+		return []
+
 
     # ITemplateProvider methods
 	def get_templates_dirs(self):
@@ -348,23 +462,4 @@ class BountyFundingPlugin(Component):
 		"""
 		return [('htdocs', resource_filename(__name__, 'htdocs'))]
 
-
-
-class GenericNotifyEmail(NotifyEmail):
-	template_name = 'email.txt'
-
-	def __init__(self, env, recipient, body):
-		NotifyEmail.__init__(self, env)
-		self.recipient = recipient
-		self.data = {}
-		self.data['body'] = body
-
-	def get_recipients(self, resid):
-		return ([self.recipient], [])	
-
-def send_email(env, recipient, subject, body):
-	email = GenericNotifyEmail(env, recipient, body)
-	email.notify('loomchild', subject)
-
-	
 

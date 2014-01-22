@@ -3,6 +3,7 @@ from flask.ext.sqlalchemy import SQLAlchemy
 from enum import Enum 
 from bountyfunding_api import app
 import config
+from datetime import datetime
 from const import SponsorshipStatus, PaymentStatus, PaymentGateway
 #import logging
 
@@ -82,18 +83,36 @@ class Email(db.Model):
 	email_id = db.Column(db.Integer, primary_key=True)
 	project_id = db.Column(db.Integer, nullable=False)
 	user_id = db.Column(db.Integer, db.ForeignKey(User.user_id), nullable=False)
-	subject = db.Column(db.String(128))
+	issue_id = db.Column(db.Integer, db.ForeignKey(Issue.issue_id), nullable=False)
 	body = db.Column(db.String(1024))
 
 	user = db.relation(User, lazy="joined")
+	issue = db.relation(Issue, lazy="joined")
 	
-	def __init__(self, project_id, user_id, subject, body):
+	def __init__(self, project_id, user_id, issue_id, body):
 		self.project_id = project_id
 		self.user_id = user_id
-		self.subject = subject
+		self.issue_id = issue_id
 		self.body = body
 
 	def __repr__(self):
-		return '<Email project_id: "%s", user_id: "%s", subject: "%s">' %\
-				(self.project_id, self.user_id, self.subject)
+		return '<Email project_id: "%s", user_id: "%s", issue_id: "%s">' %\
+				(self.project_id, self.user_id, self.issue_id)
+
+
+class Change(db.Model):
+	change_id = db.Column(db.Integer, primary_key=True)
+	timestamp = db.Column(db.DateTime, nullable=False)
+	method = db.Column(db.String(10), nullable=False)
+	path = db.Column(db.String(256), nullable=False)
+	arguments = db.Column(db.Text(), nullable=False)
+
+	def __init__(self, method, path, arguments):
+		self.timestamp = datetime.now()
+		self.method = method
+		self.path = path
+		self.arguments = arguments
+
+	def __repr__(self):
+		return '<Change change_id: "%s"' % (self.change_id,)
 
