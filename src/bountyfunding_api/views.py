@@ -46,10 +46,10 @@ def update_status(issue_ref):
 			body = 'The task you have sponsored has been started. Please deposit the promised amount. To do that please go to project issue tracker, log in, find this issue and select Confirm.'
 			notify_sponsors(issue.issue_id, SponsorshipStatus.PLEDGED, body)
 		elif status == IssueStatus.COMPLETED:
-			body_confirmed = 'The task you have sponsored has been completed by the developer. Please verify it. To do that please go to project issue tracker, log in, find an issue and select Validate.'
+			body_confirmed = 'The task you have sponsored has been completed by the developer. Please validate it. To do that please go to project issue tracker, log in, find an issue and select Validate.'
 			notify_sponsors(issue.issue_id, SponsorshipStatus.CONFIRMED, body_confirmed)
 			
-			body_pledged = 'The task you have sponsored has been completed by the developer. Please deposit the promised amout and verify it. To do that please go to project issue tracker, log in, find an issue and select Confirm & Validate.'
+			body_pledged = 'The task you have sponsored has been completed by the developer. Please deposit the promised amout and validate it. To do that please go to project issue tracker, log in, find an issue and select Confirm and then Validate.'
 			notify_sponsors(issue.issue_id, SponsorshipStatus.PLEDGED, body_pledged)
 		
 		else:
