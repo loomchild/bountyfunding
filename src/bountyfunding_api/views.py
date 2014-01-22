@@ -43,19 +43,14 @@ def update_status(issue_ref):
 
 	if issue != None:
 		if status == IssueStatus.STARTED:
-			subject = 'Task started %s' % issue.issue_ref
-			body = 'The task you have sponsored is ready to be sponsored. Please deposit the promised amount. To do that please go to project issue tracker at %s, log in, find an issue ID %s and select Confirm.' % (config.TRACKER_URL, issue.issue_ref)
-			notify_sponsors(issue.issue_id, SponsorshipStatus.PLEDGED, subject, body)
-
-			sponsorships = Sponsorship.query.filter_by(issue_id=issue.issue_id, status=SponsorshipStatus.PLEDGED)
+			body = 'The task you have sponsored has been started. Please deposit the promised amount. To do that please go to project issue tracker, log in, find this issue and select Confirm.'
+			notify_sponsors(issue.issue_id, SponsorshipStatus.PLEDGED, body)
 		elif status == IssueStatus.COMPLETED:
-			subject = 'Task completed %s' % issue.issue_ref
+			body_confirmed = 'The task you have sponsored has been completed by the developer. Please verify it. To do that please go to project issue tracker, log in, find an issue and select Validate.'
+			notify_sponsors(issue.issue_id, SponsorshipStatus.CONFIRMED, body_confirmed)
 			
-			body_confirmed = 'The task you have sponsored has been completed by the developer. Please verify it. To do that please go to project issue tracker at %s, log in, find an issue ID %s and select Validate.' % (config.TRACKER_URL, issue.issue_ref)
-			notify_sponsors(issue.issue_id, SponsorshipStatus.CONFIRMED, subject, body_confirmed)
-			
-			body_pledged = 'The task you have sponsored has been completed by the developer. Please deposit the promised amout and verify it. To do that please go to project issue tracker at %s, log in, find an issue ID %s and select Confirm and then Validate.' % (config.TRACKER_URL, issue.issue_ref)
-			notify_sponsors(issue.issue_id, SponsorshipStatus.PLEDGED, subject, body_pledged)
+			body_pledged = 'The task you have sponsored has been completed by the developer. Please deposit the promised amout and verify it. To do that please go to project issue tracker, log in, find an issue and select Confirm & Validate.'
+			notify_sponsors(issue.issue_id, SponsorshipStatus.PLEDGED, body_pledged)
 		
 		else:
 			return jsonify(error="Unknown status"), 400
@@ -279,7 +274,7 @@ def get_emails():
 
 	response = []
 	for email in emails:
-		response.append({'id': email.email_id, 'recipient':email.user.name, 'subject':email.subject, 'body':email.body})
+		response.append({'id': email.email_id, 'recipient':email.user.name, 'issue_id':email.issue.issue_ref, 'body':email.body})
 		
 	response = jsonify(data=response)
 	return response 
@@ -408,13 +403,13 @@ def create_change(method, path, arguments):
 	db.session.commit()
 
 
-def notify_sponsors(issue_id, status, subject, body):
+def notify_sponsors(issue_id, status, body):
 	sponsorships = Sponsorship.query.filter_by(issue_id=issue_id, status=status)
 	for sponsorship in sponsorships:
-		create_email(sponsorship.user.user_id, subject, body)
+		create_email(sponsorship.user.user_id, issue_id, body)
 
-def create_email(user_id, subject, body):
-	email = Email(DEFAULT_PROJECT_ID, user_id, subject, body)
+def create_email(user_id, issue_id, body):
+	email = Email(DEFAULT_PROJECT_ID, user_id, issue_id, body)
 	db.session.add(email)
 	db.session.commit()
 

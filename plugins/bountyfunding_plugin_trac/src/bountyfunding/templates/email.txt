@@ -1,1 +1,4 @@
 ${body}
+-- 
+Ticket URL: <${link}>
+$project_name <${project_url}>

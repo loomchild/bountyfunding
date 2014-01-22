@@ -15,9 +15,10 @@ from trac.ticket.model import Ticket
 
 from trac.notification import NotifyEmail
 
+from genshi.template.text import NewTextTemplate
+
 import requests, re
 from pkg_resources import resource_filename
-
 
 
 # Configuration
@@ -39,9 +40,24 @@ class Email:
 	def __init__(self, dictionary):
 		self.id = dictionary.get('id')
 		self.recipient = dictionary.get('recipient')
-		self.subject = dictionary.get('subject')
+		self.issue_id = dictionary.get('issue_id')
 		self.body = dictionary.get('body')
 
+class GenericNotifyEmail(NotifyEmail):
+	template_name = 'email.txt'
+
+	def __init__(self, env, recipient, body, link):
+		NotifyEmail.__init__(self, env)
+		self.recipient = recipient
+		self.data = {
+			'body': body,
+			'link': link,
+			'project_name': env.project_name,
+			'project_url': env.project_url or self.env.abs_href(),
+		}
+
+	def get_recipients(self, resid):
+		return ([self.recipient], [])	
 
 def sum_amounts(sponsorships, statuses=None):
 	if statuses != None:
@@ -115,6 +131,31 @@ class BountyFundingPlugin(Component):
 			ticket.save_changes(author, comment)
 	
 		return update
+    
+	def send_email(self, recipient, ticket_id, body):
+		ticket = Ticket(self.env, ticket_id)
+		subject = self.format_email_subject(ticket)
+		link = self.env.abs_href.ticket(ticket_id)
+
+		email = GenericNotifyEmail(self.env, recipient, body, link)
+		email.notify('loomchild', subject)
+
+	def format_email_subject(self, ticket):
+		template = self.config.get('notification','ticket_subject_template')
+		template = NewTextTemplate(template.encode('utf8'))
+
+		prefix = self.config.get('notification', 'smtp_subject_prefix')
+		if prefix == '__default__':
+			prefix = '[%s]' % self.env.project_name
+
+		data = {
+			'prefix': prefix,
+			'summary': ticket['summary'],
+			'ticket': ticket,
+			'env': self.env,
+		}
+
+		return template.generate(**data).render('text', encoding=None).strip()
 
 	
 	# ITemplateStreamFilter methods
@@ -349,7 +390,7 @@ class BountyFundingPlugin(Component):
 				if request.status_code == 200:
 					emails = [Email(email) for email in request.json().get('data')]
 					for email in emails:
-						send_email(self.env, email.recipient, email.subject, email.body)
+						self.send_email(email.recipient, int(email.issue_id), email.body)
 						self.call_api('DELETE', '/email/%s' % email.id), 
 				req.send_no_content()
 			if action == 'status':
@@ -421,23 +462,4 @@ class BountyFundingPlugin(Component):
 		"""
 		return [('htdocs', resource_filename(__name__, 'htdocs'))]
 
-
-
-class GenericNotifyEmail(NotifyEmail):
-	template_name = 'email.txt'
-
-	def __init__(self, env, recipient, body):
-		NotifyEmail.__init__(self, env)
-		self.recipient = recipient
-		self.data = {}
-		self.data['body'] = body
-
-	def get_recipients(self, resid):
-		return ([self.recipient], [])	
-
-def send_email(env, recipient, subject, body):
-	email = GenericNotifyEmail(env, recipient, body)
-	email.notify('loomchild', subject)
-
-	
 
