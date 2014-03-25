@@ -13,9 +13,6 @@ database_url = sqlite:///db/test.db
 # Externally accessible location of bug tracker
 tracker_url = http://localhost:8100
 
-# Allow project delete operation (enable only for testing), True/False
-project_delete_allow = False
-
 # Maximum pledge amount
 max_pledge_amount = 100
 

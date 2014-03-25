@@ -21,8 +21,6 @@ DATABASE_URL = ''
 DATABASE_IN_MEMORY = False
 DATABASE_CREATE = False
 
-PROJECT_DELETE_ALLOW = False
-
 MAX_PLEDGE_AMOUNT = 100
 
 PAYMENT_GATEWAYS = [PaymentGateway.PLAIN]
@@ -63,9 +61,6 @@ def init(args):
 
 	database_url = get(parser, 'general', 'database_url', DATABASE_URL, args.db_in_memory).strip()
 	init_database(database_url)
-
-	global PROJECT_DELETE_ALLOW
-	PROJECT_DELETE_ALLOW = get(parser, 'general', 'project_delete_allow', PROJECT_DELETE_ALLOW, args.project_delete_allow, type=bool)
 
 	global MAX_PLEDGE_AMOUNT
 	MAX_PLEDGE_AMOUNT = get(parser, 'general', 'max_pledge_amount', MAX_PLEDGE_AMOUNT, type=int)

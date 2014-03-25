@@ -1,12 +1,18 @@
-from utils import api, dict_to_object
+from utils import Api, dict_to_object
 from const import *
 from nose.tools import *
 
 
+PROJECT_ID = -1;
 USER = "loomchild"
 
+
+api = Api(PROJECT_ID)
+
+
 def teardown():
-	api.delete('/project/1')
+	r = api.delete('/')
+	eq_(r.status_code, 200)
 
 
 def test_email():

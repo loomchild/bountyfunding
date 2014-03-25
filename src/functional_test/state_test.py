@@ -1,19 +1,20 @@
-from utils import api, dict_to_object
+from utils import Api, dict_to_object
 from const import *
 from nose.tools import *
 
 
+PROJECT_ID = -1;
 USER = 'loomchild'
 CARD_NUMBER = "4111111111111111"
 CARD_DATE = "05/50"
 
 
-def teardown_module():
-	api.delete("/issue/1")
-	api.delete("/user/%s" % USER)
+api = Api(PROJECT_ID)
+
 
 def teardown():
-	api.delete('/project/1')
+	r = api.delete('/')
+	eq_(r.status_code, 200)
 
 
 def test_sponsorship_pledged_transitions():

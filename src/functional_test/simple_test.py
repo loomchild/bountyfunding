@@ -1,10 +1,17 @@
-from utils import api, dict_to_object
+from utils import Api, dict_to_object
 from const import SponsorshipStatus, PaymentStatus, PaymentGateway
 from nose.tools import *
 
 
+PROJECT_ID = -1;
+
+
+api = Api(PROJECT_ID)
+
+
 def teardown_module():
-	api.delete('/project/1')
+	r = api.delete('/')
+	eq_(r.status_code, 200)
 
 
 def test_version():
