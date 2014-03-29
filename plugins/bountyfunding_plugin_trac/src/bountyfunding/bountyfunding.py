@@ -178,6 +178,7 @@ class BountyFundingPlugin(Component):
 				sponsorships = {}
 				status = self.convert_status(ticket.values['status'])
 				owner = ticket.values['owner']
+				tooltip = None
 				if request.status_code == 200 or request.status_code == 404:
 					sponsorships = self.get_sponsorships(identifier)
 					
@@ -244,7 +245,8 @@ class BountyFundingPlugin(Component):
 				add_script(req, 'htdocs/scripts/bountyfunding.js')
 
 				filter = Transformer('.//td[@headers="h_bounty"]/text()')
-				stream |= filter.wrap(tag.span(title=tooltip))
+				if tooltip != None:
+					stream |= filter.wrap(tag.span(title=tooltip))
 				filter = Transformer('.//td[@headers="h_bounty"]')
 				stream |= filter.attr("class", "bountyfunding")
 				stream |= filter.append(fragment)

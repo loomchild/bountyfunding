@@ -100,7 +100,6 @@ class CommonConfig:
 		if parser.has_option(section, option):
 			value = parser.get(section, option)
 			value = parse(name, value)
-			print "%s.%s: %s" % (section, option, value)
 			setattr(self, name, value)
 
 	def _init_value_from_args(self, args, option, name):

@@ -11,7 +11,6 @@ import re, requests, threading
 DEFAULT_PROJECT_ID = 1
 DATE_PATTERN = re.compile('^(0?[1-9]|1[012])/[0-9][0-9]$')
 
-NOTIFY_URL = config.TRACKER_URL + '/bountyfunding/'
 NOTIFY_INTERVAL = 5
 
 
@@ -78,7 +77,7 @@ def post_sponsorship(issue_ref):
 	user_name = request.values.get('user')
 	amount = int(request.values.get('amount'))
 
-	check_pledge_amount(amount)
+	check_pledge_amount(g.project_id, amount)
 
 	issue = retrieve_create_issue(g.project_id, issue_ref)
 	user = retrieve_create_user(g.project_id, user_name)
@@ -165,7 +164,7 @@ def update_sponsorship(issue_ref, user_name):
 			amount = int(amount_string)
 		except ValueError:
 			return jsonify(error="amount is not a number"), 400
-		check_pledge_amount(amount)
+		check_pledge_amount(g.project_id, amount)
 
 		sponsorship.amount = amount
 
@@ -212,11 +211,11 @@ def update_payment(issue_ref, user_name):
 			if card_number != '4111111111111111' or DATE_PATTERN.match(card_date) == None:
 				return jsonify(error='Invalid card details'), 403
 		elif payment.gateway == PaymentGateway.PAYPAL_REST:
-			approved = paypal_rest.process_payment(sponsorship, payment, request.values)
+			approved = paypal_rest.process_payment(g.project_id, sponsorship, payment, request.values)
 			if not approved:
 				return jsonify(error='Payment not confirmed by PayPal'), 403
 		elif payment.gateway == PaymentGateway.PAYPAL_STANDARD:
-			approved = paypal_standard.process_payment(sponsorship, payment, request.values)
+			approved = paypal_standard.process_payment(g.project_id, sponsorship, payment, request.values)
 			if not approved:
 				return jsonify(error='Payment not confirmed by PayPal'), 403
 		else:
@@ -253,11 +252,11 @@ def create_payment(issue_ref, user_name):
 	elif gateway == PaymentGateway.PAYPAL_REST:
 		if not return_url:
 			return jsonify(error='return_url cannot be blank'), 400
-		payment = paypal_rest.create_payment(sponsorship, return_url)
+		payment = paypal_rest.create_payment(g.project_id, sponsorship, return_url)
 	elif gateway == PaymentGateway.PAYPAL_STANDARD:
 		if not return_url:
 			return jsonify(error='return_url cannot be blank'), 400
-		payment = paypal_standard.create_payment(sponsorship, return_url)
+		payment = paypal_standard.create_payment(g.project_id, sponsorship, return_url)
 	else:
 		return jsonify(error='Unknown gateway'), 400
 
@@ -310,7 +309,7 @@ def delete_project():
 
 @app.route('/config/payment_gateways', methods=['GET'])
 def get_config_payment_gateways():
-	gateways = [PaymentGateway.to_string(pg) for pg in config.PAYMENT_GATEWAYS]
+	gateways = [PaymentGateway.to_string(pg) for pg in config[g.project_id].PAYMENT_GATEWAYS]
 	return jsonify(gateways=gateways)
 
 
@@ -421,18 +420,23 @@ def create_email(project_id, user_id, issue_id, body):
 	db.session.commit()
 
 def send_emails():
-	if Email.exists():
-		try:
-			requests.get(NOTIFY_URL + 'email', timeout=1)
-		except requests.exceptions.RequestException:
-			app.logger.warn('Unable to connect to issue tracker at ' + NOTIFY_URL)
+	emails = Email.query.all()
+	if len(emails) > 0:
+		project_ids = set(map(lambda email: email.project_id, emails))
+		for project_id in project_ids:
+			notify_url = config[project_id].TRACKER_URL + '/bountyfunding/'
+			try:
+				requests.get(notify_url + 'email', timeout=1)
+			except requests.exceptions.RequestException:
+				app.logger.warn('Unable to connect to issue tracker at ' + notify_url)
 
 
-def check_pledge_amount(amount):
+def check_pledge_amount(project_id, amount):
 	if amount <= 0:
 		raise APIException("Amount must be positive", 400)
-	if amount > config.MAX_PLEDGE_AMOUNT:
-		raise APIException("Amount must be less than %d" % config.MAX_PLEDGE_AMOUNT, 400)
+	max_pledge_amount = config[project_id].MAX_PLEDGE_AMOUNT
+	if amount > max_pledge_amount:
+		raise APIException("Amount must be less than %d" % max_pledge_amount, 400)
 
 
 def notify():
