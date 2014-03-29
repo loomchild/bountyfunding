@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 
 from os import path
-import argparse
-import config
+from argparse import ArgumentParser
+from config import config
 from enum import Enum
 
 
@@ -22,7 +22,7 @@ def create_db():
 
 
 if __name__ == "__main__":
-	arg_parser = argparse.ArgumentParser(description='BountyFunding API')
+	arg_parser = ArgumentParser(description='BountyFunding API')
 	
 	arg_parser.add_argument('action', 
 			action='store', default=Action.RUN, choices=Action.values(),
@@ -35,6 +35,10 @@ if __name__ == "__main__":
 			metavar='FILE',
 			help='Specify config file location (default %(default)s)')
 
+	arg_parser.add_argument('--id', 
+			action='store', default='',
+			help='Process ID to kill it easier; this parameter is ignored')
+	
 	arg_parser.add_argument('--port', 
 			action='store', type=int, default=None,
 			help='Port number')
@@ -47,14 +51,6 @@ if __name__ == "__main__":
 			action='store_const', const='sqlite://',
 			help='Use empty in-memory database')
 
-	arg_parser.add_argument('--project-delete-allow', 
-			action='store_true', default=False,
-			help='Allow delete project operation (use only for testing)')
-
-	arg_parser.add_argument('--id', 
-			action='store', default='',
-			help='Process ID to kill it easier; this parameter is ignored')
-	
 	args = arg_parser.parse_args()
 	
 	config.init(args)

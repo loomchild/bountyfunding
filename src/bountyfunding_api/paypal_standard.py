@@ -5,7 +5,7 @@ import urllib
 import httplib2
 httplib2.debuglevel = 1
 
-import config
+from config import config
 from models import db, Payment
 from const import PaymentGateway
 

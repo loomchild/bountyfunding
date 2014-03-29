@@ -12,7 +12,6 @@ def setup():
 		[
 			"python", "src/bountyfunding_api.py", "--db-in-memory", 
 			"--config-file", "conf/bountyfunding_api.ini.sample",
-			"--project-delete-allow",
 		], 
 		cwd=BOUNTYFUNDING_HOME, 
 		preexec_fn=os.setsid

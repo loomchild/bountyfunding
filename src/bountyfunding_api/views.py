@@ -5,7 +5,7 @@ from const import IssueStatus, SponsorshipStatus, PaymentStatus, PaymentGateway
 from pprint import pprint
 import paypal_rest
 import paypal_standard
-import config
+from config import config
 import re, requests, threading
 
 DEFAULT_PROJECT_ID = 1
@@ -440,20 +440,3 @@ def notify():
 	t = threading.Timer(NOTIFY_INTERVAL, notify)
 	t.daemon = True
 	t.start()
-
-
-# Examples
-#@app.route('/user/static')
-#def show_static_user():
-#	response = make_response(url_for('static', filename='test.txt'))
-#	return response
-#
-#@app.route('/director')
-#def redirector():
-#	return redirect(url_for('show_user_profile', username='Director'))
-#
-#@app.route('/error')
-#def error():
-#	app.logger.error('An error occurred')
-#	abort(401)
-
