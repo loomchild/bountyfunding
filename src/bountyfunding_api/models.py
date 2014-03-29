@@ -116,3 +116,18 @@ class Change(db.Model):
 	def __repr__(self):
 		return '<Change change_id: "%s"' % (self.change_id,)
 
+class Config(db.Model):
+	config_id = db.Column(db.Integer, primary_key=True)
+	project_id = db.Column(db.Integer, nullable=False)
+	name = db.Column(db.String(64), nullable=False)
+	value = db.Column(db.String(256), nullable=False)
+	
+	def __init__(self, project_id, name, value):
+		self.project_id = project_id
+		self.name = name
+		self.value = value
+
+	def __repr__(self):
+		return '<Config %s-%s: "%s"' % (self.project_id, self.name, self.value)
+
+db.Index('idx_config_pid_name', Config.project_id, Config.name, unique=True)

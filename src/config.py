@@ -8,69 +8,54 @@ from homer import BOUNTYFUNDING_HOME
 from const import PaymentGateway
 
 
-class Property:
-	def __init__(self, description, typ, defualt_value, section, in_args, in_file, in_db):
-		self.description = description
-		self.typ = typ
-		self.default_value = defualt_value
-		self.section = section
-		self.in_args = in_args
-		self.in_file = in_file
-		self.in_db = in_db
-
-properties = {
-	'VERSION' : Property('Software version', str, 'Unknown', 'general', False, False, False),
-	'PORT' : Property('Port number', int, 5000, 'general', True, True, False),
-	'DEBUG' : Property('Enable debug mode (use only for testing)', bool, False, 'general', True, True, False),
-
-	'DATABASE_URL' : Property('SQLAlchemy database url', str, '', 'general', False, True, False),
-	'DATABASE_IN_MEMORY' : Property('Use empty in-memory database', bool, False, 'general', False, False, False),
-	'DATABASE_CREATE' : Property('Create database', bool, False, 'general', False, False, False),
-	
-	'TRACKER_URL' : Property('Externally accessible location of bug tracker', str, '', 'project', False, True, True),
-	'MAX_PLEDGE_AMOUNT' : Property('Maximum pledge amount', int, 100, 'project', False, True, True),
-	'PAYMENT_GATEWAYS' : Property('List of enabled payment gateways', list, [PaymentGateway.PLAIN], 'project', False, True, True),
-		
-	'PAYPAL_SANDBOX' : Property('Use Paypal sandbox or live system', bool, True, 'paypal', False, True, True),
-	'PAYPAL_RECEIVER_EMAIL' : Property('Email of the entity receiving payments; must match with other details like tokens, etc', str, '', 'paypal', False, True, True),
-	'PAYPAL_CLIENT_ID' : Property('RESTful API client ID', str, '', 'paypal', False, True, True),
-	'PAYPAL_CLIENT_SECRET' : Property('RESTful API client secret', str, '', 'paypal', False, True, True),
-	'PAYPAL_PDT_ACCESS_TOKEN' : Property('Paypal Payment Data Transfer (PDT) access token', str, '', 'paypal', False, True, True),
-}
-
-
-def parse(typ, value):
-	p = parsers[typ]
-	v = p(value)
+def parse(name, value):
+	p = properties[name]
+	v = p.parser(value)
 	return v
 
 boolean_states = {'0': False, '1': True, 'false': False, 'no': False, 
 	'off': False, 'on': True, 'true': True, 'yes': True}
 
-def parse_bool(value):
+def boolean(value):
 	v = value.lower()
 	if v not in boolean_states:
 		raise ValueError, 'Not a boolean: %s' % v
 	return boolean_states[v]
-
-def parse_str(value):
-	return value.strip()
-
-def parse_int(value):
-	return int(value)
-
-def parse_float(value):
-	return int(value)
 		
-def parse_list(value):
+def string_list(value):
 	return filter(None, [v.strip() for v in value.split(',')])
 
-parsers = {
-	str : parse_str,
-	bool : parse_bool,
-	int : parse_int,
-	float : parse_float,
-	list : parse_list,
+def payment_gateway_list(value):
+	return [PaymentGateway.from_string(s) for s in string_list(value)]
+
+
+class Property:
+	def __init__(self, description, parser, defualt_value, in_args, in_file, in_db):
+		self.description = description
+		self.parser = parser
+		self.default_value = defualt_value
+		self.in_args = in_args
+		self.in_file = in_file
+		self.in_db = in_db
+
+properties = {
+	'VERSION' : Property('Software version', str, 'Unknown', False, False, False),
+	'PORT' : Property('Port number', int, 5000, True, True, False),
+	'DEBUG' : Property('Enable debug mode (use only for testing)', boolean, False, True, True, False),
+
+	'DATABASE_URL' : Property('SQLAlchemy database url', str, '', False, True, False),
+	'DATABASE_IN_MEMORY' : Property('Use empty in-memory database', boolean, False, False, False, False),
+	'DATABASE_CREATE' : Property('Create database', boolean, False, False, False, False),
+	
+	'TRACKER_URL' : Property('Externally accessible location of bug tracker', str, '', False, True, True),
+	'MAX_PLEDGE_AMOUNT' : Property('Maximum pledge amount', int, 100, False, True, True),
+	'PAYMENT_GATEWAYS' : Property('List of enabled payment gateways', payment_gateway_list, [PaymentGateway.PLAIN], False, True, True),
+		
+	'PAYPAL_SANDBOX' : Property('Use Paypal sandbox or live system', boolean, True, False, True, True),
+	'PAYPAL_RECEIVER_EMAIL' : Property('Email of the entity receiving payments; must match with other details like tokens, etc', str, '', False, True, True),
+	'PAYPAL_CLIENT_ID' : Property('RESTful API client ID', str, '', False, True, True),
+	'PAYPAL_CLIENT_SECRET' : Property('RESTful API client secret', str, '', False, True, True),
+	'PAYPAL_PDT_ACCESS_TOKEN' : Property('Paypal Payment Data Transfer (PDT) access token', str, '', False, True, True),
 }
 
 
@@ -79,6 +64,9 @@ class CommonConfig:
 		for name, prop in properties.items():
 			setattr(self, name, prop.default_value)
 		
+	def __getitem__(self, project_id):
+		return ProjectConfig(project_id)
+
 	def init(self, args):
 		config_file = args.config_file
 		if not os.path.isabs(config_file):
@@ -88,7 +76,7 @@ class CommonConfig:
 		
 		file_props = filter(lambda (k,v): v.in_file, properties.items())
 		for name, prop in file_props:
-			self._init_value_from_file(parser, prop.section, name.lower(), name)
+			self._init_value_from_file(parser, name)
 
 		if args.db_in_memory:
 			setattr(self, 'DATABASE_URL', 'sqlite://')
@@ -100,11 +88,19 @@ class CommonConfig:
 		self._init_version()
 		self._init_database()
 
-	def _init_value_from_file(self, parser, section, option, name):
+	def _init_value_from_file(self, parser, name):
+		option = name.lower()
+		section = 'general'
+		for prefix in ('paypal',):
+			if option.startswith(prefix):
+				section = prefix
+				option = option[len(prefix)+1:]
+				break
+		
 		if parser.has_option(section, option):
 			value = parser.get(section, option)
-			prop = properties[name]
-			value = parse(prop.typ, value)
+			value = parse(name, value)
+			print "%s.%s: %s" % (section, option, value)
 			setattr(self, name, value)
 
 	def _init_value_from_args(self, args, option, name):
@@ -141,11 +137,21 @@ class CommonConfig:
 	def _init_property(self, name):
 		setattr(self, name, properties[name].default_value)
 
-class ProjectConfig:
-	pass
 
-class ConfigurationException:
-	def __init__(self, message):
-		self.message = message
+class ProjectConfig:
+	def __init__(self, project_id):
+		self.project_id = project_id
+
+	def __getattr__(self, name):
+		if properties[name].in_db:
+			from bountyfunding_api.models import Config
+			prop = Config.query.filter_by(project_id=self.project_id, name=name.lower()).first()
+			if prop != None:
+				value = parse(name, prop.value)
+				return value
+		return getattr(config, name)
+
 
 config = CommonConfig()
+
+
