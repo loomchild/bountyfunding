@@ -67,6 +67,7 @@ class Payment(db.Model):
 	url = db.Column(db.String)
 	status = db.Column(db.Integer, nullable=False)
 	gateway = db.Column(db.Integer)
+	timestamp = db.Column(db.DateTime, nullable=False)
 
 	def __init__(self, project_id, sponsorship_id, gateway):
 		self.project_id = project_id
@@ -75,6 +76,7 @@ class Payment(db.Model):
 		self.gateway_id = ''
 		self.url = ''
 		self.status = PaymentStatus.INITIATED
+		self.timestamp = datetime.now()
 
 	def __repr__(self):
 		return '<Payment payment_id: "%s">' % self.payment_id
