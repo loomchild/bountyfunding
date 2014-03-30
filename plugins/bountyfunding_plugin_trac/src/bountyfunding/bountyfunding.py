@@ -96,7 +96,12 @@ class BountyFundingPlugin(Component):
 
 	def call_api(self, method, path, **kwargs):
 		url = self.api_url + path
-		return requests.request(method, url, params=kwargs)
+		try:
+			response = requests.request(method, url, params=kwargs)
+		except requests.exceptions.ConnectionError:
+			self.log.warn("Error connecting to BountyFunding API")
+			response = None
+		return response
 	
 	def convert_status(self, status):
 		return self.status_mapping[status]
@@ -179,7 +184,7 @@ class BountyFundingPlugin(Component):
 				status = self.convert_status(ticket.values['status'])
 				owner = ticket.values['owner']
 				tooltip = None
-				if request.status_code == 200 or request.status_code == 404:
+				if request != None and (request.status_code == 200 or request.status_code == 404):
 					sponsorships = self.get_sponsorships(identifier)
 					
 					pledged_amount = sum_amounts(sponsorships.values())
@@ -236,7 +241,7 @@ class BountyFundingPlugin(Component):
 						fragment.append(action)
 						
 				else:
-					fragment.append("Error occured")
+					fragment.append("[API Error]")
 	
 				#chrome = Chrome(self.env)
 				#chrome.add_jquery_ui(req)
@@ -244,9 +249,10 @@ class BountyFundingPlugin(Component):
 				add_stylesheet(req, 'htdocs/styles/bountyfunding.css')
 				add_script(req, 'htdocs/scripts/bountyfunding.js')
 
-				filter = Transformer('.//td[@headers="h_bounty"]/text()')
 				if tooltip != None:
+					filter = Transformer('.//td[@headers="h_bounty"]/text()')
 					stream |= filter.wrap(tag.span(title=tooltip))
+
 				filter = Transformer('.//td[@headers="h_bounty"]')
 				stream |= filter.attr("class", "bountyfunding")
 				stream |= filter.append(fragment)
@@ -396,10 +402,9 @@ class BountyFundingPlugin(Component):
 						self.call_api('DELETE', '/email/%s' % email.id), 
 				req.send_no_content()
 			if action == 'status':
-				try:
-					request = self.call_api('GET', '/version')
-				except requests.ConnectionError:
-					raise HTTPInternalError('Unable to connect to API')
+				request = self.call_api('GET', '/version')
+				if request == None:
+					raise HTTPInternalError('Unable to connect to BountyFunding API')
 				if request.status_code != 200:
 					raise HTTPInternalError('Invalid status code when connection to API' 
 							% request.status_code)
