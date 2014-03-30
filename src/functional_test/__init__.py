@@ -14,7 +14,7 @@ def setup():
 			"--config-file", "conf/bountyfunding_api.ini.sample",
 		], 
 		cwd=BOUNTYFUNDING_HOME, 
-		preexec_fn=os.setsid
+		preexec_fn=os.setsid,
 	)
 	time.sleep(2)	
 
@@ -23,3 +23,4 @@ def teardown():
 	print("Stopping BountyFunding API...")
 	# Based on http://stackoverflow.com/a/4791612/1106546, won't work on Windows
 	os.killpg(bountyfunding_process.pid, signal.SIGKILL)
+	

@@ -1,15 +1,12 @@
 
 from flask.ext.sqlalchemy import SQLAlchemy
 from enum import Enum 
-from bountyfunding_api import app
-from config import config
 from datetime import datetime
 from const import SponsorshipStatus, PaymentStatus, PaymentGateway
 #import logging
 
 
-app.config['SQLALCHEMY_DATABASE_URI'] = config.DATABASE_URL
-db = SQLAlchemy(app)
+db = SQLAlchemy()
 
 
 #logging.basicConfig()

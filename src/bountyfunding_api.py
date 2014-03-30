@@ -2,22 +2,30 @@
 
 from os import path
 from argparse import ArgumentParser
-from config import config
 from enum import Enum
+
+from bountyfunding_api import app
+from bountyfunding_api.models import db
+from config import config
 
 
 class Action(Enum):
 	RUN = 'run'
 	CREATE_DB = 'create-db'
 
+def init_db():
+	app.config['SQLALCHEMY_DATABASE_URI'] = config.DATABASE_URL
+	db.init_app(app)
+	# See http://piotr.banaszkiewicz.org/blog/2012/06/29/flask-sqlalchemy-init_app/, option 2
+	db.app = app
 
 def run():
-	from bountyfunding_api import app
+	init_db()
 	app.run(port=config.PORT, debug=config.DEBUG)
 
 def create_db():
-	from bountyfunding_api.models import db
 	print 'Creating dabase in %s' % config.DATABASE_URL
+	init_db()
 	db.create_all()
 
 
@@ -44,11 +52,11 @@ if __name__ == "__main__":
 			help='Port number')
 	
 	arg_parser.add_argument('--debug', 
-			action='store_true', default=False,
+			action='store_true', default=None,
 			help='Enable debug mode (use only for testing)')
 	
 	arg_parser.add_argument('--db-in-memory', 
-			action='store_const', const='sqlite://',
+			action='store_true', default=None,
 			help='Use empty in-memory database')
 
 	args = arg_parser.parse_args()

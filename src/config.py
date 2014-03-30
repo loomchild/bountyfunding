@@ -6,6 +6,7 @@ import argparse
 import subprocess
 from homer import BOUNTYFUNDING_HOME
 from const import PaymentGateway
+from bountyfunding_api.models import Config
 
 
 def parse(name, value):
@@ -143,13 +144,16 @@ class ProjectConfig:
 
 	def __getattr__(self, name):
 		if properties[name].in_db:
-			from bountyfunding_api.models import Config
-			prop = Config.query.filter_by(project_id=self.project_id, name=name.lower()).first()
+			prop = self._get_property(self.project_id, name.lower())
 			if prop != None:
 				value = parse(name, prop.value)
 				return value
 		return getattr(config, name)
 
+	def _get_property(self, project_id, name):
+		prop = Config.query.filter_by(project_id=project_id, name=name).first()
+		return prop
+		
 
 config = CommonConfig()
 
