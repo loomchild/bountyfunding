@@ -9,6 +9,9 @@ class SponsorshipStatus(Enum):
 	PLEDGED = 10
 	CONFIRMED = 20
 	VALIDATED = 30
+	TRANSFERRED = 40
+	REJECTED = 50
+	REFUNDED = 60
 
 class PaymentStatus(Enum):
 	INITIATED = 10

@@ -137,7 +137,8 @@ def delete_sponsorship(issue_ref, user_name):
 
 @app.route("/issue/<issue_ref>/sponsorship/<user_name>", methods=['PUT'])
 def update_sponsorship(issue_ref, user_name):
-	status = SponsorshipStatus.from_string(request.values.get('status')) 
+	status_string = request.values.get('status')
+	status = SponsorshipStatus.from_string(status_string) 
 	amount_string = request.values.get('amount')
 
 	issue = retrieve_issue(g.project_id, issue_ref)
@@ -149,17 +150,33 @@ def update_sponsorship(issue_ref, user_name):
 
 	if status != None:
 		if status == SponsorshipStatus.PLEDGED:
-			return jsonify(error='Can only change status to VALIDATED'), 400
-		if status == SponsorshipStatus.CONFIRMED:
+			return jsonify(error='Cannot change state to PLEDGED'), 400
+		elif status == SponsorshipStatus.CONFIRMED:
 			return jsonify(error='Confirm sponsorship by confirming the payment'), 400
-		if sponsorship.status != SponsorshipStatus.CONFIRMED:
-			return jsonify(error='Can only validate confirmed sponsorship'), 403
-		if status == sponsorship.status:
+		elif status == sponsorship.status:
 			return jsonify(error='Status already set'), 403
+		elif status == SponsorshipStatus.VALIDATED:
+			if (sponsorship.status != SponsorshipStatus.CONFIRMED
+					and sponsorship.status != SponsorshipStatus.REJECTED):
+				return jsonify(error='Can only validate confirmed sponsorship'), 403
+		elif status == SponsorshipStatus.TRANSFERRED:
+			if sponsorship.status != SponsorshipStatus.VALIDATED:
+				return jsonify(error='Can only transfer when sponsorship is validated'), 403
+		elif status == SponsorshipStatus.REJECTED:
+			if (sponsorship.status != SponsorshipStatus.CONFIRMED 
+					and sponsorship.status != SponsorshipStatus.VALIDATED):
+				return jsonify(error='Can only reject confirmed sponsorship'), 403
+		elif status == SponsorshipStatus.REFUNDED:
+			if sponsorship.status != SponsorshipStatus.REJECTED:
+				return jsonify(error='Can only refund rejected sponsorship'), 403
+		else:
+			return jsonify(error='Invalid status: %s' % status_string), 400
 
 		sponsorship.status = status
 
 	if amount_string != None:
+		if sponsorship.status != SponsorshipStatus.PLEDGED:
+			return jsonify(error='Can only change amount in PLEDGED state'), 403
 		try:
 			amount = int(amount_string)
 		except ValueError:
