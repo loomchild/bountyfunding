@@ -13,6 +13,9 @@ database_url = sqlite:///db/test.db
 # Externally accessible location of bug tracker
 tracker_url = http://localhost:8100
 
+# Admin user identifier
+admin = admin
+
 # Maximum pledge amount
 max_pledge_amount = 100
 

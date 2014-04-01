@@ -49,6 +49,7 @@ properties = {
 	'DATABASE_CREATE' : Property('Create database', boolean, False, False, False, False),
 	
 	'TRACKER_URL' : Property('Externally accessible location of bug tracker', str, '', False, True, True),
+	'ADMIN' : Property('Admin user identifier', str, '', False, True, True),
 	'MAX_PLEDGE_AMOUNT' : Property('Maximum pledge amount', int, 100, False, True, True),
 	'PAYMENT_GATEWAYS' : Property('List of enabled payment gateways', payment_gateway_list, [PaymentGateway.PLAIN], False, True, True),
 		

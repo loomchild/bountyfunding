@@ -159,6 +159,9 @@ def update_sponsorship(issue_ref, user_name):
 			if (sponsorship.status != SponsorshipStatus.CONFIRMED
 					and sponsorship.status != SponsorshipStatus.REJECTED):
 				return jsonify(error='Can only validate confirmed sponsorship'), 403
+			admin = retrieve_create_user(g.project_id, config.ADMIN)
+			body = 'User %s has validated his/her sponsorship. Please transfer the money to the developer.'% user_name
+			create_email(g.project_id, admin.user_id, issue.issue_id, body)
 		elif status == SponsorshipStatus.TRANSFERRED:
 			if sponsorship.status != SponsorshipStatus.VALIDATED:
 				return jsonify(error='Can only transfer when sponsorship is validated'), 403
@@ -166,6 +169,9 @@ def update_sponsorship(issue_ref, user_name):
 			if (sponsorship.status != SponsorshipStatus.CONFIRMED 
 					and sponsorship.status != SponsorshipStatus.VALIDATED):
 				return jsonify(error='Can only reject confirmed sponsorship'), 403
+			admin = retrieve_create_user(g.project_id, config.ADMIN)
+			body = 'User %s has rejected his/her sponsorship. Please refund the money to the user.'% user_name
+			create_email(g.project_id, admin.user_id, issue.issue_id, body)
 		elif status == SponsorshipStatus.REFUNDED:
 			if sponsorship.status != SponsorshipStatus.REJECTED:
 				return jsonify(error='Can only refund rejected sponsorship'), 403
