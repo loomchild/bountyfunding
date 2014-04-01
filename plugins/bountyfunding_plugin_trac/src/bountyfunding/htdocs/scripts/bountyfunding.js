@@ -5,11 +5,6 @@ $("#confirm-button").click(function() {
 	$("#confirm-options").show()
 })
 
-$("#confirm-cancel").click(function() {
-	$("#confirm-options").hide()
-	$("#confirm-button").show()
-})
-
 $("#confirm-options").hide()
 
 });

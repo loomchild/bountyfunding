@@ -215,13 +215,19 @@ class BountyFundingPlugin(Component):
 							gateway_tags.append(tag.input(type="submit", value="PayPal", name='PAYPAL_REST'))
 						if 'PAYPAL_STANDARD' in gateways:
 							gateway_tags.append(tag.input(type="submit", value="PayPal", name='PAYPAL_STANDARD'))
-						gateway_tags.append(tag.input(type="button", value="Cancel", id="confirm-cancel"))
-
 						if user_sponsorship.status == 'PLEDGED':
-							action = tag.form(tag.input(type="button", value=u"Confirm %d\u20ac" % user_sponsorship.amount, id="confirm-button"), tag.span(gateway_tags, id="confirm-options"), method="post", action="/ticket/%s/confirm" % identifier)
+							action = tag.form(
+								tag.input(type="button", name="confirm", value=u"Confirm %d\u20ac" % user_sponsorship.amount, id="confirm-button"), 
+								tag.span(gateway_tags, id="confirm-options"), 
+								tag.input(type="submit", name="cancel", value="Cancel"), 
+								method="post", action="/ticket/%s/confirm" % identifier)
 						else:
 							#TODO: should be separate action
-							action = tag.form(tag.input(name="amount", type="text", size="3", value="0", pattern="[0-9]*", title="money amount"), tag.input(type="button", value="Pledge & Confirm", id="confirm-button"), tag.span(gateway_tags, id="confirm-options"), method="post", action="/ticket/%s/confirm" % identifier)
+							action = tag.form(
+								tag.input(name="amount", type="text", size="3", value="0", pattern="[0-9]*", title="money amount"), 
+								tag.input(type="button", value="Pledge & Confirm", id="confirm-button"), 
+								tag.span(gateway_tags, id="confirm-options"), 
+								method="post", action="/ticket/%s/confirm" % identifier)
 
 					elif status == 'COMPLETED' and user_sponsorship.status in ('CONFIRMED', 'REJECTED', 'VALIDATED'):
 						action = tag.form(method="post", action="/ticket/%s/validate" % identifier)
@@ -308,74 +314,81 @@ class BountyFundingPlugin(Component):
 					else:
 						self.update_ticket(ticket_id, True, user)
 			elif action == 'confirm':
-				if req.args.get('PLAIN'):
-					gateway = 'PLAIN'
-				elif req.args.get('PAYPAL_REST'):
-					gateway = 'PAYPAL_REST'
-				elif req.args.get('PAYPAL_STANDARD'):
-					gateway = 'PAYPAL_STANDARD'
-				else:
-					#TODO: raise exception instead
-					gateway = None
-				
-				response = self.call_api('GET', '/issue/%s/sponsorship/%s' % (ticket_id, user))
-				if response.status_code == 404:
-					ticket = Ticket(self.env, ticket_id)
-					# Security: can't sponsor not started tickets
-					status = self.convert_status(ticket['status'])
-					if status != 'STARTED':
-						#TODO: prevent confirming, exception would be much nicer
-						gateway = None
+				if req.args.get('cancel'):
+					response = self.call_api('DELETE', '/issue/%s/sponsorship/%s' % (ticket_id, user))
+					if response.status_code != 200:
+						add_warning(req, "Unable to cancel pledge - %s" % response.json().get('error', ''))
 					else:
-						amount = req.args.get('amount')
-						response = self.call_api('POST', '/issue/%s/sponsorships' % ticket_id, user=user, amount=amount)
-						if response.status_code != 200:
-							add_warning(req, "Unable to pledge - %s" % response.json().get('error', ''))
+						self.update_ticket(ticket_id, True, user)
+				else:
+					if req.args.get('PLAIN'):
+						gateway = 'PLAIN'
+					elif req.args.get('PAYPAL_REST'):
+						gateway = 'PAYPAL_REST'
+					elif req.args.get('PAYPAL_STANDARD'):
+						gateway = 'PAYPAL_STANDARD'
+					else:
+						#TODO: raise exception instead
+						gateway = None
+					
+					response = self.call_api('GET', '/issue/%s/sponsorship/%s' % (ticket_id, user))
+					if response.status_code == 404:
+						ticket = Ticket(self.env, ticket_id)
+						# Security: can't sponsor not started tickets
+						status = self.convert_status(ticket['status'])
+						if status != 'STARTED':
 							#TODO: prevent confirming, exception would be much nicer
 							gateway = None
-
-				if gateway == 'PLAIN':
-					pay = req.args.get('pay')
-					card_number = req.args.get('card_number')
-					card_date = req.args.get('card_date')
-					error = "" 
-				
-					if pay != None:
-						if not card_number or not card_date:
-							error = 'Please specify card number and expiry date'
-						if card_number and card_date:
-							response = self.call_api('POST', 
-									'/issue/%s/sponsorship/%s/payments' % (ticket_id, user), 
-									gateway='PLAIN')
-							if response.status_code != 200:
-								error = 'API cannot create plain payment'
-							response = self.call_api('PUT', 
-									'/issue/%s/sponsorship/%s/payment' % (ticket_id, user), 
-									status='CONFIRMED', card_number=card_number, card_date=card_date)
-							if response.status_code != 200:
-								error = 'API refused your plain payment'
-							else:
-								self.update_ticket(ticket_id, True, user, 'Confirmed sponsorship.')
-							
-					if pay == None or error:
-						return "payment.html", {'error': error}, None
-	
-				elif gateway == 'PAYPAL_REST' or gateway == 'PAYPAL_STANDARD':
-					return_url = req.abs_href('ticket', ticket_id, 'pay')
-					response = self.call_api('POST', 
-							'/issue/%s/sponsorship/%s/payments' % (ticket_id, user), 
-							gateway=gateway, return_url=return_url)
-					if response.status_code == 200:
-						response = self.call_api('GET', 
-								'/issue/%s/sponsorship/%s/payment' % (ticket_id, user))
-						if response.status_code == 200:
-							redirect_url = response.json().get('url')
-							req.redirect(redirect_url)
 						else:
-							error = 'API cannot retrieve created PayPal payment'
-					else:
-						error = 'API cannot create PayPal payment'
-					add_warning(req, error)
+							amount = req.args.get('amount')
+							response = self.call_api('POST', '/issue/%s/sponsorships' % ticket_id, user=user, amount=amount)
+							if response.status_code != 200:
+								add_warning(req, "Unable to pledge - %s" % response.json().get('error', ''))
+								#TODO: prevent confirming, exception would be much nicer
+								gateway = None
+
+					if gateway == 'PLAIN':
+						pay = req.args.get('pay')
+						card_number = req.args.get('card_number')
+						card_date = req.args.get('card_date')
+						error = "" 
+					
+						if pay != None:
+							if not card_number or not card_date:
+								error = 'Please specify card number and expiry date'
+							if card_number and card_date:
+								response = self.call_api('POST', 
+										'/issue/%s/sponsorship/%s/payments' % (ticket_id, user), 
+										gateway='PLAIN')
+								if response.status_code != 200:
+									error = 'API cannot create plain payment'
+								response = self.call_api('PUT', 
+										'/issue/%s/sponsorship/%s/payment' % (ticket_id, user), 
+										status='CONFIRMED', card_number=card_number, card_date=card_date)
+								if response.status_code != 200:
+									error = 'API refused your plain payment'
+								else:
+									self.update_ticket(ticket_id, True, user, 'Confirmed sponsorship.')
+								
+						if pay == None or error:
+							return "payment.html", {'error': error}, None
+		
+					elif gateway == 'PAYPAL_REST' or gateway == 'PAYPAL_STANDARD':
+						return_url = req.abs_href('ticket', ticket_id, 'pay')
+						response = self.call_api('POST', 
+								'/issue/%s/sponsorship/%s/payments' % (ticket_id, user), 
+								gateway=gateway, return_url=return_url)
+						if response.status_code == 200:
+							response = self.call_api('GET', 
+									'/issue/%s/sponsorship/%s/payment' % (ticket_id, user))
+							if response.status_code == 200:
+								redirect_url = response.json().get('url')
+								req.redirect(redirect_url)
+							else:
+								error = 'API cannot retrieve created PayPal payment'
+						else:
+							error = 'API cannot create PayPal payment'
+						add_warning(req, error)
 			
 			elif action == 'pay':
 				args = dict(req.args)

@@ -109,8 +109,11 @@ def get_sponsorship(issue_ref, user_name):
 
 	else:
 		sponsorship = retrieve_sponsorship(issue.issue_id, user.user_id)
-		status = SponsorshipStatus.to_string(sponsorship.status)
-		response = jsonify(status=status)
+		if sponsorship == None:
+			response = jsonify(error='Sponsorship not found'), 404
+		else:
+			status = SponsorshipStatus.to_string(sponsorship.status)
+			response = jsonify(status=status)
 	
 	return response
 
