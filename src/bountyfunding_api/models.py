@@ -1,15 +1,12 @@
 
 from flask.ext.sqlalchemy import SQLAlchemy
 from enum import Enum 
-from bountyfunding_api import app
-import config
 from datetime import datetime
 from const import SponsorshipStatus, PaymentStatus, PaymentGateway
 #import logging
 
 
-app.config['SQLALCHEMY_DATABASE_URI'] = config.DATABASE_URL
-db = SQLAlchemy(app)
+db = SQLAlchemy()
 
 
 #logging.basicConfig()
@@ -67,6 +64,7 @@ class Payment(db.Model):
 	url = db.Column(db.String)
 	status = db.Column(db.Integer, nullable=False)
 	gateway = db.Column(db.Integer)
+	timestamp = db.Column(db.DateTime, nullable=False)
 
 	def __init__(self, project_id, sponsorship_id, gateway):
 		self.project_id = project_id
@@ -75,6 +73,7 @@ class Payment(db.Model):
 		self.gateway_id = ''
 		self.url = ''
 		self.status = PaymentStatus.INITIATED
+		self.timestamp = datetime.now()
 
 	def __repr__(self):
 		return '<Payment payment_id: "%s">' % self.payment_id
@@ -116,3 +115,18 @@ class Change(db.Model):
 	def __repr__(self):
 		return '<Change change_id: "%s"' % (self.change_id,)
 
+class Config(db.Model):
+	config_id = db.Column(db.Integer, primary_key=True)
+	project_id = db.Column(db.Integer, nullable=False)
+	name = db.Column(db.String(64), nullable=False)
+	value = db.Column(db.String(256), nullable=False)
+	
+	def __init__(self, project_id, name, value):
+		self.project_id = project_id
+		self.name = name
+		self.value = value
+
+	def __repr__(self):
+		return '<Config %s-%s: "%s"' % (self.project_id, self.name, self.value)
+
+db.Index('idx_config_pid_name', Config.project_id, Config.name, unique=True)

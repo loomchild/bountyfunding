@@ -8,7 +8,7 @@ browser = None
 def setup():
 	global browser
 	browser = webdriver.Firefox()
-	browser.implicitly_wait(3)
+	browser.implicitly_wait(5)
 	browser.maximize_window()
 
 def teardown():

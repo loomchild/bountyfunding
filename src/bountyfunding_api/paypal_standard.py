@@ -5,24 +5,26 @@ import urllib
 import httplib2
 httplib2.debuglevel = 1
 
-import config
+from config import config
 from models import db, Payment
 from const import PaymentGateway
 
-if config.PAYPAL_SANDBOX:
-	PAYPAL_URL = 'https://www.sandbox.paypal.com'
-else: 
-	PAYPAL_URL = 'https://www.paypal.com'
-PAYPAL_URL += '/cgi-bin/webscr'
+def get_paypal_url(project_id):
+	if config[project_id].PAYPAL_SANDBOX:
+		paypal_url = 'https://www.sandbox.paypal.com'
+	else: 
+		paypal_url = 'https://www.paypal.com'
+	paypal_url += '/cgi-bin/webscr'
+	return paypal_url
 
 
-def create_payment(sponsorship, return_url):
+def create_payment(project_id, sponsorship, return_url):
 	"""
 	Returns authorization URL
 	"""
 	args = {
 		"cmd": "_donations",
-		"business": config.PAYPAL_RECEIVER_EMAIL,
+		"business": config[project_id].PAYPAL_RECEIVER_EMAIL,
 		"item_name": "Bounty",
 		"amount": sponsorship.amount,
 		"currency_code": "EUR",
@@ -31,14 +33,14 @@ def create_payment(sponsorship, return_url):
 		"return": return_url,
 		"cancel_return": return_url
 	}
-	redirect_url = PAYPAL_URL + "?" + urllib.urlencode(args)
+	redirect_url = get_paypal_url(project_id) + "?" + urllib.urlencode(args)
 
 	payment = Payment(sponsorship.project_id, sponsorship.sponsorship_id, PaymentGateway.PAYPAL_STANDARD)
 	payment.url = redirect_url
 	return payment
 
 
-def process_payment(sponsorship, payment, details):
+def process_payment(project_id, sponsorship, payment, details):
 	"""
 	Validates payment
 	"""
@@ -46,7 +48,7 @@ def process_payment(sponsorship, payment, details):
 
 	payload = {
 		"cmd": "_notify-synch",
-		"at": config.PAYPAL_PDT_ACCESS_TOKEN,
+		"at": config[project_id].PAYPAL_PDT_ACCESS_TOKEN,
 		"tx": transaction_id
 	}
 
@@ -54,7 +56,7 @@ def process_payment(sponsorship, payment, details):
 	if db.session.query(db.exists().where(Payment.gateway_id==transaction_id)).scalar():
 		return False
 
-	r = requests.post(PAYPAL_URL, data=payload)
+	r = requests.post(get_paypal_url(project_id), data=payload)
 	
 	lines = r.text.strip().splitlines()
 	
@@ -72,7 +74,7 @@ def process_payment(sponsorship, payment, details):
 		retrieved_payment[key] = urllib.unquote_plus(value)
 
 	# Check recipient email
-	if retrieved_payment['business'] != config.PAYPAL_RECEIVER_EMAIL:
+	if retrieved_payment['business'] != config[project_id].PAYPAL_RECEIVER_EMAIL:
 		return False
 
 	# Check currency

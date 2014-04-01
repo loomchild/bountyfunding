@@ -2,15 +2,21 @@ import requests
 from collections import namedtuple
 
 
+DEFAULT_API_URL = 'http://localhost:5000'
+
+
 # TODO: Covert to SDK and use in plugins
 class Api:
 
-	def __init__(self, url):
+	def __init__(self, project_id, url=DEFAULT_API_URL):
+		self.project_id = project_id
 		self.url = url
 
 	def call(self, method, path, **kwargs):
 		full_url = self.url + path
-		return requests.request(method, full_url, params=kwargs)
+		params = kwargs
+		params['at'] = self.project_id
+		return requests.request(method, full_url, params=params)
 
 	def get(self, path, **kwargs):
 		return self.call('GET', path, **kwargs)
@@ -25,9 +31,6 @@ class Api:
 		return self.call('DELETE', path, **kwargs)
 
 	#TODO: Add ensure calls that throw an exception if code is not 200/201
-
-API_URL = 'http://localhost:5000'
-api = Api(API_URL)
 
 
 def dict_to_object(d):

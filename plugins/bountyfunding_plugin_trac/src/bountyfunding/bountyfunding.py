@@ -96,7 +96,12 @@ class BountyFundingPlugin(Component):
 
 	def call_api(self, method, path, **kwargs):
 		url = self.api_url + path
-		return requests.request(method, url, params=kwargs)
+		try:
+			response = requests.request(method, url, params=kwargs)
+		except requests.exceptions.ConnectionError:
+			self.log.warn("Error connecting to BountyFunding API")
+			response = None
+		return response
 	
 	def convert_status(self, status):
 		return self.status_mapping[status]
@@ -138,7 +143,7 @@ class BountyFundingPlugin(Component):
 		link = self.env.abs_href.ticket(ticket_id)
 
 		email = GenericNotifyEmail(self.env, recipient, body, link)
-		email.notify('loomchild', subject)
+		email.notify('', subject)
 
 	def format_email_subject(self, ticket):
 		template = self.config.get('notification','ticket_subject_template')
@@ -178,7 +183,8 @@ class BountyFundingPlugin(Component):
 				sponsorships = {}
 				status = self.convert_status(ticket.values['status'])
 				owner = ticket.values['owner']
-				if request.status_code == 200 or request.status_code == 404:
+				tooltip = None
+				if request != None and (request.status_code == 200 or request.status_code == 404):
 					sponsorships = self.get_sponsorships(identifier)
 					
 					pledged_amount = sum_amounts(sponsorships.values())
@@ -188,7 +194,7 @@ class BountyFundingPlugin(Component):
 					tooltip = u"Pledged: %d\u20ac" % pledged_amount
 					
 					if status == 'STARTED' or status == 'COMPLETED':
-						confirmed_amount = sum_amounts(sponsorships.values(), ('CONFIRMED', 'VALIDATED'))
+						confirmed_amount = sum_amounts(sponsorships.values(), ('CONFIRMED', 'VALIDATED', 'REJECTED', 'TRANSFERRED', 'REFUNDED'))
 						tooltip += u" \nConfirmed: %d\u20ac" % confirmed_amount
 					if status == 'COMPLETED':
 						validated_amount = sum_amounts(sponsorships.values(), 'VALIDATED')
@@ -196,7 +202,6 @@ class BountyFundingPlugin(Component):
 					
 					# Action
 					action = None
-						
 					if (((status == 'STARTED' or status == 'COMPLETED') 
 							and user_sponsorship.status == 'PLEDGED') 
 						or (status == 'STARTED' and user != None and user != owner
@@ -210,22 +215,31 @@ class BountyFundingPlugin(Component):
 							gateway_tags.append(tag.input(type="submit", value="PayPal", name='PAYPAL_REST'))
 						if 'PAYPAL_STANDARD' in gateways:
 							gateway_tags.append(tag.input(type="submit", value="PayPal", name='PAYPAL_STANDARD'))
-						gateway_tags.append(tag.input(type="button", value="Cancel", id="confirm-cancel"))
-
 						if user_sponsorship.status == 'PLEDGED':
-							action = tag.form(tag.input(type="button", value=u"Confirm %d\u20ac" % user_sponsorship.amount, id="confirm-button"), tag.span(gateway_tags, id="confirm-options"), method="post", action="/ticket/%s/confirm" % identifier)
+							action = tag.form(
+								tag.input(type="button", name="confirm", value=u"Confirm %d\u20ac" % user_sponsorship.amount, id="confirm-button"), 
+								tag.span(gateway_tags, id="confirm-options"), 
+								tag.input(type="submit", name="cancel", value="Cancel"), 
+								method="post", action="/ticket/%s/confirm" % identifier)
 						else:
 							#TODO: should be separate action
-							action = tag.form(tag.input(name="amount", type="text", size="3", value="0"), tag.input(type="button", value="Pledge & Confirm", id="confirm-button"), tag.span(gateway_tags, id="confirm-options"), method="post", action="/ticket/%s/confirm" % identifier)
+							action = tag.form(
+								tag.input(name="amount", type="text", size="3", value="0", pattern="[0-9]*", title="money amount"), 
+								tag.input(type="button", value="Pledge & Confirm", id="confirm-button"), 
+								tag.span(gateway_tags, id="confirm-options"), 
+								method="post", action="/ticket/%s/confirm" % identifier)
 
-					elif status == 'COMPLETED' and user_sponsorship.status == 'CONFIRMED':
-						action = tag.form(tag.input(type="submit", name='accept', value=u"Validate %d\u20ac" % user_sponsorship.amount), method="post", action="/ticket/%s/validate" % identifier)
-
+					elif status == 'COMPLETED' and user_sponsorship.status in ('CONFIRMED', 'REJECTED', 'VALIDATED'):
+						action = tag.form(method="post", action="/ticket/%s/validate" % identifier)
+						if user_sponsorship.status == 'CONFIRMED' or user_sponsorship.status == 'REJECTED':
+							action.append(tag.input(type="submit", name='validate', value=u"Validate %d\u20ac" % user_sponsorship.amount))
+						if user_sponsorship.status == 'CONFIRMED' or user_sponsorship.status == 'VALIDATED':
+							action.append(tag.input(type="submit", name='reject', value="Reject"))
 					elif (status == 'READY' and user != None):
 						if user_sponsorship.status == None:
-							action = tag.form(tag.input(name="amount", type="text", size="3", value=user_sponsorship.amount), tag.input(type="submit", value="Pledge"), method="post", action="/ticket/%s/sponsor" % identifier)
+							action = tag.form(tag.input(name="amount", type="text", size="3", value=user_sponsorship.amount, pattern="[0-9]*", title="money amount"), tag.input(type="submit", value="Pledge"), method="post", action="/ticket/%s/sponsor" % identifier)
 						elif user_sponsorship.status == 'PLEDGED':
-							action = tag.form(tag.input(name="amount", type="text", size="3", value=user_sponsorship.amount), tag.input(type="submit", name="update", value="Update"), tag.input(type="submit", name="cancel", value="Cancel"), method="post", action="/ticket/%s/update_sponsorship" % identifier)
+							action = tag.form(tag.input(name="amount", type="text", size=3, value=user_sponsorship.amount, pattern="[0-9]*", title="money amount"), tag.input(type="submit", name="update", value="Update"), tag.input(type="submit", name="cancel", value="Cancel"), method="post", action="/ticket/%s/update_sponsorship" % identifier)
 					
 					elif (user == None):
 						action = tag.span(u"\u00A0", tag.a("Login", href="/login"), " or ", tag.a("Register", href="/register"), " to sponsor")
@@ -235,7 +249,7 @@ class BountyFundingPlugin(Component):
 						fragment.append(action)
 						
 				else:
-					fragment.append("Error occured")
+					fragment.append("[API Error]")
 	
 				#chrome = Chrome(self.env)
 				#chrome.add_jquery_ui(req)
@@ -243,8 +257,10 @@ class BountyFundingPlugin(Component):
 				add_stylesheet(req, 'htdocs/styles/bountyfunding.css')
 				add_script(req, 'htdocs/scripts/bountyfunding.js')
 
-				filter = Transformer('.//td[@headers="h_bounty"]/text()')
-				stream |= filter.wrap(tag.span(title=tooltip))
+				if tooltip != None:
+					filter = Transformer('.//td[@headers="h_bounty"]/text()')
+					stream |= filter.wrap(tag.span(title=tooltip))
+
 				filter = Transformer('.//td[@headers="h_bounty"]')
 				stream |= filter.attr("class", "bountyfunding")
 				stream |= filter.append(fragment)
@@ -298,74 +314,81 @@ class BountyFundingPlugin(Component):
 					else:
 						self.update_ticket(ticket_id, True, user)
 			elif action == 'confirm':
-				if req.args.get('PLAIN'):
-					gateway = 'PLAIN'
-				elif req.args.get('PAYPAL_REST'):
-					gateway = 'PAYPAL_REST'
-				elif req.args.get('PAYPAL_STANDARD'):
-					gateway = 'PAYPAL_STANDARD'
-				else:
-					#TODO: raise exception instead
-					gateway = None
-				
-				response = self.call_api('GET', '/issue/%s/sponsorship/%s' % (ticket_id, user))
-				if response.status_code == 404:
-					ticket = Ticket(self.env, ticket_id)
-					# Security: can't sponsor not started tickets
-					status = self.convert_status(ticket['status'])
-					if status != 'STARTED':
-						#TODO: prevent confirming, exception would be much nicer
-						gateway = None
+				if req.args.get('cancel'):
+					response = self.call_api('DELETE', '/issue/%s/sponsorship/%s' % (ticket_id, user))
+					if response.status_code != 200:
+						add_warning(req, "Unable to cancel pledge - %s" % response.json().get('error', ''))
 					else:
-						amount = req.args.get('amount')
-						response = self.call_api('POST', '/issue/%s/sponsorships' % ticket_id, user=user, amount=amount)
-						if response.status_code != 200:
-							add_warning(req, "Unable to pledge - %s" % response.json().get('error', ''))
+						self.update_ticket(ticket_id, True, user)
+				else:
+					if req.args.get('PLAIN'):
+						gateway = 'PLAIN'
+					elif req.args.get('PAYPAL_REST'):
+						gateway = 'PAYPAL_REST'
+					elif req.args.get('PAYPAL_STANDARD'):
+						gateway = 'PAYPAL_STANDARD'
+					else:
+						#TODO: raise exception instead
+						gateway = None
+					
+					response = self.call_api('GET', '/issue/%s/sponsorship/%s' % (ticket_id, user))
+					if response.status_code == 404:
+						ticket = Ticket(self.env, ticket_id)
+						# Security: can't sponsor not started tickets
+						status = self.convert_status(ticket['status'])
+						if status != 'STARTED':
 							#TODO: prevent confirming, exception would be much nicer
 							gateway = None
-
-				if gateway == 'PLAIN':
-					pay = req.args.get('pay')
-					card_number = req.args.get('card_number')
-					card_date = req.args.get('card_date')
-					error = "" 
-				
-					if pay != None:
-						if not card_number or not card_date:
-							error = 'Please specify card number and expiry date'
-						if card_number and card_date:
-							response = self.call_api('POST', 
-									'/issue/%s/sponsorship/%s/payments' % (ticket_id, user), 
-									gateway='PLAIN')
-							if response.status_code != 200:
-								error = 'API cannot create plain payment'
-							response = self.call_api('PUT', 
-									'/issue/%s/sponsorship/%s/payment' % (ticket_id, user), 
-									status='CONFIRMED', card_number=card_number, card_date=card_date)
-							if response.status_code != 200:
-								error = 'API refused your plain payment'
-							else:
-								self.update_ticket(ticket_id, True, user, 'Confirmed sponsorship.')
-							
-					if pay == None or error:
-						return "payment.html", {'error': error}, None
-	
-				elif gateway == 'PAYPAL_REST' or gateway == 'PAYPAL_STANDARD':
-					return_url = req.abs_href('ticket', ticket_id, 'pay')
-					response = self.call_api('POST', 
-							'/issue/%s/sponsorship/%s/payments' % (ticket_id, user), 
-							gateway=gateway, return_url=return_url)
-					if response.status_code == 200:
-						response = self.call_api('GET', 
-								'/issue/%s/sponsorship/%s/payment' % (ticket_id, user))
-						if response.status_code == 200:
-							redirect_url = response.json().get('url')
-							req.redirect(redirect_url)
 						else:
-							error = 'API cannot retrieve created PayPal payment'
-					else:
-						error = 'API cannot create PayPal payment'
-					add_warning(req, error)
+							amount = req.args.get('amount')
+							response = self.call_api('POST', '/issue/%s/sponsorships' % ticket_id, user=user, amount=amount)
+							if response.status_code != 200:
+								add_warning(req, "Unable to pledge - %s" % response.json().get('error', ''))
+								#TODO: prevent confirming, exception would be much nicer
+								gateway = None
+
+					if gateway == 'PLAIN':
+						pay = req.args.get('pay')
+						card_number = req.args.get('card_number')
+						card_date = req.args.get('card_date')
+						error = "" 
+					
+						if pay != None:
+							if not card_number or not card_date:
+								error = 'Please specify card number and expiry date'
+							if card_number and card_date:
+								response = self.call_api('POST', 
+										'/issue/%s/sponsorship/%s/payments' % (ticket_id, user), 
+										gateway='PLAIN')
+								if response.status_code != 200:
+									error = 'API cannot create plain payment'
+								response = self.call_api('PUT', 
+										'/issue/%s/sponsorship/%s/payment' % (ticket_id, user), 
+										status='CONFIRMED', card_number=card_number, card_date=card_date)
+								if response.status_code != 200:
+									error = 'API refused your plain payment'
+								else:
+									self.update_ticket(ticket_id, True, user, 'Confirmed sponsorship.')
+								
+						if pay == None or error:
+							return "payment.html", {'error': error}, None
+		
+					elif gateway == 'PAYPAL_REST' or gateway == 'PAYPAL_STANDARD':
+						return_url = req.abs_href('ticket', ticket_id, 'pay')
+						response = self.call_api('POST', 
+								'/issue/%s/sponsorship/%s/payments' % (ticket_id, user), 
+								gateway=gateway, return_url=return_url)
+						if response.status_code == 200:
+							response = self.call_api('GET', 
+									'/issue/%s/sponsorship/%s/payment' % (ticket_id, user))
+							if response.status_code == 200:
+								redirect_url = response.json().get('url')
+								req.redirect(redirect_url)
+							else:
+								error = 'API cannot retrieve created PayPal payment'
+						else:
+							error = 'API cannot create PayPal payment'
+						add_warning(req, error)
 			
 			elif action == 'pay':
 				args = dict(req.args)
@@ -376,10 +399,17 @@ class BountyFundingPlugin(Component):
 					self.update_ticket(ticket_id, True, user, 'Confirmed sponsorship.')
 					add_notice(req, "Thank you for your payment. Your transaction has been completed, and a receipt for your purchase has been emailed to you.")
 			elif action == 'validate':
-				response = self.call_api('PUT', '/issue/%s/sponsorship/%s' % (ticket_id, user), 
+				if req.args.get('validate'):
+					response = self.call_api('PUT', '/issue/%s/sponsorship/%s' % (ticket_id, user), 
 						status='VALIDATED')
-				if response.status_code == 200:
-					self.update_ticket(ticket_id, True, user, 'Validated sponsorship.')
+					if response.status_code == 200:
+						self.update_ticket(ticket_id, True, user, 'Validated sponsorship.')
+				elif req.args.get('reject'):
+					response = self.call_api('PUT', '/issue/%s/sponsorship/%s' % (ticket_id, user), 
+						status='REJECTED')
+					if response.status_code == 200:
+						self.update_ticket(ticket_id, True, user, 'Rejected sponsorship.')
+
 
 			req.redirect('/ticket/%s' % ticket_id)
 		
@@ -394,10 +424,9 @@ class BountyFundingPlugin(Component):
 						self.call_api('DELETE', '/email/%s' % email.id), 
 				req.send_no_content()
 			if action == 'status':
-				try:
-					request = self.call_api('GET', '/version')
-				except requests.ConnectionError:
-					raise HTTPInternalError('Unable to connect to API')
+				request = self.call_api('GET', '/version')
+				if request == None:
+					raise HTTPInternalError('Unable to connect to BountyFunding API')
 				if request.status_code != 200:
 					raise HTTPInternalError('Invalid status code when connection to API' 
 							% request.status_code)

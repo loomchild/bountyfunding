@@ -3,26 +3,29 @@ import paypalrestsdk
 import httplib2
 httplib2.debuglevel = 1
 
-import config
+from config import config
 from models import Payment
 from const import PaymentGateway
 
-def init_sdk():
-	if config.PAYPAL_SANDBOX:
+def init_sdk(project_id):
+	if config[project_id].PAYPAL_SANDBOX:
 		mode = 'sandbox'
 	else:
 		mode = 'live' 
 
 	paypalrestsdk.configure({
 	  "mode": mode,
-	  "client_id": config.PAYPAL_CLIENT_ID,
-	  "client_secret": config.PAYPAL_CLIENT_SECRET })
+	  "client_id": config[project_id].PAYPAL_CLIENT_ID,
+	  "client_secret": config[project_id].PAYPAL_CLIENT_SECRET })
 
 
-def create_payment(sponsorship, return_url):
+def create_payment(project_id, sponsorship, return_url):
 	"""
 	Returns authorization URL
 	"""
+	
+	init_sdk(project_id)
+
 	created_payment = paypalrestsdk.Payment({
 		"intent": "sale",
 		"payer": {
@@ -60,12 +63,11 @@ def create_payment(sponsorship, return_url):
 		return None
 
 
-def process_payment(sponsorship, payment, details):
+def process_payment(project_id, sponsorship, payment, details):
+	init_sdk(project_id)
 	payer_id = details.get('PayerID')
 	retrieved_payment = paypalrestsdk.Payment.find(payment.gateway_id)
 	retrieved_payment.execute({"payer_id": payer_id})
 	# TODO: Validate details otherwise someone can reuse a transaction
 	return retrieved_payment.state == 'approved'
 
-
-init_sdk()

@@ -131,7 +131,7 @@ def test_validate():
 
 	browser.get(ticket_url)
 	bf = get_bountyfunding()
-	validate_button = bf.find_element_by_name('accept')
+	validate_button = bf.find_element_by_name('validate')
 	validate_button.click()
 	
 	# Check if confirmation was succesful

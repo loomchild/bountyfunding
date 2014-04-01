@@ -6,135 +6,156 @@ import argparse
 import subprocess
 from homer import BOUNTYFUNDING_HOME
 from const import PaymentGateway
+from bountyfunding_api.models import Config
 
 
-VERSION = 'Unknown'
+def parse(name, value):
+	p = properties[name]
+	v = p.parser(value)
+	return v
 
+boolean_states = {'0': False, '1': True, 'false': False, 'no': False, 
+	'off': False, 'on': True, 'true': True, 'yes': True}
 
-PORT = 5000
-DEBUG = True
-
-
-TRACKER_URL = ''
-
-DATABASE_URL = ''
-DATABASE_IN_MEMORY = False
-DATABASE_CREATE = False
-
-PROJECT_DELETE_ALLOW = False
-
-MAX_PLEDGE_AMOUNT = 100
-
-PAYMENT_GATEWAYS = [PaymentGateway.PLAIN]
-
-
-PAYPAL_SANDBOX = True
-PAYPAL_RECEIVER_EMAIL = ''
-
-PAYPAL_CLIENT_ID = ''
-PAYPAL_CLIENT_SECRET = ''
-
-PAYPAL_PDT_ACCESS_TOKEN = ''
-
-
-class ConfigurationException:
-	def __init__(self, message):
-		self.message = message
-
-def init(args):
-	config_file = args.config_file
-	if not os.path.isabs(config_file):
-		config_file = os.path.abspath(os.path.join(BOUNTYFUNDING_HOME, config_file))
-
-	# Read file
-	parser = ConfigParser.RawConfigParser()
-	parser.readfp(open(config_file))
-	
-	init_version()
-
-	global PORT
-	PORT = get(parser, 'general', 'port', PORT, args.port, type=int)
-
-	global DEBUG
-	DEBUG = get(parser, 'general', 'debug', DEBUG, args.debug, type=bool)
-	
-	global TRACKER_URL
-	TRACKER_URL = get(parser, 'general', 'tracker_url', TRACKER_URL).strip()
-
-	database_url = get(parser, 'general', 'database_url', DATABASE_URL, args.db_in_memory).strip()
-	init_database(database_url)
-
-	global PROJECT_DELETE_ALLOW
-	PROJECT_DELETE_ALLOW = get(parser, 'general', 'project_delete_allow', PROJECT_DELETE_ALLOW, args.project_delete_allow, type=bool)
-
-	global MAX_PLEDGE_AMOUNT
-	MAX_PLEDGE_AMOUNT = get(parser, 'general', 'max_pledge_amount', MAX_PLEDGE_AMOUNT, type=int)
-
-	global PAYMENT_GATEWAYS
-	PAYMENT_GATEWAYS = get(parser, 'general', 'payment_gateways', PAYMENT_GATEWAYS, type=list)
-	PAYMENT_GATEWAYS = [PaymentGateway.from_string(pg) for pg in PAYMENT_GATEWAYS]
-
-	global PAYPAL_SANDBOX, PAYPAL_RECEIVER_EMAIL
-	PAYPAL_SANDBOX = get(parser, 'paypal', 'sandbox', PAYPAL_SANDBOX, type=bool)
-	PAYPAL_RECEIVER_EMAIL = get(parser, 'paypal', 'receiver_email', PAYPAL_RECEIVER_EMAIL)
-	
-	global PAYPAL_CLIENT_ID, PAYPAL_CLIENT_SECRET
-	PAYPAL_CLIENT_ID = get(parser, 'paypal', 'client_id', PAYPAL_CLIENT_ID)
-	PAYPAL_CLIENT_SECRET = get(parser, 'paypal', 'client_secret', PAYPAL_CLIENT_SECRET)
-
-	global PAYPAL_PDT_ACCESS_TOKEN
-	PAYPAL_PDT_ACCESS_TOKEN = get(parser, 'paypal', 'pdt_access_token', PAYPAL_PDT_ACCESS_TOKEN)
-
-
-def init_version():
-	global VERSION
-	try:
-		description = subprocess.check_output(["git", "describe", "--long"], 
-				stderr=subprocess.STDOUT)
-		m = re.match(r"v([\w\.]+)-\d+-g(\w+)", description)
-		if m:
-			VERSION = m.group(1) + "-" + m.group(2)
-	except subprocess.CalledProcessError:
-		pass 
-
-
-def init_database(database_url):
-	global DATABASE_URL, DATABASE_IN_MEMORY, DATABASE_CREATE
-
-	DATABASE_URL = database_url
-
-	if DATABASE_URL == 'sqlite://':
-		DATABASE_IN_MEMORY = True
-		DATABASE_CREATE = True
-
-	elif DATABASE_URL.startswith('sqlite:///'):
-		path = database_url[10:]
+def boolean(value):
+	v = value.lower()
+	if v not in boolean_states:
+		raise ValueError, 'Not a boolean: %s' % v
+	return boolean_states[v]
 		
-		# Relative path for sqlite database should be based on home directory
-		if not os.path.isabs(path):
-			path = os.path.join(BOUNTYFUNDING_HOME, path)
-			DATABASE_URL = 'sqlite:///' + path
+def string_list(value):
+	return filter(None, [v.strip() for v in value.split(',')])
 
-		if not os.path.exists(path):
-			DATABASE_CREATE = True
+def payment_gateway_list(value):
+	return [PaymentGateway.from_string(s) for s in string_list(value)]
 
+
+class Property:
+	def __init__(self, description, parser, defualt_value, in_args, in_file, in_db):
+		self.description = description
+		self.parser = parser
+		self.default_value = defualt_value
+		self.in_args = in_args
+		self.in_file = in_file
+		self.in_db = in_db
+
+properties = {
+	'VERSION' : Property('Software version', str, 'Unknown', False, False, False),
+	'PORT' : Property('Port number', int, 5000, True, True, False),
+	'DEBUG' : Property('Enable debug mode (use only for testing)', boolean, False, True, True, False),
+
+	'DATABASE_URL' : Property('SQLAlchemy database url', str, '', False, True, False),
+	'DATABASE_IN_MEMORY' : Property('Use empty in-memory database', boolean, False, False, False, False),
+	'DATABASE_CREATE' : Property('Create database', boolean, False, False, False, False),
+	
+	'TRACKER_URL' : Property('Externally accessible location of bug tracker', str, '', False, True, True),
+	'ADMIN' : Property('Admin user identifier', str, '', False, True, True),
+	'MAX_PLEDGE_AMOUNT' : Property('Maximum pledge amount', int, 100, False, True, True),
+	'PAYMENT_GATEWAYS' : Property('List of enabled payment gateways', payment_gateway_list, [PaymentGateway.PLAIN], False, True, True),
 		
-def get(parser, section, option, default, override=None, type=str):
-	if override:
-		return override
-	elif parser.has_option(section, option):
-		if type == bool:
-			value = parser.getboolean(section, option)
-		elif type == int:
-			value = parser.getint(section, option)
-		elif type == float:
-			value = parser.getfloat(section, option)
-		elif type == str:
+	'PAYPAL_SANDBOX' : Property('Use Paypal sandbox or live system', boolean, True, False, True, True),
+	'PAYPAL_RECEIVER_EMAIL' : Property('Email of the entity receiving payments; must match with other details like tokens, etc', str, '', False, True, True),
+	'PAYPAL_CLIENT_ID' : Property('RESTful API client ID', str, '', False, True, True),
+	'PAYPAL_CLIENT_SECRET' : Property('RESTful API client secret', str, '', False, True, True),
+	'PAYPAL_PDT_ACCESS_TOKEN' : Property('Paypal Payment Data Transfer (PDT) access token', str, '', False, True, True),
+}
+
+
+class CommonConfig:
+	def __init__(self):
+		for name, prop in properties.items():
+			setattr(self, name, prop.default_value)
+		
+	def __getitem__(self, project_id):
+		return ProjectConfig(project_id)
+
+	def init(self, args):
+		config_file = args.config_file
+		if not os.path.isabs(config_file):
+			config_file = os.path.abspath(os.path.join(BOUNTYFUNDING_HOME, config_file))
+		parser = ConfigParser.RawConfigParser()
+		parser.readfp(open(config_file))
+		
+		file_props = filter(lambda (k,v): v.in_file, properties.items())
+		for name, prop in file_props:
+			self._init_value_from_file(parser, name)
+
+		if args.db_in_memory:
+			setattr(self, 'DATABASE_URL', 'sqlite://')
+
+		args_props = filter(lambda (k,v): v.in_args, properties.items())
+		for name, prop in args_props:
+			self._init_value_from_args(args, name.lower(), name)
+		
+		self._init_version()
+		self._init_database()
+
+	def _init_value_from_file(self, parser, name):
+		option = name.lower()
+		section = 'general'
+		for prefix in ('paypal',):
+			if option.startswith(prefix):
+				section = prefix
+				option = option[len(prefix)+1:]
+				break
+		
+		if parser.has_option(section, option):
 			value = parser.get(section, option)
-		elif type == list:
-			value = filter(None, [v.strip() for v in parser.get(section, option).split(',')])
-		else:
-			raise ConfigurationException("Unknown type: %s" % type)
-		return value
-	else:
-		return default
+			value = parse(name, value)
+			setattr(self, name, value)
+
+	def _init_value_from_args(self, args, option, name):
+		value = getattr(args, option)
+		if value != None:
+			setattr(self, name, value)
+
+	def _init_version(self):
+		try:
+			description = subprocess.check_output(["git", "describe", "--long"], 
+					stderr=subprocess.STDOUT)
+			m = re.match(r"v([\w\.]+)-\d+-g(\w+)", description)
+			if m:
+				self.VERSION = m.group(1) + "-" + m.group(2)
+		except subprocess.CalledProcessError:
+			pass 
+
+	def _init_database(self):
+		if self.DATABASE_URL == 'sqlite://':
+			self.DATABASE_IN_MEMORY = True
+			self.DATABASE_CREATE = True
+
+		elif self.DATABASE_URL.startswith('sqlite:///'):
+			path = self.DATABASE_URL[10:]
+		
+			# Relative path for sqlite database should be based on home directory
+			if not os.path.isabs(path):
+				path = os.path.join(BOUNTYFUNDING_HOME, path)
+				self.DATABASE_URL = 'sqlite:///' + path
+
+			if not os.path.exists(path):
+				self.DATABASE_CREATE = True
+
+	def _init_property(self, name):
+		setattr(self, name, properties[name].default_value)
+
+
+class ProjectConfig:
+	def __init__(self, project_id):
+		self.project_id = project_id
+
+	def __getattr__(self, name):
+		if properties[name].in_db:
+			prop = self._get_property(self.project_id, name.lower())
+			if prop != None:
+				value = parse(name, prop.value)
+				return value
+		return getattr(config, name)
+
+	def _get_property(self, project_id, name):
+		prop = Config.query.filter_by(project_id=project_id, name=name).first()
+		return prop
+		
+
+config = CommonConfig()
+
+

@@ -37,6 +37,9 @@ Install Trac, at least version 1.0 is required. Make the following changes to th
 		[notification]
 		...
 		smtp_enabled = yes
+		...
+		smtp_from = <valid email address with domain name>
+		...
 
 * All users or developers that want to use BountyFunding need to specify their emails as notifications and speedy replies are very important
 * Install Trac [Account Manager Plugin](http://trac-hacks.org/wiki/AccountManagerPlugin) to allow new user registration
@@ -102,7 +105,7 @@ Download the archive from github [master.zip](https://github.com/bountyfunding/b
 * To check if plugin has been installed properly go to Trac Admin / Plugins. Also you should see Bounty field on each ticket. It's also a good idea to check if email notifications are sent - create a ticket, sponsor it by one user and assign it or complete it by another user - first user should receive a notification. 
 
 ### Deploy API
-* Configure the API. Example configuration file can be found in conf/bountyfunding_api.ini.sample, for a simple installation it is enough to duplicate this file and remove the .sample extension, but it's a good idea to look inside to examine available options. If you want to use PayPal you'll need to replace project sandbox API credentials with your real ones.
+* Configure the API. Example configuration file can be found in conf/bountyfunding_api.ini.sample, for a simple installation it is enough to duplicate this file and remove the .sample extension, but it's a good idea to look inside to examine available options. You will probably need to change tracker URL and admin user. If you want to use PayPal you'll need to replace project sandbox API credentials with your real ones. 
 
 		cp conf/bountyfunding_api.ini.sample conf/bountyfunding_api.ini
 
