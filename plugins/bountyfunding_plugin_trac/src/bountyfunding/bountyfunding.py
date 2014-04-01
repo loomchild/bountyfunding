@@ -194,7 +194,7 @@ class BountyFundingPlugin(Component):
 					tooltip = u"Pledged: %d\u20ac" % pledged_amount
 					
 					if status == 'STARTED' or status == 'COMPLETED':
-						confirmed_amount = sum_amounts(sponsorships.values(), ('CONFIRMED', 'VALIDATED'))
+						confirmed_amount = sum_amounts(sponsorships.values(), ('CONFIRMED', 'VALIDATED', 'REJECTED', 'TRANSFERRED', 'REFUNDED'))
 						tooltip += u" \nConfirmed: %d\u20ac" % confirmed_amount
 					if status == 'COMPLETED':
 						validated_amount = sum_amounts(sponsorships.values(), 'VALIDATED')
@@ -202,7 +202,6 @@ class BountyFundingPlugin(Component):
 					
 					# Action
 					action = None
-						
 					if (((status == 'STARTED' or status == 'COMPLETED') 
 							and user_sponsorship.status == 'PLEDGED') 
 						or (status == 'STARTED' and user != None and user != owner
@@ -224,9 +223,12 @@ class BountyFundingPlugin(Component):
 							#TODO: should be separate action
 							action = tag.form(tag.input(name="amount", type="text", size="3", value="0", pattern="[0-9]*", title="money amount"), tag.input(type="button", value="Pledge & Confirm", id="confirm-button"), tag.span(gateway_tags, id="confirm-options"), method="post", action="/ticket/%s/confirm" % identifier)
 
-					elif status == 'COMPLETED' and user_sponsorship.status == 'CONFIRMED':
-						action = tag.form(tag.input(type="submit", name='accept', value=u"Validate %d\u20ac" % user_sponsorship.amount), method="post", action="/ticket/%s/validate" % identifier)
-
+					elif status == 'COMPLETED' and user_sponsorship.status in ('CONFIRMED', 'REJECTED', 'VALIDATED'):
+						action = tag.form(method="post", action="/ticket/%s/validate" % identifier)
+						if user_sponsorship.status == 'CONFIRMED' or user_sponsorship.status == 'REJECTED':
+							action.append(tag.input(type="submit", name='validate', value=u"Validate %d\u20ac" % user_sponsorship.amount))
+						if user_sponsorship.status == 'CONFIRMED' or user_sponsorship.status == 'VALIDATED':
+							action.append(tag.input(type="submit", name='reject', value="Reject"))
 					elif (status == 'READY' and user != None):
 						if user_sponsorship.status == None:
 							action = tag.form(tag.input(name="amount", type="text", size="3", value=user_sponsorship.amount, pattern="[0-9]*", title="money amount"), tag.input(type="submit", value="Pledge"), method="post", action="/ticket/%s/sponsor" % identifier)
@@ -384,10 +386,17 @@ class BountyFundingPlugin(Component):
 					self.update_ticket(ticket_id, True, user, 'Confirmed sponsorship.')
 					add_notice(req, "Thank you for your payment. Your transaction has been completed, and a receipt for your purchase has been emailed to you.")
 			elif action == 'validate':
-				response = self.call_api('PUT', '/issue/%s/sponsorship/%s' % (ticket_id, user), 
+				if req.args.get('validate'):
+					response = self.call_api('PUT', '/issue/%s/sponsorship/%s' % (ticket_id, user), 
 						status='VALIDATED')
-				if response.status_code == 200:
-					self.update_ticket(ticket_id, True, user, 'Validated sponsorship.')
+					if response.status_code == 200:
+						self.update_ticket(ticket_id, True, user, 'Validated sponsorship.')
+				elif req.args.get('reject'):
+					response = self.call_api('PUT', '/issue/%s/sponsorship/%s' % (ticket_id, user), 
+						status='REJECTED')
+					if response.status_code == 200:
+						self.update_ticket(ticket_id, True, user, 'Rejected sponsorship.')
+
 
 			req.redirect('/ticket/%s' % ticket_id)
 		
