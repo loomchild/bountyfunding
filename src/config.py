@@ -111,7 +111,7 @@ class CommonConfig:
 
 	def _init_version(self):
 		try:
-			description = subprocess.check_output(["git", "describe", "--long"], 
+			description = subprocess.check_output(["git", "describe", "--long", "--tags"], 
 					stderr=subprocess.STDOUT)
 			m = re.match(r"v([\w\.]+)-\d+-g(\w+)", description)
 			if m:
