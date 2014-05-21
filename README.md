@@ -42,7 +42,7 @@ Install Trac, at least version 1.0 is required. Make the following changes to th
 		...
 
 * All users or developers that want to use BountyFunding need to specify their emails as notifications and speedy replies are very important
-* Install Trac [Account Manager Plugin](http://trac-hacks.org/wiki/AccountManagerPlugin) to allow new user registration. Alternatively use my lightweight [SimpleRegister](https://github.com/loomchild/simpleregister) plugin or just include an information how to register on iyour Trac wiki.
+* Install Trac [Account Manager Plugin](http://trac-hacks.org/wiki/AccountManagerPlugin) to allow new user registration. Alternatively use my lightweight [SimpleRegister](https://github.com/loomchild/simpleregister) plugin or just include an information how to register on your Trac wiki.
 * In case of problems you may consider enabling logging (to stderr or file) and increasing logging level to diagnose possible problems with configuration (in trac.ini):
 
 		[logging]
