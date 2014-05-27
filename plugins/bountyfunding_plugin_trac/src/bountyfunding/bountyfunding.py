@@ -415,7 +415,7 @@ class BountyFundingPlugin(Component):
 						self.update_ticket(ticket_id, True, user, 'Rejected sponsorship.')
 
 
-			req.redirect('/ticket/%s' % ticket_id)
+			req.redirect(req.href.ticket(ticket_id))
 		
 		elif match.group('bountyfunding'):
 			action = match.group('bountyfunding_action')
