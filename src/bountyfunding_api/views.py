@@ -339,6 +339,10 @@ def get_config_payment_gateways():
 	return jsonify(gateways=gateways)
 
 
+# Order of these two functions is important - first one needs to be executed
+# before the second, because I need project_id to log the change
+# http://t27668.web-flask-general.webdiscuss.info/priority-for-before-request-t27668.html
+
 @app.before_request
 def check_access_and_set_project():
 	at = request.values.get('at')
@@ -348,13 +352,12 @@ def check_access_and_set_project():
 		project_id = DEFAULT_PROJECT_ID
 	g.project_id = project_id
 
-
 @app.before_request
 def log_change():
 	if request.method == 'POST' or request.method == 'PUT' or request.method == 'DELETE':
 		arguments = ", ".join(map(lambda (k, v): '%s:%s' % (k, v),\
 				sorted(request.values.iteritems(True))))
-		create_change(request.method, request.path, arguments)
+		create_change(g.project_id, request.method, request.path, arguments)
 
 
 @app.before_first_request
@@ -429,8 +432,8 @@ def retrieve_last_payment(sponsorship_id):
 	return payment
 
 
-def create_change(method, path, arguments):
-	change = Change(method, path, arguments)
+def create_change(project_id, method, path, arguments):
+	change = Change(project_id, method, path, arguments)
 	db.session.add(change)
 	db.session.commit()
 

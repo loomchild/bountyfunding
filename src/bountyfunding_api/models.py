@@ -101,12 +101,14 @@ class Email(db.Model):
 
 class Change(db.Model):
 	change_id = db.Column(db.Integer, primary_key=True)
+	project_id = db.Column(db.Integer, nullable=False)
 	timestamp = db.Column(db.DateTime, nullable=False)
 	method = db.Column(db.String(10), nullable=False)
 	path = db.Column(db.String(256), nullable=False)
 	arguments = db.Column(db.Text(), nullable=False)
 
-	def __init__(self, method, path, arguments):
+	def __init__(self, project_id, method, path, arguments):
+		self.project_id = project_id
 		self.timestamp = datetime.now()
 		self.method = method
 		self.path = path
