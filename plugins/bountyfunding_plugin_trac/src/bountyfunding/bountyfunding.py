@@ -23,6 +23,7 @@ from pkg_resources import resource_filename
 
 # Configuration
 DEFAULT_API_URL='http://localhost:5000'
+DEFAULT_ACCESS_TOKEN = 1
 DEFAULT_MAPPING_READY = ['new', 'accepted', 'reopened']
 DEFAULT_MAPPING_STARTED = ['assigned']
 DEFAULT_MAPPING_COMPLETED = ['closed']
@@ -75,6 +76,7 @@ class BountyFundingPlugin(Component):
 
 	def configure(self):
 		self.api_url = self.config.get('bountyfunding', 'api_url', DEFAULT_API_URL)
+		self.access_token = self.config.get('bountyfunding', 'access_token', DEFAULT_ACCESS_TOKEN)
 		
 		self.status_mapping = {}
 		for m in self.get_config_array(
@@ -96,6 +98,8 @@ class BountyFundingPlugin(Component):
 
 	def call_api(self, method, path, **kwargs):
 		url = self.api_url + path
+		params = kwargs
+		params['at'] = self.access_token
 		try:
 			response = requests.request(method, url, params=kwargs)
 		except requests.exceptions.ConnectionError:
