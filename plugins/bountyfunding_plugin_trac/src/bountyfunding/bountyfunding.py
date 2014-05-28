@@ -224,29 +224,29 @@ class BountyFundingPlugin(Component):
 								tag.input(type="button", name="confirm", value=u"Confirm %d\u20ac" % user_sponsorship.amount, id="confirm-button"), 
 								tag.span(gateway_tags, id="confirm-options"), 
 								tag.input(type="submit", name="cancel", value="Cancel"), 
-								method="post", action="/ticket/%s/confirm" % identifier)
+								method="post", action=req.href.ticket(identifier, "confirm"))
 						else:
 							#TODO: should be separate action
 							action = tag.form(
 								tag.input(name="amount", type="text", size="3", value="0", pattern="[0-9]*", title="money amount"), 
 								tag.input(type="button", value="Pledge & Confirm", id="confirm-button"), 
 								tag.span(gateway_tags, id="confirm-options"), 
-								method="post", action="/ticket/%s/confirm" % identifier)
+								method="post", action=req.href.ticket(identifier, "confirm"))
 
 					elif status == 'COMPLETED' and user_sponsorship.status in ('CONFIRMED', 'REJECTED', 'VALIDATED'):
-						action = tag.form(method="post", action="/ticket/%s/validate" % identifier)
+						action = tag.form(method="post", action=req.href.ticket(identifier, "validate"))
 						if user_sponsorship.status == 'CONFIRMED' or user_sponsorship.status == 'REJECTED':
 							action.append(tag.input(type="submit", name='validate', value=u"Validate %d\u20ac" % user_sponsorship.amount))
 						if user_sponsorship.status == 'CONFIRMED' or user_sponsorship.status == 'VALIDATED':
 							action.append(tag.input(type="submit", name='reject', value="Reject"))
 					elif (status == 'READY' and user != None):
 						if user_sponsorship.status == None:
-							action = tag.form(tag.input(name="amount", type="text", size="3", value=user_sponsorship.amount, pattern="[0-9]*", title="money amount"), tag.input(type="submit", value="Pledge"), method="post", action="/ticket/%s/sponsor" % identifier)
+							action = tag.form(tag.input(name="amount", type="text", size="3", value=user_sponsorship.amount, pattern="[0-9]*", title="money amount"), tag.input(type="submit", value="Pledge"), method="post", action=req.href.ticket(identifier, "sponsor"))
 						elif user_sponsorship.status == 'PLEDGED':
-							action = tag.form(tag.input(name="amount", type="text", size=3, value=user_sponsorship.amount, pattern="[0-9]*", title="money amount"), tag.input(type="submit", name="update", value="Update"), tag.input(type="submit", name="cancel", value="Cancel"), method="post", action="/ticket/%s/update_sponsorship" % identifier)
+							action = tag.form(tag.input(name="amou/nt", type="text", size=3, value=user_sponsorship.amount, pattern="[0-9]*", title="money amount"), tag.input(type="submit", name="update", value="Update"), tag.input(type="submit", name="cancel", value="Cancel"), method="post", action=req.href.ticket(identifier, "update_sponsorship"))
 					
 					elif (user == None):
-						action = tag.span(u"\u00A0", tag.a("Login", href="/login"), " or ", tag.a("Register", href="/register"), " to sponsor")
+						action = tag.span(u"\u00A0", tag.a("Login", href=req.href.login()), " or ", tag.a("Register", href=req.href.register()), " to sponsor")
 					
 					if action != None:
 						fragment.append(" ")
