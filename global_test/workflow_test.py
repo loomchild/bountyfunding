@@ -8,6 +8,7 @@ from nose.tools import *
 
 
 URL = 'http://localhost:8100'
+#URL = 'http://localhost:8200/trac2'
 #URL = 'http://demo.bountyfunding.org'
 USER = ('user', 'user')
 DEV = ('dev', 'dev')
@@ -29,9 +30,10 @@ def login(who):
 	browser.get(URL + '/login')
 	user_input = browser.find_element_by_id('user')
 	password_input = browser.find_element_by_id('password')
+	submit = browser.find_element_by_xpath("//input[@value='Login']")
 	user_input.send_keys(who[0])
 	password_input.send_keys(who[1])
-	password_input.send_keys(Keys.ENTER)
+	submit.click()
 
 def logout():
 	browser.get(URL + '/logout')
@@ -57,9 +59,10 @@ def test_create_and_pledge():
 	browser.get(ticket_url)
 	bf = get_bountyfunding()
 	amount = bf.find_element_by_name('amount')
+	pledge = browser.find_element_by_xpath("//input[@value='Pledge']")
 	amount.clear()
 	amount.send_keys("10")
-	amount.send_keys(Keys.ENTER)
+	pledge.click()
 
 	# Check if pledge was succesful
 	bf = get_bountyfunding()
