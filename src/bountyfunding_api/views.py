@@ -465,7 +465,7 @@ def check_pledge_amount(project_id, amount):
 		raise APIException("Amount must be positive", 400)
 	max_pledge_amount = config[project_id].MAX_PLEDGE_AMOUNT
 	if amount > max_pledge_amount:
-		raise APIException("Amount must be less than %d" % max_pledge_amount, 400)
+		raise APIException("Amount may be up to %d" % max_pledge_amount, 400)
 
 
 def notify():
