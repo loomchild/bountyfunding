@@ -243,7 +243,7 @@ class BountyFundingPlugin(Component):
 						if user_sponsorship.status == None:
 							action = tag.form(tag.input(name="amount", type="text", size="3", value=user_sponsorship.amount, pattern="[0-9]*", title="money amount"), tag.input(type="submit", value="Pledge"), method="post", action=req.href.ticket(identifier, "sponsor"))
 						elif user_sponsorship.status == 'PLEDGED':
-							action = tag.form(tag.input(name="amou/nt", type="text", size=3, value=user_sponsorship.amount, pattern="[0-9]*", title="money amount"), tag.input(type="submit", name="update", value="Update"), tag.input(type="submit", name="cancel", value="Cancel"), method="post", action=req.href.ticket(identifier, "update_sponsorship"))
+							action = tag.form(tag.input(name="amount", type="text", size=3, value=user_sponsorship.amount, pattern="[0-9]*", title="money amount"), tag.input(type="submit", name="update", value="Update"), tag.input(type="submit", name="cancel", value="Cancel"), method="post", action=req.href.ticket(identifier, "update_sponsorship"))
 					
 					elif (user == None):
 						action = tag.span(u"\u00A0", tag.a("Login", href=req.href.login()), " or ", tag.a("Register", href=req.href.register()), " to sponsor")
