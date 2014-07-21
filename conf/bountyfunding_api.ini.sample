@@ -23,6 +23,15 @@ max_pledge_amount = 100
 payment_gateways = PLAIN
 
 
+[project]
+
+# Enable default project that can be accessed without a token (used when this API serves only one project)
+default = True
+
+# Enable test projects (disable when API is available from outside world)
+test = True
+
+
 [paypal]
 
 # Use Paypal sandbox or live system; True by default

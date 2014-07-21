@@ -5,10 +5,11 @@ from const import IssueStatus, SponsorshipStatus, PaymentStatus, PaymentGateway
 from pprint import pprint
 import paypal_rest
 import paypal_standard
+from errors import APIException
+import security
 from config import config
 import re, requests, threading
 
-DEFAULT_PROJECT_ID = 1
 DATE_PATTERN = re.compile('^(0?[1-9]|1[012])/[0-9][0-9]$')
 
 NOTIFY_INTERVAL = 5
@@ -319,9 +320,10 @@ def delete_email(email_id):
 
 @app.route('/', methods=['DELETE'])
 def delete_project():
+	project = g.project
+	if not project.test:
+		return jsonify(error="You can't delete non-test project"), 403
 	project_id = g.project_id
-	if project_id >= 0:
-		return jsonify(error="You can't delete this project"), 403
 
 	Payment.query.filter_by(project_id=project_id).delete()
 	Sponsorship.query.filter_by(project_id=project_id).delete()
@@ -345,12 +347,10 @@ def get_config_payment_gateways():
 
 @app.before_request
 def check_access_and_set_project():
-	at = request.values.get('at')
-	if at:
-		project_id = int(at)
-	else:
-		project_id = DEFAULT_PROJECT_ID
-	g.project_id = project_id
+	token = request.values.get('token')
+	project = security.get_project(token)
+	g.project = project
+	g.project_id = project.project_id
 
 @app.before_request
 def log_change():
@@ -372,11 +372,6 @@ def init():
 	if not config.DATABASE_IN_MEMORY:
 		notify()
 
-
-class APIException(Exception):
-	def __init__(self, message="", status_code=400):
-		self.message = message
-		self.status_code = status_code
 
 @app.errorhandler(APIException)
 def handle_api_exception(exception):
@@ -466,6 +461,7 @@ def check_pledge_amount(project_id, amount):
 	max_pledge_amount = config[project_id].MAX_PLEDGE_AMOUNT
 	if amount > max_pledge_amount:
 		raise APIException("Amount may be up to %d" % max_pledge_amount, 400)
+
 
 
 def notify():

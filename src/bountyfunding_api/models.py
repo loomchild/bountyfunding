@@ -3,14 +3,31 @@ from flask.ext.sqlalchemy import SQLAlchemy
 from enum import Enum 
 from datetime import datetime
 from const import SponsorshipStatus, PaymentStatus, PaymentGateway
+
 #import logging
+#logging.basicConfig()
+#logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
 
 
 db = SQLAlchemy()
 
 
-#logging.basicConfig()
-#logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
+class Project(db.Model):
+	project_id = db.Column(db.Integer, primary_key=True)
+	name = db.Column(db.String(64), nullable=False)
+	description = db.Column(db.String(1024), nullable=False)
+	test = db.Column(db.Boolean, nullable=False)
+
+	def __init__(self, name, description, test, project_id=None):
+		self.name = name
+		self.description = description
+		self.test = test
+		if project_id:
+			self.project_id = project_id
+
+	def __repr__(self):
+		return '<Project project_id: "%s", name: "%s">' % self.project_id, self.name
+
 
 class Issue(db.Model):
 	issue_id = db.Column(db.Integer, primary_key=True)
@@ -129,6 +146,22 @@ class Config(db.Model):
 		self.value = value
 
 	def __repr__(self):
-		return '<Config %s-%s: "%s"' % (self.project_id, self.name, self.value)
+		return '<Config %s-%s: "%s">' % (self.project_id, self.name, self.value)
 
 db.Index('idx_config_pid_name', Config.project_id, Config.name, unique=True)
+
+
+class Token(db.Model):
+	token_id = db.Column(db.Integer, primary_key=True)
+	project_id = db.Column(db.Integer, db.ForeignKey(Project.project_id), nullable=False)
+	token = db.Column(db.String(64), nullable=False)
+	
+	def __init__(self, project_id, token):
+		self.project_id = project_id
+		self.token = token
+
+	def __repr__(self):
+		return '<Token project_id: "%s", token: "%s">' % (self.project_id, self.token)
+
+db.Index('idx_token_token', Token.token, unique=True)
+

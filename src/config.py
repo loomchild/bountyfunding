@@ -53,6 +53,9 @@ properties = {
 	'MAX_PLEDGE_AMOUNT' : Property('Maximum pledge amount', int, 100, False, True, True),
 	'PAYMENT_GATEWAYS' : Property('List of enabled payment gateways', payment_gateway_list, [PaymentGateway.PLAIN], False, True, True),
 		
+	'PROJECT_DEFAULT' : Property('Enable default project', boolean, True, False, True, False),
+	'PROJECT_TEST' : Property('Enable test projects', boolean, True, False, True, False),
+
 	'PAYPAL_SANDBOX' : Property('Use Paypal sandbox or live system', boolean, True, False, True, True),
 	'PAYPAL_RECEIVER_EMAIL' : Property('Email of the entity receiving payments; must match with other details like tokens, etc', str, '', False, True, True),
 	'PAYPAL_CLIENT_ID' : Property('RESTful API client ID', str, '', False, True, True),
@@ -93,7 +96,7 @@ class CommonConfig:
 	def _init_value_from_file(self, parser, name):
 		option = name.lower()
 		section = 'general'
-		for prefix in ('paypal',):
+		for prefix in ('paypal', 'project', ):
 			if option.startswith(prefix):
 				section = prefix
 				option = option[len(prefix)+1:]

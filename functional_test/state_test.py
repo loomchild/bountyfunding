@@ -3,13 +3,13 @@ from const import *
 from nose.tools import *
 
 
-PROJECT_ID = -1;
+TOKEN = 'test';
 USER = 'loomchild'
 CARD_NUMBER = "4111111111111111"
 CARD_DATE = "05/50"
 
 
-api = Api(PROJECT_ID)
+api = Api(TOKEN)
 
 
 def delete_all():

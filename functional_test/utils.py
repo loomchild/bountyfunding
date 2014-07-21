@@ -8,14 +8,14 @@ DEFAULT_API_URL = 'http://localhost:5000'
 # TODO: Covert to SDK and use in plugins
 class Api:
 
-	def __init__(self, project_id, url=DEFAULT_API_URL):
-		self.project_id = project_id
+	def __init__(self, token, url=DEFAULT_API_URL):
+		self.token = token
 		self.url = url
 
 	def call(self, method, path, **kwargs):
 		full_url = self.url + path
 		params = kwargs
-		params['at'] = self.project_id
+		params['token'] = self.token
 		return requests.request(method, full_url, params=params)
 
 	def get(self, path, **kwargs):

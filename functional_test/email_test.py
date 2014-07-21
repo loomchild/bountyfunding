@@ -3,11 +3,11 @@ from const import *
 from nose.tools import *
 
 
-PROJECT_ID = -1;
+TOKEN = 'test';
 USER = "loomchild"
 
 
-api = Api(PROJECT_ID)
+api = Api(TOKEN)
 
 
 def teardown():

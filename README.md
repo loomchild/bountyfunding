@@ -105,7 +105,7 @@ Download the archive from github [master.zip](https://github.com/bountyfunding/b
   	
 		[bountyfunding]
 		...
-		access_token = 1
+		token = <mytoken>
 
 * Restart Trac
 * To check if plugin has been installed properly go to Trac Admin / Plugins. Also you should see Bounty field on each ticket. It's also a good idea to check if email notifications are sent - create a ticket, sponsor it by one user and assign it or complete it by another user - first user should receive a notification. 

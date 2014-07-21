@@ -3,10 +3,10 @@ from const import SponsorshipStatus, PaymentStatus, PaymentGateway
 from nose.tools import *
 
 
-PROJECT_ID = -1;
+TOKEN = 'test';
 
 
-api = Api(PROJECT_ID)
+api = Api(TOKEN)
 
 
 def teardown_module():
