@@ -22,38 +22,86 @@ def status():
 @app.route("/issues", methods=['GET'])
 def get_issues():
 	issues = retrieve_issues(g.project_id)
-	issues = dict(map(lambda i: (i.issue_ref, {}), issues))
+	issues = dict(map(lambda i: (i.issue_ref, mapify_issue(i)), issues))
 	response = jsonify(issues)
 	return response
+
+@app.route("/issues", methods=['POST'])
+def post_issue():
+	ref = request.values.get('ref')
+	status = IssueStatus.from_string(request.values.get('status'))
+	title = request.values.get('title')
+	link = request.values.get('link')
+
+	if ref == None or status == None or title == None or link == None:
+		return jsonify(error="All parameters are required"), 400
+	
+	if not link.startswith('/'):
+		return jsonify(error="Link must be relative to the issue tracker URL and start with /"), 400
+
+	issue = retrieve_issue(g.project_id, ref)
+
+	if issue != None:
+		return jsonify(error="Issue already exists"), 409
+
+	create_issue(g.project_id, ref, status, title, link)
+
+	return jsonify(message='OK')
+
 
 @app.route("/issue/<issue_ref>", methods=['GET'])
 def get_issue(issue_ref):
 	issue = retrieve_issue(g.project_id, issue_ref)
-	if issue != None:
-		response = jsonify()
-	else:
-		response = jsonify(error='Issue not found'), 404
-	return response
+
+	if issue == None:
+		return jsonify(error='Issue not found'), 404
+
+	return jsonify(mapify_issue(issue))
 
 @app.route("/issue/<issue_ref>", methods=['PUT'])
-def update_status(issue_ref):
+def put_issue(issue_ref):
+	# Does not allow to create new issue despite it could because we know the ID. 
+	# This is done for simplicity and to provide only one way of doing one thing.
 	status = IssueStatus.from_string(request.values.get('status'))
+	title = request.values.get('title')
+	link = request.values.get('link')
+
+	# TODO: in addition could be more clever actually report if issue has been updated or not
+	if status == None and title == None and link == None:
+		return jsonify(error="At least one parameter is required when updating an issue"), 400
+
+	if link != None and not link.startswith('/'):
+		return jsonify(error="Link must be relative to the issue tracker URL and start with /"), 400
 
 	issue = retrieve_issue(g.project_id, issue_ref)
 
-	if issue != None:
-		if status == IssueStatus.STARTED:
+	if issue == None:
+		return jsonify(error='Issue not found'), 404
+		
+	if status != None and status != issue.status:
+		issue.status = status
+		# Nothing to do for default status
+		# TODO: be more clever to avoid sending repeated emails
+		if status == IssueStatus.READY:
+			pass
+		elif status == IssueStatus.STARTED:
 			body = 'The task you have sponsored has been started. Please deposit the promised amount. To do that please go to project issue tracker, log in, find this issue and select Confirm.'
 			notify_sponsors(g.project_id, issue.issue_id, SponsorshipStatus.PLEDGED, body)
 		elif status == IssueStatus.COMPLETED:
 			body_confirmed = 'The task you have sponsored has been completed by the developer. Please validate it. To do that please go to project issue tracker, log in, find an issue and select Validate.'
 			notify_sponsors(g.project_id, issue.issue_id, SponsorshipStatus.CONFIRMED, body_confirmed)
-			
 			body_pledged = 'The task you have sponsored has been completed by the developer. Please deposit the promised amout and validate it. To do that please go to project issue tracker, log in, find an issue and select Confirm and then Validate.'
 			notify_sponsors(g.project_id, issue.issue_id, SponsorshipStatus.PLEDGED, body_pledged)
-		
 		else:
 			return jsonify(error="Unknown status"), 400
+
+	if title != None and title != issue.title:
+		issue.title = title
+
+	if link != None and link != issue.link:
+		issue.link = link
+
+	update_issue(issue)
 
 	return jsonify(message='OK')
 
@@ -80,7 +128,10 @@ def post_sponsorship(issue_ref):
 
 	check_pledge_amount(g.project_id, amount)
 
-	issue = retrieve_create_issue(g.project_id, issue_ref)
+	issue = retrieve_issue(g.project_id, issue_ref)
+	if issue == None:
+		return jsonify(error='Issue not found'), 404
+
 	user = retrieve_create_user(g.project_id, user_name)
 	
 	sponsorship = retrieve_sponsorship(issue.issue_id, user.user_id)
@@ -138,16 +189,24 @@ def delete_sponsorship(issue_ref, user_name):
 		response = jsonify(message="Sponsorship deleted")
 	
 	return response
-
+	
 @app.route("/issue/<issue_ref>/sponsorship/<user_name>", methods=['PUT'])
 def update_sponsorship(issue_ref, user_name):
+	# Does not allow to create new sponsorship despite it could because we know the ID. 
+	# This is done for simplicity and to provide only one way of doing one thing.
 	status_string = request.values.get('status')
 	status = SponsorshipStatus.from_string(status_string) 
 	amount_string = request.values.get('amount')
 
 	issue = retrieve_issue(g.project_id, issue_ref)
-	user = retrieve_user(g.project_id, user_name)
+	if issue == None:
+		return jsonify(error='Issue not found'), 404
+	
+	user = retrieve_create_user(g.project_id, user_name)
+	
 	sponsorship = retrieve_sponsorship(issue.issue_id, user.user_id)
+	if sponsorship == None:
+		return jsonify(error='Sponsorship not found'), 404
 
 	if status == None and amount_string == None:
 		return jsonify(error="Nothing to update"), 400
@@ -386,13 +445,22 @@ def retrieve_issue(project_id, issue_ref):
 	issue = Issue.query.filter_by(project_id=project_id, issue_ref=issue_ref).first()
 	return issue
 
-def retrieve_create_issue(project_id, issue_ref):
-	issue = retrieve_issue(project_id, issue_ref)
-	if issue == None:
-		issue = Issue(project_id=project_id, issue_ref=issue_ref)
-		db.session.add(issue)
-		db.session.commit()
+def create_issue(project_id, ref, status, title, link):
+	issue = Issue(project_id, ref, status, title, link)
+	db.session.add(issue)
+	db.session.commit()
 	return issue
+
+def update_issue(issue):
+	db.session.add(issue)
+	db.session.commit()
+
+def mapify_issue(issue):
+	#TODO: convert it to Issue method / operator
+	status = IssueStatus.to_string(issue.status)
+	link = config[issue.project_id].TRACKER_URL + issue.link
+	return dict(ref=issue.issue_ref, status=status, title=issue.title, link=link)
+
 
 def retrieve_user(project_id, name):
 	user = User.query.filter_by(project_id=project_id, name=name).first()

@@ -143,6 +143,7 @@ def test_sponsorship_refunded_transitions():
 
 
 def sponsorship_pledged():
+	api.post('/issues', ref=1, status=IssueStatus.to_string(IssueStatus.READY), title='Title1', link='/issue/1')
 	return api.post('/issue/1/sponsorships', user=USER, amount=10)
 
 def payment_initiated():

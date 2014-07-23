@@ -17,8 +17,11 @@ def teardown():
 
 def test_email():
 	eq_(len(get_emails()), 0)
-
+	
+	r = api.post('/issues', ref=1, status='READY', title='Title', link='/issue/1')
+	eq_(r.status_code, 200)
 	r = api.post('/issue/1/sponsorships', user=USER, amount=10)
+	eq_(r.status_code, 200)
 	r = api.get("/issue/1")
 	eq_(r.status_code, 200)
 

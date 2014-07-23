@@ -118,13 +118,11 @@ class BountyFundingPlugin(Component):
 		return sponsorships
 
 	#TODO: not entirely safe from race conditions, fix it
-	def update_ticket(self, ticket_id, refresh_amount=True, author=None, comment=None):
-		ticket = Ticket(self.env, ticket_id)
-		
+	def update_ticket(self, ticket, refresh_amount=True, author=None, comment=None):
 		update = (comment != None)
 
 		if refresh_amount:
-			sponsorships = self.get_sponsorships(ticket_id)	
+			sponsorships = self.get_sponsorships(ticket.id)	
 			amount = sum_amounts(sponsorships.values())
 			if amount == 0:
 				if ticket["bounty"]:
@@ -141,6 +139,25 @@ class BountyFundingPlugin(Component):
 	
 		return update
     
+	def update_api_ticket(self, ticket):
+		r = self.call_api('GET', '/issue/%s' % ticket.id)
+		if r.status_code != 200:
+			return False
+
+		api_ticket = r.json()
+		
+		title = ticket['summary']
+		status = self.convert_status(ticket['status'])
+		
+		if title != api_ticket['title'] or status != api_ticket['status']:
+			self.call_api('PUT', '/issue/%s' % ticket.id, title=title, status=status)
+			return True
+
+		return False
+
+	def get_link(self, ticket_id):
+		return '/ticket/%s' % ticket_id
+
 	def send_email(self, recipient, ticket_id, body):
 		ticket = Ticket(self.env, ticket_id)
 		subject = self.format_email_subject(ticket)
@@ -296,14 +313,20 @@ class BountyFundingPlugin(Component):
 			ticket_id = match.group('ticket_id')
 			action = match.group('ticket_action')
 			user = req.authname
+			ticket = Ticket(self.env, ticket_id)
+			ticket_title = ticket['summary']
+			ticket_link = self.get_link(ticket_id)
+			ticket_status = self.convert_status(ticket['status'])
 
 			if action == 'sponsor':
 				amount = req.args.get('amount')
+				if self.call_api('GET', '/issue/%s' % ticket_id).status_code == 404:
+					self.call_api('POST', '/issues', ref=ticket_id, status=ticket_status, title=ticket_title, link=ticket_link)
 				response = self.call_api('POST', '/issue/%s/sponsorships' % ticket_id, user=user, amount=amount)
 				if response.status_code != 200:
 					add_warning(req, "Unable to pledge - %s" % response.json().get('error', ''))
 				else:
-					self.update_ticket(ticket_id, True, user)
+					self.update_ticket(ticket, True, user)
 			if action == 'update_sponsorship':
 				if req.args.get('update'):
 					amount = req.args.get('amount')
@@ -311,20 +334,20 @@ class BountyFundingPlugin(Component):
 					if response.status_code != 200:
 						add_warning(req, "Unable to pledge - %s" % response.json().get('error', ''))
 					else:
-						self.update_ticket(ticket_id, True, user)
+						self.update_ticket(ticket, True, user)
 				elif req.args.get('cancel'):
 					response = self.call_api('DELETE', '/issue/%s/sponsorship/%s' % (ticket_id, user))
 					if response.status_code != 200:
 						add_warning(req, "Unable to cancel pledge - %s" % response.json().get('error', ''))
 					else:
-						self.update_ticket(ticket_id, True, user)
+						self.update_ticket(ticket, True, user)
 			elif action == 'confirm':
 				if req.args.get('cancel'):
 					response = self.call_api('DELETE', '/issue/%s/sponsorship/%s' % (ticket_id, user))
 					if response.status_code != 200:
 						add_warning(req, "Unable to cancel pledge - %s" % response.json().get('error', ''))
 					else:
-						self.update_ticket(ticket_id, True, user)
+						self.update_ticket(ticket, True, user)
 				else:
 					if req.args.get('PLAIN'):
 						gateway = 'PLAIN'
@@ -338,14 +361,14 @@ class BountyFundingPlugin(Component):
 					
 					response = self.call_api('GET', '/issue/%s/sponsorship/%s' % (ticket_id, user))
 					if response.status_code == 404:
-						ticket = Ticket(self.env, ticket_id)
 						# Security: can't sponsor not started tickets
-						status = self.convert_status(ticket['status'])
-						if status != 'STARTED':
+						if ticket_status != 'STARTED':
 							#TODO: prevent confirming, exception would be much nicer
 							gateway = None
 						else:
 							amount = req.args.get('amount')
+							if self.call_api('GET', '/issue/%s' % ticket_id).status_code == 404:
+								self.call_api('POST', '/issues', ref=ticket_id, status=ticket_status, title=ticket_title, link=ticket_link)
 							response = self.call_api('POST', '/issue/%s/sponsorships' % ticket_id, user=user, amount=amount)
 							if response.status_code != 200:
 								add_warning(req, "Unable to pledge - %s" % response.json().get('error', ''))
@@ -373,7 +396,7 @@ class BountyFundingPlugin(Component):
 								if response.status_code != 200:
 									error = 'API refused your plain payment'
 								else:
-									self.update_ticket(ticket_id, True, user, 'Confirmed sponsorship.')
+									self.update_ticket(ticket, True, user, 'Confirmed sponsorship.')
 								
 						if pay == None or error:
 							return "payment.html", {'error': error}, None
@@ -401,19 +424,19 @@ class BountyFundingPlugin(Component):
 				response = self.call_api('PUT', '/issue/%s/sponsorship/%s/payment' % (ticket_id, user), 
 						**args)
 				if response.status_code == 200:
-					self.update_ticket(ticket_id, True, user, 'Confirmed sponsorship.')
+					self.update_ticket(ticket, True, user, 'Confirmed sponsorship.')
 					add_notice(req, "Thank you for your payment. Your transaction has been completed, and a receipt for your purchase has been emailed to you.")
 			elif action == 'validate':
 				if req.args.get('validate'):
 					response = self.call_api('PUT', '/issue/%s/sponsorship/%s' % (ticket_id, user), 
 						status='VALIDATED')
 					if response.status_code == 200:
-						self.update_ticket(ticket_id, True, user, 'Validated sponsorship.')
+						self.update_ticket(ticket, True, user, 'Validated sponsorship.')
 				elif req.args.get('reject'):
 					response = self.call_api('PUT', '/issue/%s/sponsorship/%s' % (ticket_id, user), 
 						status='REJECTED')
 					if response.status_code == 200:
-						self.update_ticket(ticket_id, True, user, 'Rejected sponsorship.')
+						self.update_ticket(ticket, True, user, 'Rejected sponsorship.')
 
 
 			req.redirect(req.href.ticket(ticket_id))
@@ -439,16 +462,20 @@ class BountyFundingPlugin(Component):
 					return "status.html", {'version': request.json().get('version')}, None
 			if action == 'sync':
 				#TODO: optimize by calling /issues, setting amount to 0 if not found
-				updated_ids = []
+				updated_ids = set()
 				user = req.authname
 				if 'TICKET_ADMIN' in req.perm:
-					for ticket_id in self.env.db_query("SELECT id from ticket ORDER BY id ASC"):
-						if self.update_ticket(ticket_id[0], True, user):
-							updated_ids.append(ticket_id[0])
+					for row in self.env.db_query("SELECT id from ticket ORDER BY id ASC"):
+						ticket_id = row[0]
+						ticket = Ticket(self.env, ticket_id)
+						if self.update_ticket(ticket, True, user):
+							updated_ids.add(ticket_id)
+						if self.update_api_ticket(ticket):
+							updated_ids.add(ticket_id)
 				else:		
 					add_warning(req, "You are not permitted to sync")
 
-				return "sync.html", {"ids": updated_ids}, None
+				return "sync.html", {"ids": sorted(updated_ids)}, None
 
 
 	# ITicketChangeListener methods
@@ -456,9 +483,10 @@ class BountyFundingPlugin(Component):
 		pass
 
 	def ticket_changed(self, ticket, comment, author, old_values):
-		if 'status' in old_values:
+		if 'status' in old_values or 'summary' in old_values:
 			status = self.convert_status(ticket.values['status'])
-			self.call_api('PUT', '/issue/%s' % ticket.id, status=status)
+			title = ticket['summary']
+			self.call_api('PUT', '/issue/%s' % ticket.id, status=status, title=title)
 
 	def ticket_deleted(self, ticket):
 		pass

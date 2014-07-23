@@ -33,10 +33,16 @@ class Issue(db.Model):
 	issue_id = db.Column(db.Integer, primary_key=True)
 	project_id = db.Column(db.Integer, nullable=False)
 	issue_ref = db.Column(db.String(256), nullable=False)
+	status = db.Column(db.Integer, nullable=False)
+	title = db.Column(db.String(1024), nullable=False)
+	link = db.Column(db.String(1024), nullable=False)
 
-	def __init__(self, project_id, issue_ref):
+	def __init__(self, project_id, issue_ref, status, title, link):
 		self.project_id = project_id
 		self.issue_ref = issue_ref
+		self.status = status
+		self.title = title
+		self.link = link
 
 	def __repr__(self):
 		return '<Issue project_id: "%s", issue_ref: "%s">' % self.project_id, self.issue_ref
