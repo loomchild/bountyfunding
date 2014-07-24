@@ -22,7 +22,7 @@ def status():
 @app.route("/issues", methods=['GET'])
 def get_issues():
 	issues = retrieve_issues(g.project_id)
-	issues = dict(map(lambda i: (i.issue_ref, mapify_issue(i)), issues))
+	issues = {'data': map(mapify_issue, issues)}
 	response = jsonify(issues)
 	return response
 
@@ -104,6 +104,12 @@ def put_issue(issue_ref):
 	update_issue(issue)
 
 	return jsonify(message='OK')
+
+@app.route("/sponsored_issues", methods=['GET'])
+def get_sponsored_issues():
+	issues = retrieve_sponsored_issues(g.project_id)
+	response = jsonify(issues)
+	return response
 
 @app.route("/issue/<issue_ref>/sponsorships", methods=['GET'])
 def get_sponsorships(issue_ref):
@@ -461,6 +467,25 @@ def mapify_issue(issue):
 	link = config[issue.project_id].TRACKER_URL + issue.link
 	return dict(ref=issue.issue_ref, status=status, title=issue.title, link=link)
 
+def retrieve_sponsored_issues(project_id):
+	issues = db.engine.execute("""
+		SELECT i.issue_ref, i.status, i.title, i.link, sum(s.amount) AS amount
+		FROM issue AS i JOIN sponsorship AS s ON (i.issue_id = s.issue_id) 
+		WHERE i.project_id = :1
+		GROUP BY i.issue_id
+		HAVING amount > 0
+		ORDER BY amount DESC
+	""", [project_id]).fetchall()
+
+	issues = {'data': map(lambda i: {
+		'ref': i[0],
+		'status': IssueStatus.to_string(i[1]),
+		'title': i[2],
+		'link': config[project_id].TRACKER_URL + i[3],
+		'amount': i[4]
+	}, issues)}
+	
+	return issues
 
 def retrieve_user(project_id, name):
 	user = User.query.filter_by(project_id=project_id, name=name).first()
