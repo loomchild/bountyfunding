@@ -422,8 +422,14 @@ def log_change():
 	if request.method == 'POST' or request.method == 'PUT' or request.method == 'DELETE':
 		arguments = ", ".join(map(lambda (k, v): '%s:%s' % (k, v),\
 				sorted(request.values.iteritems(True))))
-		create_change(g.project_id, request.method, request.path, arguments)
+		g.change_id = create_change(g.project_id, request.method, request.path, arguments)
 
+@app.after_request
+def log_change_result(response):
+	# Documentation says that this may not be executed and that data will be removed - investigate
+	if 'change_id' in g:
+		update_change(g.change_id, response.status_code, response.data)
+	return response
 
 @app.before_first_request
 def init():
@@ -524,7 +530,17 @@ def create_change(project_id, method, path, arguments):
 	change = Change(project_id, method, path, arguments)
 	db.session.add(change)
 	db.session.commit()
+	return change.change_id
 
+def update_change(change_id, status, response):
+	change = Change.query.get(change_id)
+	if change == None:
+		app.logger.warn('Change %s not found', change_id)
+		return
+	change.status = status
+	change.response = response
+	db.session.add(change)
+	db.session.commit()
 
 def notify_sponsors(project_id, issue_id, status, body):
 	sponsorships = Sponsorship.query.filter_by(issue_id=issue_id, status=status)

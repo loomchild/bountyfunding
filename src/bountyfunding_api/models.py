@@ -129,6 +129,8 @@ class Change(db.Model):
 	method = db.Column(db.String(10), nullable=False)
 	path = db.Column(db.String(256), nullable=False)
 	arguments = db.Column(db.Text(), nullable=False)
+	status = db.Column(db.Integer, nullable=True)
+	response = db.Column(db.String(4096), nullable=True)
 
 	def __init__(self, project_id, method, path, arguments):
 		self.project_id = project_id
