@@ -55,6 +55,7 @@ properties = {
 		
 	'PROJECT_DEFAULT' : Property('Enable default project', boolean, True, False, True, False),
 	'PROJECT_TEST' : Property('Enable test projects', boolean, True, False, True, False),
+	'PROJECT_ROOT' : Property('Enable root projects', boolean, False, False, True, False),
 
 	'PAYPAL_SANDBOX' : Property('Use Paypal sandbox or live system', boolean, True, False, True, True),
 	'PAYPAL_RECEIVER_EMAIL' : Property('Email of the entity receiving payments; must match with other details like tokens, etc', str, '', False, True, True),

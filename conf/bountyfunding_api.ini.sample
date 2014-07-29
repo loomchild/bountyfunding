@@ -31,6 +31,9 @@ default = True
 # Enable test projects (disable when API is available from outside world)
 test = True
 
+# Enable default root project used to create other projects (disable when API is available from outside)
+root = False
+
 
 [paypal]
 

@@ -1,5 +1,10 @@
 from enum import Enum
 
+class ProjectType(Enum):
+	NORMAL = 10
+	TEST = 20
+	ROOT = 30
+
 class IssueStatus(Enum):
 	READY = 10
 	STARTED = 20

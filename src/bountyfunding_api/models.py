@@ -16,12 +16,12 @@ class Project(db.Model):
 	project_id = db.Column(db.Integer, primary_key=True)
 	name = db.Column(db.String(64), nullable=False)
 	description = db.Column(db.String(1024), nullable=False)
-	test = db.Column(db.Boolean, nullable=False)
+	type = db.Column(db.Integer, nullable=False)
 
-	def __init__(self, name, description, test, project_id=None):
+	def __init__(self, name, description, type, project_id=None):
 		self.name = name
 		self.description = description
-		self.test = test
+		self.type = type
 		if project_id:
 			self.project_id = project_id
 

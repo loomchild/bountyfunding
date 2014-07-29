@@ -1,7 +1,7 @@
 from bountyfunding_api import app
 from flask import Flask, url_for, render_template, make_response, redirect, abort, jsonify, request, g
 from models import db, Issue, User, Sponsorship, Email, Payment, Change
-from const import IssueStatus, SponsorshipStatus, PaymentStatus, PaymentGateway
+from const import ProjectType, IssueStatus, SponsorshipStatus, PaymentStatus, PaymentGateway
 from pprint import pprint
 import paypal_rest
 import paypal_standard
@@ -383,10 +383,16 @@ def delete_email(email_id):
 	
 	return response
 
+
+@app.route('/', methods=['GET'])
+def get_project():
+	return jsonify(mapify_project(g.project))
+
+
 @app.route('/', methods=['DELETE'])
 def delete_project():
 	project = g.project
-	if not project.test:
+	if not project.type == ProjectType.TEST:
 		return jsonify(error="You can't delete non-test project"), 403
 	project_id = g.project_id
 
@@ -448,6 +454,10 @@ def init():
 def handle_api_exception(exception):
     return jsonify(error=exception.message), exception.status_code
 
+
+def mapify_project(project):
+	type = ProjectType.to_string(project.type)
+	return dict(name=project.name, description=project.description, type=type)
 
 def retrieve_issues(project_id):
 	issues = Issue.query.filter_by(project_id=project_id).all()
