@@ -20,6 +20,7 @@ from genshi.template.text import NewTextTemplate
 import requests, re
 from pkg_resources import resource_filename
 
+#from IPython import embed
 
 # Configuration
 DEFAULT_API_URL='http://localhost:5000'
@@ -190,6 +191,7 @@ class BountyFundingPlugin(Component):
 		Quick and dirty solution - modify page on the fly to inject special field. It would be
 		nicer if we can do it by creating custom field as this depends on page structure.
 		"""
+		#embed(header='Ticket Stream Filter')
 		if filename == 'ticket.html':
 			# Disable any direct bounty input
 			filter = Transformer('.//input[@id="field-bounty"]')
