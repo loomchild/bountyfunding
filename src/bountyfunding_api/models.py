@@ -18,15 +18,16 @@ class Project(db.Model):
 	description = db.Column(db.String(1024), nullable=False)
 	type = db.Column(db.Integer, nullable=False)
 
-	def __init__(self, name, description, type, project_id=None):
+	def __init__(self, name, description, type):
 		self.name = name
 		self.description = description
 		self.type = type
-		if project_id:
-			self.project_id = project_id
 
 	def __repr__(self):
 		return '<Project project_id: "%s", name: "%s">' % self.project_id, self.name
+	
+	def is_mutable(self):
+		return True
 
 
 class Issue(db.Model):

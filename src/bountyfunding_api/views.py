@@ -1,6 +1,6 @@
 from bountyfunding_api import app
 from flask import Flask, url_for, render_template, make_response, redirect, abort, jsonify, request, g
-from models import db, Issue, User, Sponsorship, Email, Payment, Change
+from models import db, Project, Issue, User, Sponsorship, Email, Payment, Change, Token
 from const import ProjectType, IssueStatus, SponsorshipStatus, PaymentStatus, PaymentGateway
 from pprint import pprint
 import paypal_rest
@@ -8,7 +8,7 @@ import paypal_standard
 from errors import APIException
 import security
 from config import config
-import re, requests, threading
+import re, requests, threading, random, string
 
 DATE_PATTERN = re.compile('^(0?[1-9]|1[012])/[0-9][0-9]$')
 
@@ -388,6 +388,43 @@ def delete_email(email_id):
 def get_project():
 	return jsonify(mapify_project(g.project))
 
+@app.route('/', methods=['PUT'])
+def put_project():
+	name = request.values.get('name')
+	description = request.values.get('description')
+
+	project = g.project
+
+	if not project.is_mutable():
+		return jsonify(error="This project can't be modified"), 400
+
+	if name == None and description == None:
+		return jsonify(error="Nothing to modify"), 400
+
+	if name != None:
+		project.name = name
+
+	if description != None:
+		project.description = description
+
+	update_project(project)
+
+	return jsonify(message='OK')
+
+@app.route('/', methods=['POST'])
+def post_project():
+	name = request.values.get('name')
+	description = request.values.get('description')
+
+	if not g.project.type == ProjectType.ROOT:
+		return jsonify(error="Insufficient permissions to create a project"), 400
+
+	if name == None or description == None:
+		return jsonify(error="All parameters are mandatory"), 400
+
+	project, token = create_project(name, description)
+
+	return jsonify(message='OK', token=token.token)
 
 @app.route('/', methods=['DELETE'])
 def delete_project():
@@ -455,9 +492,28 @@ def handle_api_exception(exception):
     return jsonify(error=exception.message), exception.status_code
 
 
+def create_project(name, description):
+	project = Project(name, description, ProjectType.NORMAL)
+	db.session.add(project)
+	db.session.flush()
+
+	token = Token(project.project_id, generate_token())
+	db.session.add(token)
+
+	db.session.commit()
+	return project, token
+
+def update_project(project):
+	db.session.add(project)
+	db.session.commit()
+
 def mapify_project(project):
 	type = ProjectType.to_string(project.type)
 	return dict(name=project.name, description=project.description, type=type)
+
+def generate_token():
+	return ''.join(random.choice(string.ascii_lowercase) for _ in xrange(32))
+
 
 def retrieve_issues(project_id):
 	issues = Issue.query.filter_by(project_id=project_id).all()

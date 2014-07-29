@@ -4,13 +4,25 @@ from models import Project, Token
 from const import ProjectType
 
 
-DEFAULT_PROJECT = Project('Default', 'Default project', ProjectType.NORMAL, project_id=1)
+class ImmutableProject:
+
+	def __init__(self, project_id, name, description, type):
+		self.project_id = project_id
+		self.name = name
+		self.description = description
+		self.type = type
+
+	def is_mutable(self):
+		return False
+
+
+DEFAULT_PROJECT = ImmutableProject(1, 'Default', 'Default project', ProjectType.NORMAL)
 DEFAULT_TOKEN = 'default'
 
 TEST_PROJECTS = [
-	Project('Test 1', 'First test project', ProjectType.TEST, project_id=-1),
-	Project('Test 2', 'Second test project', ProjectType.TEST, project_id=-2),
-	Project('Test 3', 'Third test project', ProjectType.TEST,project_id=-3),
+	ImmutableProject(-1, 'Test 1', 'First test project', ProjectType.TEST),
+	ImmutableProject(-2, 'Test 2', 'Second test project', ProjectType.TEST),
+	ImmutableProject(-3, 'Test 3', 'Third test project', ProjectType.TEST),
 ]
 TEST_TOKENS = {  
 	'test': TEST_PROJECTS[0],
@@ -19,7 +31,7 @@ TEST_TOKENS = {
 	'test3': TEST_PROJECTS[2],
 }
 
-ROOT_PROJECT = Project('Root', 'Root project', ProjectType.ROOT, project_id=0)
+ROOT_PROJECT = ImmutableProject(0, 'Root', 'Root project', ProjectType.ROOT)
 ROOT_TOKEN = 'root'
 
 def get_project(token):
