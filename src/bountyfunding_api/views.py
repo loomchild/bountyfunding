@@ -416,7 +416,7 @@ def post_project():
 	name = request.values.get('name')
 	description = request.values.get('description')
 
-	if not g.project.type == ProjectType.ROOT:
+	if not (g.project.type == ProjectType.ROOT and request.remote_addr == '127.0.0.1'):
 		return jsonify(error="Insufficient permissions to create a project"), 400
 
 	if name == None or description == None:
