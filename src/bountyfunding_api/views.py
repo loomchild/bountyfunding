@@ -201,8 +201,16 @@ def update_sponsorship(issue_ref, user_name):
 
 @app.route("/issue/<issue_ref>/sponsorship/<user_name>/payment", methods=['GET'])
 def get_payment(issue_ref, user_name):
+	
 	issue = retrieve_issue(g.project_id, issue_ref)
 	user = retrieve_user(g.project_id, user_name)
+	
+	if issue == None:
+		response = jsonify(error='Issue not found'), 404
+
+	elif user == None:
+		response = jsonify(error='User not found'), 404
+
 	sponsorship = retrieve_sponsorship(issue.issue_id, user.user_id)
 
 	payment = retrieve_last_payment(sponsorship.sponsorship_id)
@@ -224,6 +232,13 @@ def update_payment(issue_ref, user_name):
 	
 	issue = retrieve_issue(g.project_id, issue_ref)
 	user = retrieve_user(g.project_id, user_name)
+	
+	if issue == None:
+		response = jsonify(error='Issue not found'), 404
+
+	elif user == None:
+		response = jsonify(error='User not found'), 404
+
 	sponsorship = retrieve_sponsorship(issue.issue_id, user.user_id)
 
 	payment = retrieve_last_payment(sponsorship.sponsorship_id)
@@ -268,6 +283,13 @@ def create_payment(issue_ref, user_name):
 	
 	issue = retrieve_issue(g.project_id, issue_ref)
 	user = retrieve_user(g.project_id, user_name)
+	
+	if issue == None:
+		response = jsonify(error='Issue not found'), 404
+
+	elif user == None:
+		response = jsonify(error='User not found'), 404
+	
 	sponsorship = retrieve_sponsorship(issue.issue_id, user.user_id)
 	
 	if sponsorship.status != SponsorshipStatus.PLEDGED:
