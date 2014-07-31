@@ -5,6 +5,7 @@ import re
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from nose.tools import *
+from global_test import create_browser
 
 
 URL = 'http://localhost:8100'
@@ -18,9 +19,7 @@ ticket_url = None
 
 def setup_module():
 	global browser
-	browser = webdriver.Firefox()
-	browser.implicitly_wait(10)
-	browser.maximize_window()
+	browser = create_browser()
 
 def teardown_module():
 	global browser
