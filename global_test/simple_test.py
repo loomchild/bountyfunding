@@ -1,15 +1,13 @@
 __test__ = False
 
+from global_test import create_browser
 import time
-from selenium import webdriver
 
 browser = None
 
 def setup():
 	global browser
-	browser = webdriver.Firefox()
-	browser.implicitly_wait(5)
-	browser.maximize_window()
+	browser = create_browser()
 
 def teardown():
 	global browser
