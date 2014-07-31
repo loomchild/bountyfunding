@@ -5,6 +5,7 @@ doc/out/
 plugins/bountyfunding_plugin_trac/src/build/
 plugins/bountyfunding_plugin_trac/src/dist/
 virtualenv/
+virtualenv.sh
 logs/
 conf/bountyfunding_api.ini
 tags
