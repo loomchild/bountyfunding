@@ -2,8 +2,9 @@ import requests
 
 import urllib
 
-import httplib2
-httplib2.debuglevel = 1
+#TODO: move to common module
+#import httplib2
+#httplib2.debuglevel = 1
 
 from config import config
 from models import db, Payment

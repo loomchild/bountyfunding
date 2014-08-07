@@ -1,7 +1,8 @@
 import paypalrestsdk
 
-import httplib2
-httplib2.debuglevel = 1
+#TODO: to common
+#import httplib2
+#httplib2.debuglevel = 1
 
 from config import config
 from models import Payment

@@ -3,8 +3,7 @@ from flask import Flask, url_for, render_template, make_response, redirect, abor
 from models import db, Project, Issue, User, Sponsorship, Email, Payment, Change, Token
 from const import ProjectType, IssueStatus, SponsorshipStatus, PaymentStatus, PaymentGateway
 from pprint import pprint
-import paypal_rest
-import paypal_standard
+import paypal_standard, paypal_rest, paypal_adaptive
 from errors import APIException
 import security
 from config import config
@@ -325,6 +324,10 @@ def update_payment(issue_ref, user_name):
 			approved = paypal_standard.process_payment(g.project_id, sponsorship, payment, request.values)
 			if not approved:
 				return jsonify(error='Payment not confirmed by PayPal'), 403
+		elif payment.gateway == PaymentGateway.PAYPAL_ADAPTIVE:
+			approved = paypal_adaptive.process_payment(g.project_id, sponsorship, payment, request.values)
+			if not approved:
+				return jsonify(error='Payment not confirmed by PayPal'), 403
 		else:
 			return jsonify(error='Unknown gateway'), 400
 
@@ -371,6 +374,10 @@ def create_payment(issue_ref, user_name):
 		if not return_url:
 			return jsonify(error='return_url cannot be blank'), 400
 		payment = paypal_standard.create_payment(g.project_id, sponsorship, return_url)
+	elif gateway == PaymentGateway.PAYPAL_ADAPTIVE:
+		if not return_url:
+			return jsonify(error='return_url cannot be blank'), 400
+		payment = paypal_adaptive.create_payment(g.project_id, sponsorship, return_url)
 	else:
 		return jsonify(error='Unknown gateway'), 400
 

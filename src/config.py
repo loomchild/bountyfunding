@@ -62,6 +62,11 @@ properties = {
 	'PAYPAL_CLIENT_ID' : Property('RESTful API client ID', str, '', False, True, True),
 	'PAYPAL_CLIENT_SECRET' : Property('RESTful API client secret', str, '', False, True, True),
 	'PAYPAL_PDT_ACCESS_TOKEN' : Property('Paypal Payment Data Transfer (PDT) access token', str, '', False, True, True),
+
+	'PAYPAL_USER_ID': Property('Paypal user ID for Adaptive Payments', str, '', False, True, True),
+	'PAYPAL_PASSWORD': Property('Paypal password for Adaptive Payments', str, '', False, True, True),
+	'PAYPAL_SIGNATURE': Property('Paypal signature for Adaptive Payments', str, '', False, True, True),
+	'PAYPAL_APPLICATION_ID': Property('Paypal application ID for Adaptive Payments', str, '', False, True, True),
 }
 
 
@@ -148,6 +153,7 @@ class ProjectConfig:
 		self.project_id = project_id
 
 	def __getattr__(self, name):
+		#TODO: add caching
 		if properties[name].in_db:
 			prop = self._get_property(self.project_id, name.lower())
 			if prop != None:

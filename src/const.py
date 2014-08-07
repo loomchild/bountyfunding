@@ -26,5 +26,6 @@ class PaymentGateway(Enum):
 	PLAIN = 10
 	PAYPAL_REST = 20
 	PAYPAL_STANDARD = 21
+	PAYPAL_ADAPTIVE = 22
 
 

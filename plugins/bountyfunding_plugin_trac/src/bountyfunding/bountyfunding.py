@@ -238,6 +238,8 @@ class BountyFundingPlugin(Component):
 							gateway_tags.append(tag.input(type="submit", value="PayPal", name='PAYPAL_REST'))
 						if 'PAYPAL_STANDARD' in gateways:
 							gateway_tags.append(tag.input(type="submit", value="PayPal", name='PAYPAL_STANDARD'))
+						if 'PAYPAL_ADAPTIVE' in gateways:
+							gateway_tags.append(tag.input(type="submit", value="PayPal", name='PAYPAL_ADAPTIVE'))
 						if user_sponsorship.status == 'PLEDGED':
 							action = tag.form(
 								tag.input(type="button", name="confirm", value=u"Confirm %d\u20ac" % user_sponsorship.amount, id="confirm-button"), 
@@ -357,6 +359,8 @@ class BountyFundingPlugin(Component):
 						gateway = 'PAYPAL_REST'
 					elif req.args.get('PAYPAL_STANDARD'):
 						gateway = 'PAYPAL_STANDARD'
+					elif req.args.get('PAYPAL_ADAPTIVE'):
+						gateway = 'PAYPAL_ADAPTIVE'
 					else:
 						#TODO: raise exception instead
 						gateway = None
@@ -403,7 +407,7 @@ class BountyFundingPlugin(Component):
 						if pay == None or error:
 							return "payment.html", {'error': error}, None
 		
-					elif gateway == 'PAYPAL_REST' or gateway == 'PAYPAL_STANDARD':
+					elif gateway == 'PAYPAL_REST' or gateway == 'PAYPAL_STANDARD' or gateway == 'PAYPAL_ADAPTIVE':
 						return_url = req.abs_href('ticket', ticket_id, 'pay')
 						response = self.call_api('POST', 
 								'/issue/%s/sponsorship/%s/payments' % (ticket_id, user), 
