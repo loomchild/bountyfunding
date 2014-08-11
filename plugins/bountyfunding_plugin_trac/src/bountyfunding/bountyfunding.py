@@ -11,6 +11,7 @@ from trac.web import IRequestHandler, HTTPInternalError
 from trac.web.chrome import INavigationContributor, ITemplateProvider, add_stylesheet, add_script, add_warning, add_notice
 from trac.web.api import IRequestFilter, ITemplateStreamFilter
 from trac.ticket.api import ITicketChangeListener, ITicketManipulator
+from trac.prefs import IPreferencePanelProvider
 from trac.ticket.model import Ticket
 
 from trac.notification import NotifyEmail
@@ -70,7 +71,7 @@ def sum_amounts(sponsorships, statuses=None):
 
 
 class BountyFundingPlugin(Component):
-	implements(ITemplateStreamFilter, IRequestFilter, IRequestHandler, ITemplateProvider, ITicketChangeListener, ITicketManipulator)
+	implements(ITemplateStreamFilter, IRequestFilter, IRequestHandler, ITemplateProvider, ITicketChangeListener, ITicketManipulator, IPreferencePanelProvider)
 
 	def __init__(self):
 		self.configure()
@@ -531,3 +532,22 @@ class BountyFundingPlugin(Component):
 		return [('htdocs', resource_filename(__name__, 'htdocs'))]
 
 
+	# IPreferencePanelProvider methods
+
+	def get_preference_panels(self, req):
+		#TODO: this should probably be only visible when using adaptive payments
+		yield ('bountyfunding', 'BountyFunding')
+
+	def render_preference_panel(self, req, panel):
+		if req.method == 'POST':
+			paypal_email = req.args.get('bountyfunding_paypal_email')
+			if paypal_email:
+				#TODO: perform some validation if possible - see what FreedomSponsors is doing
+				#TODO: post the setting to the API?
+				req.session['bountyfunding.paypal_email'] = paypal_email
+				add_notice(req, 'Your BountyFunding settings have been been saved.')
+			req.redirect(req.href.prefs(panel or None))
+
+		return 'bountyfunding_prefs.html', {
+			'bountyfunding_paypal_email': req.session.get('bountyfunding.paypal_email', '')
+		}
