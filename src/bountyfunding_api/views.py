@@ -1,6 +1,6 @@
 from bountyfunding_api import app
 from flask import Flask, url_for, render_template, make_response, redirect, abort, jsonify, request, g
-from models import db, Project, Issue, User, UserAttribute, Sponsorship, Email, Payment, Change, Token
+from models import db, Project, Issue, User, Sponsorship, Email, Payment, Change, Token
 from const import ProjectType, IssueStatus, SponsorshipStatus, PaymentStatus, PaymentGateway
 from pprint import pprint
 import paypal_standard, paypal_rest, paypal_adaptive
@@ -393,9 +393,26 @@ def get_user(user_name):
 	if user == None:
 		return jsonify(error='User not found'), 404
 
-	user_attributes = retrieve_user_attributes(g.project_id, user.user_id)
+	return jsonify(mapify_user(user))
 
-	return jsonify(mapify_user(user, user_attributes))
+@app.route("/user/<user_name>", methods=['PUT'])
+def put_user(user_name):
+	paypal_email = request.values.get('paypal_email')
+	
+	user = retrieve_user(g.project_id, user_name)
+
+	if user == None:
+		return jsonify(error='User not found'), 404
+
+	if paypal_email == None:
+		return jsonify(error='Nothing to update'), 400
+
+	if paypal_email != None:
+		user.paypal_email = paypal_email
+
+	update_user(user)
+
+	return jsonify(message='User updated')
 
 @app.route('/emails', methods=['GET'])
 def get_emails():
@@ -610,12 +627,17 @@ def retrieve_create_user(project_id, name):
 		db.session.commit()
 	return user
 
-def retrieve_user_attributes(project_id, user_id):
-	user_attributes = UserAttribute.query.filter_by(project_id=project_id, user_id=user_id).all()
-	return {a.name:a.value for a in user_attributes}
+def update_user(user):
+	db.session.add(user)
+	db.session.commit()
 
-def mapify_user(user, user_attributes):
-	return dict(user_attributes, name=user.name)
+def mapify_user(user):
+	result = dict(name=user.name, paypal_email=user.paypal_email)
+
+	# Remove empty values
+	result = {k: v for k, v in result.items() if v != None}
+
+	return result
 
 def retrieve_sponsorship(issue_id, user_id):
 	sponsorship = Sponsorship.query.filter_by(issue_id=issue_id, user_id=user_id).first()
