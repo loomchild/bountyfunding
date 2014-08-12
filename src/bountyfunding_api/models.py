@@ -60,6 +60,22 @@ class User(db.Model):
 	def __repr__(self):
 		return '<User project_id: "%s", name: "%s">' % self.project_id, self.name
 
+class UserAttribute(db.Model):
+	user_attribute_id = db.Column(db.Integer, primary_key=True)
+	user_id = db.Column(db.Integer, db.ForeignKey(User.user_id), nullable=False)
+	project_id = db.Column(db.Integer, nullable=False)
+	name = db.Column(db.String(64), nullable=False)
+	value = db.Column(db.String(256), nullable=False)
+
+	def __init__(self, user_id, project_id, name, value):
+		self.user_id = user_id
+		self.project_id = project_id
+		self.name = name
+		self.value = value
+ 
+	def __repr__(self):
+		return '<User Attribute project_id: "%s", user_id: "%s", name: "%s">' % (self.project_id, self.user_id, self.name)
+
 class Sponsorship(db.Model):
 	sponsorship_id = db.Column(db.Integer, primary_key=True)
 	project_id = db.Column(db.Integer, nullable=False)

@@ -1,6 +1,6 @@
 from bountyfunding_api import app
 from flask import Flask, url_for, render_template, make_response, redirect, abort, jsonify, request, g
-from models import db, Project, Issue, User, Sponsorship, Email, Payment, Change, Token
+from models import db, Project, Issue, User, UserAttribute, Sponsorship, Email, Payment, Change, Token
 from const import ProjectType, IssueStatus, SponsorshipStatus, PaymentStatus, PaymentGateway
 from pprint import pprint
 import paypal_standard, paypal_rest, paypal_adaptive
@@ -11,6 +11,7 @@ import re, requests, threading, random, string
 
 DATE_PATTERN = re.compile('^(0?[1-9]|1[012])/[0-9][0-9]$')
 
+#TODO: move to config
 NOTIFY_INTERVAL = 5
 
 
@@ -46,7 +47,6 @@ def post_issue():
 	create_issue(g.project_id, ref, status, title, link)
 
 	return jsonify(message='OK')
-
 
 @app.route("/issue/<issue_ref>", methods=['GET'])
 def get_issue(issue_ref):
@@ -354,10 +354,10 @@ def create_payment(issue_ref, user_name):
 	user = retrieve_user(g.project_id, user_name)
 	
 	if issue == None:
-		response = jsonify(error='Issue not found'), 404
+		return jsonify(error='Issue not found'), 404
 
-	elif user == None:
-		response = jsonify(error='User not found'), 404
+	if user == None:
+		return jsonify(error='User not found'), 404
 	
 	sponsorship = retrieve_sponsorship(issue.issue_id, user.user_id)
 	
@@ -384,9 +384,18 @@ def create_payment(issue_ref, user_name):
 	db.session.add(payment)
 	db.session.commit()
 	
-	response = jsonify(message='Payment created')
-	return response
+	return jsonify(message='Payment created')
 
+@app.route("/user/<user_name>", methods=['GET'])
+def get_user(user_name):
+	user = retrieve_user(g.project_id, user_name)
+
+	if user == None:
+		return jsonify(error='User not found'), 404
+
+	user_attributes = retrieve_user_attributes(g.project_id, user.user_id)
+
+	return jsonify(mapify_user(user, user_attributes))
 
 @app.route('/emails', methods=['GET'])
 def get_emails():
@@ -467,6 +476,7 @@ def delete_project():
 	User.query.filter_by(project_id=project_id).delete()
 	Issue.query.filter_by(project_id=project_id).delete()
 	Email.query.filter_by(project_id=project_id).delete()
+	#TODO: add new tables
 	db.session.commit()
 
 	return jsonify(message="Project deleted")
@@ -599,6 +609,13 @@ def retrieve_create_user(project_id, name):
 		db.session.add(user)
 		db.session.commit()
 	return user
+
+def retrieve_user_attributes(project_id, user_id):
+	user_attributes = UserAttribute.query.filter_by(project_id=project_id, user_id=user_id).all()
+	return {a.name:a.value for a in user_attributes}
+
+def mapify_user(user, user_attributes):
+	return dict(user_attributes, name=user.name)
 
 def retrieve_sponsorship(issue_id, user_id):
 	sponsorship = Sponsorship.query.filter_by(issue_id=issue_id, user_id=user_id).first()
