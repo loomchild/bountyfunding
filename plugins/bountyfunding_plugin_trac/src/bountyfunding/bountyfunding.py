@@ -539,15 +539,25 @@ class BountyFundingPlugin(Component):
 		yield ('bountyfunding', 'BountyFunding')
 
 	def render_preference_panel(self, req, panel):
+		user = req.authname
 		if req.method == 'POST':
 			paypal_email = req.args.get('bountyfunding_paypal_email')
-			if paypal_email:
+			if paypal_email != None:
 				#TODO: perform some validation if possible - see what FreedomSponsors is doing
-				#TODO: post the setting to the API?
-				req.session['bountyfunding.paypal_email'] = paypal_email
-				add_notice(req, 'Your BountyFunding settings have been been saved.')
+				request = self.call_api('PUT', '/user/%s' % user, paypal_email=paypal_email)
+				if request and request.status_code == 200:
+					add_notice(req, 'Your BountyFunding settings have been been saved.')
+				else:
+					add_warning(req, 'Error saving BountyFunding settings.')
+
 			req.redirect(req.href.prefs(panel or None))
+		
+		paypal_email = ''
+
+		request = self.call_api('GET', '/user/%s' % user)
+		if request and request.status_code == 200:
+			paypal_email = request.json().get('paypal_email', '')
 
 		return 'bountyfunding_prefs.html', {
-			'bountyfunding_paypal_email': req.session.get('bountyfunding.paypal_email', '')
+			'bountyfunding_paypal_email': paypal_email,
 		}

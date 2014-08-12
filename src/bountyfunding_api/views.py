@@ -408,7 +408,10 @@ def put_user(user_name):
 		return jsonify(error='Nothing to update'), 400
 
 	if paypal_email != None:
-		user.paypal_email = paypal_email
+		if paypal_email != '':
+			user.paypal_email = paypal_email
+		else:
+			user.paypal_email = None
 
 	update_user(user)
 
