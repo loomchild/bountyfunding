@@ -58,7 +58,7 @@ Download the archive from github [master.zip](https://github.com/bountyfunding/b
 ### Deploy Trac Plugin
 * Build Python egg
 	
-		cd plugins/bountyfunding_plugin_trac/src
+		cd plugins/bountyfunding_plugin_trac
 		./setup.py bdist_egg
 
 * Put it in you Trac plugins directory
@@ -134,7 +134,7 @@ For development you will need all python packages listed in [requirements-dev.tx
 ### Tips
 * During Trac plugin development it's useful to install a plugin link instead of deploying a full egg after every chage (however, trac still needs to be restarted). To do it execute (see [Trac Plugin Development](http://trac.edgewall.org/wiki/TracDev/PluginDevelopment) for more details):
 
-		cd plugins/bountyfunding_api_plugin/src
+		cd plugins/bountyfunding_api_plugin
 		./setup.py develop -mxd /<trac_home>/plugins
 * Since the API does not offer any security layer, it is necessary to run it behind a firewall.
 * When Trac and API tickets become out of sync (due to manual modification, temporary API downtime, etc.), go to the following URL: http://\<trac_url\>/bountyfunding/sync - this will refresh local Trac cache. This operation will be automated in the future.
