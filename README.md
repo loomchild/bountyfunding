@@ -1,6 +1,7 @@
 # BountyFunding - Open-Source Bounty Funding Platform
 ===================================
-Website (including live demo): [http://bountyfunding.org](http://bountyfunding.org)
+Website (including live demo): [https://bountyfunding.com](https://bountyfunding.com) 
+Development website: [http://bountyfunding.org](http://bountyfunding.org)
 
 Introduction
 ------------
@@ -114,15 +115,16 @@ Download the archive from github [master.zip](https://github.com/bountyfunding/b
 ### Deploy API
 * Configure the API. Example configuration file can be found in api/conf/bountyfunding.ini.sample, for a simple installation it is enough to duplicate this file and remove the .sample extension, but it's a good idea to look inside to examine available options. You will probably need to change tracker URL and admin user. If you want to use PayPal you'll need to replace project sandbox API credentials with your real ones. 
 
-		cp api/conf/bountyfunding.ini.sample api/conf/bountyfunding.ini
+		cd api
+		cp conf/bountyfunding.ini.sample conf/bountyfunding.ini
 
 * Populate the database. If you are using sqlite database backend (default) then database will be automatically created and populated on the first run. Otherwise you'll need to execute following command:
 
-		api/api.py create-db
+		./api.py create-db
 
 * Run the API
 
-		api/api.py >& api/log/bountyfunding.log &
+		./api.py >& log/bountyfunding.log &
 
 Development
 -----------
