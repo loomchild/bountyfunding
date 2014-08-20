@@ -5,7 +5,7 @@ import re
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from nose.tools import *
-from global_test import create_browser
+from . import create_browser
 
 
 URL = 'http://localhost:8100'

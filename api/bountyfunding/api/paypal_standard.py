@@ -6,9 +6,10 @@ import urllib
 #import httplib2
 #httplib2.debuglevel = 1
 
-from config import config
-from models import db, Payment
-from const import PaymentGateway
+from bountyfunding.api.config import config
+from bountyfunding.api.models import db, Payment
+from bountyfunding.api.const import PaymentGateway
+
 
 def get_paypal_url(project_id):
 	if config[project_id].PAYPAL_SANDBOX:

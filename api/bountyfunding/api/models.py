@@ -1,8 +1,7 @@
-
 from flask.ext.sqlalchemy import SQLAlchemy
-from enum import Enum 
 from datetime import datetime
-from const import SponsorshipStatus, PaymentStatus, PaymentGateway
+
+from bountyfunding.api.const import SponsorshipStatus, PaymentStatus, PaymentGateway
 
 #import logging
 #logging.basicConfig()

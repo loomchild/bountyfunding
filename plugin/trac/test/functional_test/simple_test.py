@@ -1,6 +1,6 @@
 __test__ = False
 
-from global_test import create_browser
+from . import create_browser
 import time
 
 browser = None

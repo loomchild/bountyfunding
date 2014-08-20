@@ -1,5 +1,7 @@
-from utils import Api, dict_to_object
-from const import IssueStatus, SponsorshipStatus, PaymentStatus, PaymentGateway
+from util import Api, dict_to_object
+
+from bountyfunding.api.const import IssueStatus, SponsorshipStatus, PaymentStatus, PaymentGateway
+
 from nose.tools import *
 
 

@@ -9,11 +9,11 @@ BountyFunding is a bounty funding platform designed specifically for Free / Open
 Requirements
 ------------
 * Python (2.7)
-* Database (SQLite / MySQL / PostgreSQL, anything supported SQLAlchemy)
+* Database (SQLite / MySQL / PostgreSQL, anything supported by SQLAlchemy)
 * Message Transfer Agent, such as Postfix or Exim
 * Trac (1.0+)
-* All python packages listed in [requirements.txt](requirements.txt)
 * Recommended: pip and virtualenv
+* Python packages listed in requirements files for individual modules
 
 Installation
 ------------
@@ -23,7 +23,8 @@ Run below commands to install python dependencies if needed. I use [pip](http://
 
 * Install requirements
 
-		pip install -r requirements.txt
+		pip install -r api/requirements.txt
+		pip install -r plugin/trac/requirements.txt
 
 ### Install and Configure Trac
 Install Trac, at least version 1.0 is required. Make the following changes to the configuration:
@@ -58,17 +59,17 @@ Download the archive from github [master.zip](https://github.com/bountyfunding/b
 ### Deploy Trac Plugin
 * Build Python egg
 	
-		cd plugins/bountyfunding_plugin_trac
+		cd plugin/trac
 		./setup.py bdist_egg
 
 * Put it in you Trac plugins directory
 
-		cp dist/BountyFunding*.egg /<trac_home>/plugins
+		cp dist/BountyFunding*.egg <trac_home>/plugins
 
 * Configure the plugin - add the following to trac.ini in appriopriate sections:
   
   		[components]
-		bountyfunding = enabled
+		bountyfunding.* = enabled
 
 		[ticket-custom]
 		bounty = text
@@ -77,7 +78,7 @@ Download the archive from github [master.zip](https://github.com/bountyfunding/b
 		[bountyfunding]
 		api_url = http://localhost:5000
 
-* You can add new bounty field to your existing reports using [TracQuery](http://trac.edgewall.org/wiki/TracQuery) or [TracReports](http://trac.edgewall.org/wiki/TracReports). Due to technical limitations this field can be only sorted in alphabetical order which is not ideal - there is small workaround for TracReports to cast it as INTEGER. For example Active Tickets By Milestone report can look like this:
+* You can add new bounty field to your existing reports using [TracQuery](http://trac.edgewall.org/wiki/TracQuery) or [TracReports](http://trac.edgewall.org/wiki/TracReports). Due to technical limitations this field can be only sorted in alphabetical order which is not ideal - there is a small workaround for TracReports to cast it as INTEGER. For example Active Tickets By Milestone report can look like this:
 		
 		SELECT p.value AS __color__,
 		   'Milestone '||milestone AS __group__,
@@ -101,7 +102,7 @@ Download the archive from github [master.zip](https://github.com/bountyfunding/b
 		status_mapping_started = assigned
 		status_mapping_completed = closed
 
-* If you are connecting multiple trac instance to a single API, set an access token:
+* If you are connecting multiple trac instances to a single API, set an access token:
   	
 		[bountyfunding]
 		...
@@ -111,17 +112,17 @@ Download the archive from github [master.zip](https://github.com/bountyfunding/b
 * To check if plugin has been installed properly go to Trac Admin / Plugins. Also you should see Bounty field on each ticket. It's also a good idea to check if email notifications are sent - create a ticket, sponsor it by one user and assign it or complete it by another user - first user should receive a notification. 
 
 ### Deploy API
-* Configure the API. Example configuration file can be found in conf/bountyfunding_api.ini.sample, for a simple installation it is enough to duplicate this file and remove the .sample extension, but it's a good idea to look inside to examine available options. You will probably need to change tracker URL and admin user. If you want to use PayPal you'll need to replace project sandbox API credentials with your real ones. 
+* Configure the API. Example configuration file can be found in api/conf/bountyfunding.ini.sample, for a simple installation it is enough to duplicate this file and remove the .sample extension, but it's a good idea to look inside to examine available options. You will probably need to change tracker URL and admin user. If you want to use PayPal you'll need to replace project sandbox API credentials with your real ones. 
 
-		cp conf/bountyfunding_api.ini.sample conf/bountyfunding_api.ini
+		cp api/conf/bountyfunding.ini.sample api/conf/bountyfunding.ini
 
 * Populate the database. If you are using sqlite database backend (default) then database will be automatically created and populated on the first run. Otherwise you'll need to execute following command:
 
-		src/bountyfunding_api.py create-db
+		api/api.py create-db
 
 * Run the API
 
-		src/bountyfunding_api.py >& ../log/bountyfunding_api.log &
+		api/api.py >& api/log/bountyfunding.log &
 
 Development
 -----------
@@ -129,12 +130,13 @@ Development
 ### Requirements
 For development you will need all python packages listed in [requirements-dev.txt](requirements-dev.txt):
 	
-		pip install -r requirements-dev.txt
+		pip install -r api/requirements-dev.txt
+		pip install -r plugin/trac/requirements-dev.txt
 
 ### Tips
 * During Trac plugin development it's useful to install a plugin link instead of deploying a full egg after every chage (however, trac still needs to be restarted). To do it execute (see [Trac Plugin Development](http://trac.edgewall.org/wiki/TracDev/PluginDevelopment) for more details):
 
-		cd plugins/bountyfunding_api_plugin
-		./setup.py develop -mxd /<trac_home>/plugins
+		cd plugin/trac
+		./setup.py develop -mxd <trac_home>/plugins
 * Since the API does not offer any security layer, it is necessary to run it behind a firewall.
 * When Trac and API tickets become out of sync (due to manual modification, temporary API downtime, etc.), go to the following URL: http://\<trac_url\>/bountyfunding/sync - this will refresh local Trac cache. This operation will be automated in the future.

@@ -2,11 +2,11 @@
 
 from os import path
 from argparse import ArgumentParser
-from enum import Enum
 
-from bountyfunding_api import app
-from bountyfunding_api.models import db
-from config import config
+from bountyfunding.util.enum import Enum
+from bountyfunding.api.config import config
+from bountyfunding.api import app
+from bountyfunding.api.models import db
 
 
 class Action(Enum):
@@ -39,7 +39,7 @@ if __name__ == "__main__":
 
 	arg_parser.add_argument('-c', '--config-file', 
 			action='store', 
-			default=path.join('conf', 'bountyfunding_api.ini'),
+			default=path.join('conf', 'bountyfunding.ini'),
 			metavar='FILE',
 			help='Specify config file location (default %(default)s)')
 

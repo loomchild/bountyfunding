@@ -2,10 +2,10 @@
 .*.sw?
 *.egg-info
 doc/out/
-plugins/bountyfunding_plugin_trac/src/build/
-plugins/bountyfunding_plugin_trac/src/dist/
+build/
+dist/
 virtualenv/
 virtualenv.sh
 logs/
-conf/bountyfunding_api.ini
+bountyfunding.ini
 tags

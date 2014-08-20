@@ -1,4 +1,4 @@
-from enum import Enum
+from bountyfunding.util.enum import Enum
 
 class ProjectType(Enum):
 	NORMAL = 10

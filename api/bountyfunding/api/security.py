@@ -1,7 +1,7 @@
-from errors import APIException
-from config import config
-from models import Project, Token
-from const import ProjectType
+from bountyfunding.api.errors import APIException
+from bountyfunding.api.config import config
+from bountyfunding.api.models import Project, Token
+from bountyfunding.api.const import ProjectType
 
 
 class ImmutableProject:

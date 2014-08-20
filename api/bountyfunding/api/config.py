@@ -4,9 +4,11 @@ import re
 import ConfigParser
 import argparse
 import subprocess
-from homer import BOUNTYFUNDING_HOME
-from const import PaymentGateway
-from bountyfunding_api.models import Config
+
+from bountyfunding.util.homer import BOUNTYFUNDING_HOME
+from bountyfunding.api.const import PaymentGateway
+
+from bountyfunding.api.models import Config
 
 
 def parse(name, value):

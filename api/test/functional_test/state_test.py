@@ -1,5 +1,7 @@
-from utils import Api, dict_to_object
-from const import *
+from util import Api, dict_to_object
+
+from bountyfunding.api.const import *
+
 from nose.tools import *
 
 

@@ -1,13 +1,18 @@
-from bountyfunding_api import app
+from bountyfunding.api import app
+
+from bountyfunding.api.models import db, Project, Issue, User, Sponsorship, Email, Payment, Change, Token
+from bountyfunding.api.const import ProjectType, IssueStatus, SponsorshipStatus, PaymentStatus, PaymentGateway
+
+from bountyfunding.api import paypal_standard, paypal_rest, paypal_adaptive
+from bountyfunding.api.errors import APIException
+
+from bountyfunding.api import security
+from bountyfunding.api.config import config
+
 from flask import Flask, url_for, render_template, make_response, redirect, abort, jsonify, request, g
-from models import db, Project, Issue, User, Sponsorship, Email, Payment, Change, Token
-from const import ProjectType, IssueStatus, SponsorshipStatus, PaymentStatus, PaymentGateway
 from pprint import pprint
-import paypal_standard, paypal_rest, paypal_adaptive
-from errors import APIException
-import security
-from config import config
 import re, requests, threading, random, string
+
 
 DATE_PATTERN = re.compile('^(0?[1-9]|1[012])/[0-9][0-9]$')
 

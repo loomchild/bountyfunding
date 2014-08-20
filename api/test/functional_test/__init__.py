@@ -2,7 +2,7 @@ import os
 import signal
 import subprocess
 import time
-from homer import BOUNTYFUNDING_HOME
+from bountyfunding.util.homer import BOUNTYFUNDING_HOME
 
 
 def setup():
@@ -10,8 +10,9 @@ def setup():
 	print("Starting BountyFunding API...")
 	bountyfunding_process = subprocess.Popen(
 		[
-			"python", "src/bountyfunding_api.py", "--db-in-memory", 
-			"--config-file", "conf/bountyfunding_api.ini.sample",
+			"python", "api.py", 
+			"--db-in-memory", 
+			"--config-file", "conf/bountyfunding.ini.sample",
 		], 
 		cwd=BOUNTYFUNDING_HOME, 
 		preexec_fn=os.setsid,

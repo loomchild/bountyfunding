@@ -1,7 +1,8 @@
 from paypalx import AdaptivePayments, PaypalError
-from config import config
-from models import db, Payment
-from const import PaymentGateway
+
+from bountyfunding.api.config import config
+from bountyfunding.api.models import db, Payment
+from bountyfunding.api.const import PaymentGateway
 
 
 def get_paypal(project_id):
