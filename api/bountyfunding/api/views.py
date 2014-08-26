@@ -1,9 +1,10 @@
 from bountyfunding.api import app
 
 from bountyfunding.api.models import db, Project, Issue, User, Sponsorship, Email, Payment, Change, Token
+from bountyfunding.api.data import retrieve_user
 from bountyfunding.api.const import ProjectType, IssueStatus, SponsorshipStatus, PaymentStatus, PaymentGateway
 
-from bountyfunding.api import paypal_standard, paypal_rest, paypal_adaptive
+from bountyfunding.api.payment.factory import payment_factory
 from bountyfunding.api.errors import APIException
 
 from bountyfunding.api import security
@@ -13,8 +14,6 @@ from flask import Flask, url_for, render_template, make_response, redirect, abor
 from pprint import pprint
 import re, requests, threading, random, string
 
-
-DATE_PATTERN = re.compile('^(0?[1-9]|1[012])/[0-9][0-9]$')
 
 #TODO: move to config
 NOTIFY_INTERVAL = 5
@@ -316,25 +315,12 @@ def update_payment(issue_ref, user_name):
 	if payment != None:
 		if payment.status == status:
 			return jsonify(error='Payment already confirmed'), 403
-		if payment.gateway == PaymentGateway.PLAIN:
-			card_number = request.values.get('card_number')
-			card_date = request.values.get('card_date')
-			if card_number != '4111111111111111' or DATE_PATTERN.match(card_date) == None:
-				return jsonify(error='Invalid card details'), 403
-		elif payment.gateway == PaymentGateway.PAYPAL_REST:
-			approved = paypal_rest.process_payment(g.project_id, sponsorship, payment, request.values)
-			if not approved:
-				return jsonify(error='Payment not confirmed by PayPal'), 403
-		elif payment.gateway == PaymentGateway.PAYPAL_STANDARD:
-			approved = paypal_standard.process_payment(g.project_id, sponsorship, payment, request.values)
-			if not approved:
-				return jsonify(error='Payment not confirmed by PayPal'), 403
-		elif payment.gateway == PaymentGateway.PAYPAL_ADAPTIVE:
-			approved = paypal_adaptive.process_payment(g.project_id, sponsorship, payment, request.values)
-			if not approved:
-				return jsonify(error='Payment not confirmed by PayPal'), 403
-		else:
-			return jsonify(error='Unknown gateway'), 400
+
+		payment_gateway = payment_factory.get_payment_gateway(payment.gateway)
+
+		approved = payment_gateway.process_payment(g.project_id, sponsorship, payment, request.values)
+		if not approved:
+			return jsonify(error='Payment not confirmed by the gateway'), 403
 
 		payment.status = status
 		db.session.add(payment)
@@ -342,6 +328,7 @@ def update_payment(issue_ref, user_name):
 		db.session.add(sponsorship)
 		db.session.commit()
 		response = jsonify(message='Payment updated')
+	
 	else:
 		response = jsonify(error='Payment not found'), 404
 	
@@ -369,22 +356,9 @@ def create_payment(issue_ref, user_name):
 	if sponsorship.status != SponsorshipStatus.PLEDGED:
 		return jsonify(error="You can only create payment for PLEDGED sponsorship"), 403
 
-	if gateway == PaymentGateway.PLAIN:
-		payment = Payment(g.project_id, sponsorship.sponsorship_id, gateway)
-	elif gateway == PaymentGateway.PAYPAL_REST:
-		if not return_url:
-			return jsonify(error='return_url cannot be blank'), 400
-		payment = paypal_rest.create_payment(g.project_id, sponsorship, return_url)
-	elif gateway == PaymentGateway.PAYPAL_STANDARD:
-		if not return_url:
-			return jsonify(error='return_url cannot be blank'), 400
-		payment = paypal_standard.create_payment(g.project_id, sponsorship, return_url)
-	elif gateway == PaymentGateway.PAYPAL_ADAPTIVE:
-		if not return_url:
-			return jsonify(error='return_url cannot be blank'), 400
-		payment = paypal_adaptive.create_payment(g.project_id, sponsorship, return_url)
-	else:
-		return jsonify(error='Unknown gateway'), 400
+	payment_gateway = payment_factory.get_payment_gateway(gateway)
+	
+	payment = payment_gateway.create_payment(g.project_id, sponsorship, return_url)
 
 	db.session.add(payment)
 	db.session.commit()
@@ -404,10 +378,7 @@ def get_user(user_name):
 def put_user(user_name):
 	paypal_email = request.values.get('paypal_email')
 	
-	user = retrieve_user(g.project_id, user_name)
-
-	if user == None:
-		return jsonify(error='User not found'), 404
+	user = retrieve_create_user(g.project_id, user_name)
 
 	if paypal_email == None:
 		return jsonify(error='Nothing to update'), 400
@@ -588,7 +559,7 @@ def retrieve_issue(project_id, issue_ref):
 	return issue
 
 def create_issue(project_id, ref, status, title, link):
-	issue = Issue(project_id, ref, status, title, link)
+	issue = Issue(project_id, ref, status, title, link, None)
 	db.session.add(issue)
 	db.session.commit()
 	return issue
@@ -622,10 +593,6 @@ def retrieve_sponsored_issues(project_id):
 	}, issues)}
 	
 	return issues
-
-def retrieve_user(project_id, name):
-	user = User.query.filter_by(project_id=project_id, name=name).first()
-	return user
 
 def retrieve_create_user(project_id, name):
 	user = retrieve_user(project_id, name)

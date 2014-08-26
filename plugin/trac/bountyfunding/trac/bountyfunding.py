@@ -235,8 +235,6 @@ class BountyFundingPlugin(Component):
 						gateway_tags = []
 						if 'PLAIN' in gateways:
 							gateway_tags.append(tag.input(type="submit", value="Payment Card", name='PLAIN'))
-						if 'PAYPAL_REST' in gateways:
-							gateway_tags.append(tag.input(type="submit", value="PayPal", name='PAYPAL_REST'))
 						if 'PAYPAL_STANDARD' in gateways:
 							gateway_tags.append(tag.input(type="submit", value="PayPal", name='PAYPAL_STANDARD'))
 						if 'PAYPAL_ADAPTIVE' in gateways:
@@ -356,8 +354,6 @@ class BountyFundingPlugin(Component):
 				else:
 					if req.args.get('PLAIN'):
 						gateway = 'PLAIN'
-					elif req.args.get('PAYPAL_REST'):
-						gateway = 'PAYPAL_REST'
 					elif req.args.get('PAYPAL_STANDARD'):
 						gateway = 'PAYPAL_STANDARD'
 					elif req.args.get('PAYPAL_ADAPTIVE'):
@@ -408,7 +404,7 @@ class BountyFundingPlugin(Component):
 						if pay == None or error:
 							return "payment.html", {'error': error}, None
 		
-					elif gateway == 'PAYPAL_REST' or gateway == 'PAYPAL_STANDARD' or gateway == 'PAYPAL_ADAPTIVE':
+					elif gateway == 'PAYPAL_STANDARD' or gateway == 'PAYPAL_ADAPTIVE':
 						return_url = req.abs_href('ticket', ticket_id, 'pay')
 						response = self.call_api('POST', 
 								'/issue/%s/sponsorship/%s/payments' % (ticket_id, user), 
@@ -490,6 +486,7 @@ class BountyFundingPlugin(Component):
 		pass
 
 	def ticket_changed(self, ticket, comment, author, old_values):
+		#TODO: add owner tracking, also in sync
 		if 'status' in old_values or 'summary' in old_values:
 			status = self.convert_status(ticket.values['status'])
 			title = ticket['summary']

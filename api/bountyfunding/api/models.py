@@ -36,13 +36,15 @@ class Issue(db.Model):
 	status = db.Column(db.Integer, nullable=False)
 	title = db.Column(db.String(1024), nullable=False)
 	link = db.Column(db.String(1024), nullable=False)
+	owner_id = db.Column(db.Integer, nullable=True)
 
-	def __init__(self, project_id, issue_ref, status, title, link):
+	def __init__(self, project_id, issue_ref, status, title, link, owner_id):
 		self.project_id = project_id
 		self.issue_ref = issue_ref
 		self.status = status
 		self.title = title
 		self.link = link
+		self.owner_id = owner_id
 
 	def __repr__(self):
 		return '<Issue project_id: "%s", issue_ref: "%s">' % self.project_id, self.issue_ref
@@ -90,8 +92,9 @@ class Payment(db.Model):
 	status = db.Column(db.Integer, nullable=False)
 	gateway = db.Column(db.Integer)
 	timestamp = db.Column(db.DateTime, nullable=False)
+	recipient_id = db.Column(db.Integer, nullable=False)
 
-	def __init__(self, project_id, sponsorship_id, gateway):
+	def __init__(self, project_id, sponsorship_id, gateway, recipient_id):
 		self.project_id = project_id
 		self.sponsorship_id = sponsorship_id
 		self.gateway = gateway
@@ -99,6 +102,7 @@ class Payment(db.Model):
 		self.url = ''
 		self.status = PaymentStatus.INITIATED
 		self.timestamp = datetime.now()
+		self.recipient_id = recipient_id
 
 	def __repr__(self):
 		return '<Payment payment_id: "%s">' % self.payment_id

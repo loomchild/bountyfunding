@@ -17,7 +17,7 @@ def setup():
 		cwd=BOUNTYFUNDING_HOME, 
 		preexec_fn=os.setsid,
 	)
-	time.sleep(2)	
+	time.sleep(2)
 
 def teardown():
 	global bountyfunding_process
