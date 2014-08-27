@@ -36,19 +36,25 @@ def post_issue():
 	status = IssueStatus.from_string(request.values.get('status'))
 	title = request.values.get('title')
 	link = request.values.get('link')
+	owner_name = request.values.get('owner')
 
 	if ref == None or status == None or title == None or link == None:
-		return jsonify(error="All parameters are required"), 400
+		return jsonify(error="ref, status, title and link parameters are required"), 400
 	
 	if not link.startswith('/'):
 		return jsonify(error="Link must be relative to the issue tracker URL and start with /"), 400
+
+	owner_id = None
+	if owner_name != None:
+		owner = retrieve_create_user(g.project_id, owner_name)
+		owner_id = owner.user_id
 
 	issue = retrieve_issue(g.project_id, ref)
 
 	if issue != None:
 		return jsonify(error="Issue already exists"), 409
 
-	create_issue(g.project_id, ref, status, title, link)
+	issue = create_issue(g.project_id, ref, status, title, link, owner_id)
 
 	return jsonify(message='OK')
 
@@ -68,13 +74,18 @@ def put_issue(issue_ref):
 	status = IssueStatus.from_string(request.values.get('status'))
 	title = request.values.get('title')
 	link = request.values.get('link')
+	owner_name = request.values.get('owner')
 
 	# TODO: in addition could be more clever actually report if issue has been updated or not
-	if status == None and title == None and link == None:
+	if status == None and title == None and link == None and owner_name == None:
 		return jsonify(error="At least one parameter is required when updating an issue"), 400
 
 	if link != None and not link.startswith('/'):
 		return jsonify(error="Link must be relative to the issue tracker URL and start with /"), 400
+
+	owner = None
+	if owner_name != None:
+		owner = retrieve_create_user(g.project_id, owner_name)
 
 	issue = retrieve_issue(g.project_id, issue_ref)
 
@@ -103,6 +114,10 @@ def put_issue(issue_ref):
 
 	if link != None and link != issue.link:
 		issue.link = link
+
+	if owner != None and owner.user_id != issue.owner_id:
+		issue.owner_id = owner.user_id
+		#TODO: check status, make sure sponsorships are refunded, etc. 
 
 	update_issue(issue)
 
@@ -558,8 +573,8 @@ def retrieve_issue(project_id, issue_ref):
 	issue = Issue.query.filter_by(project_id=project_id, issue_ref=issue_ref).first()
 	return issue
 
-def create_issue(project_id, ref, status, title, link):
-	issue = Issue(project_id, ref, status, title, link, None)
+def create_issue(project_id, ref, status, title, link, owner_id):
+	issue = Issue(project_id, ref, status, title, link, owner_id)
 	db.session.add(issue)
 	db.session.commit()
 	return issue
@@ -569,10 +584,15 @@ def update_issue(issue):
 	db.session.commit()
 
 def mapify_issue(issue):
-	#TODO: convert it to Issue method / operator
-	status = IssueStatus.to_string(issue.status)
-	link = config[issue.project_id].TRACKER_URL + issue.link
-	return dict(ref=issue.issue_ref, status=status, title=issue.title, link=link)
+	result = dict(ref=issue.issue_ref, title=issue.title)	
+
+	result['status'] = IssueStatus.to_string(issue.status)
+	result['link'] = config[issue.project_id].TRACKER_URL + issue.link
+
+	if issue.owner != None:
+		result['owner'] = issue.owner.name
+
+	return result
 
 def retrieve_sponsored_issues(project_id):
 	issues = db.engine.execute("""
