@@ -117,7 +117,7 @@ def put_issue(issue_ref):
 
 	if owner != None and owner.user_id != issue.owner_id:
 		issue.owner_id = owner.user_id
-		#TODO: check status, make sure sponsorships are refunded, etc. 
+		#TODO: check status, make sure sponsorships are refunded, etc. Same with status change.
 
 	update_issue(issue)
 
