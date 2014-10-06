@@ -150,9 +150,21 @@ class BountyFundingPlugin(Component):
 		
 		title = ticket['summary']
 		status = self.convert_status(ticket['status'])
+		owner = ticket['owner']
 		
-		if title != api_ticket['title'] or status != api_ticket['status']:
-			self.call_api('PUT', '/issue/%s' % ticket.id, title=title, status=status)
+		changes = {}
+
+		if title != api_ticket.get('title'):
+			changes['title'] = title
+
+		if status != api_ticket.get('status'):
+			changes['status'] = status
+
+		if owner != api_ticket.get('owner'):
+			changes['owner'] = owner
+
+		if changes:
+			self.call_api('PUT', '/issue/%s' % ticket.id, **changes)
 			return True
 
 		return False
@@ -235,8 +247,6 @@ class BountyFundingPlugin(Component):
 						gateway_tags = []
 						if 'PLAIN' in gateways:
 							gateway_tags.append(tag.input(type="submit", value="Payment Card", name='PLAIN'))
-						if 'PAYPAL_REST' in gateways:
-							gateway_tags.append(tag.input(type="submit", value="PayPal", name='PAYPAL_REST'))
 						if 'PAYPAL_STANDARD' in gateways:
 							gateway_tags.append(tag.input(type="submit", value="PayPal", name='PAYPAL_STANDARD'))
 						if 'PAYPAL_ADAPTIVE' in gateways:
@@ -275,7 +285,9 @@ class BountyFundingPlugin(Component):
 						fragment.append(action)
 						
 				else:
-					error = request.json().get("error", "Unknown error")
+					error = "Connection error"
+					if request:
+						error = request.json().get("error", "Unknown error")
 					fragment.append(tag.span("[API Error]", title=error))
 	
 				#chrome = Chrome(self.env)
@@ -321,12 +333,13 @@ class BountyFundingPlugin(Component):
 			ticket = Ticket(self.env, ticket_id)
 			ticket_title = ticket['summary']
 			ticket_link = self.get_link(ticket_id)
+			ticket_owner = ticket['owner']
 			ticket_status = self.convert_status(ticket['status'])
 
 			if action == 'sponsor':
 				amount = req.args.get('amount')
 				if self.call_api('GET', '/issue/%s' % ticket_id).status_code == 404:
-					self.call_api('POST', '/issues', ref=ticket_id, status=ticket_status, title=ticket_title, link=ticket_link)
+					self.call_api('POST', '/issues', ref=ticket_id, status=ticket_status, title=ticket_title, link=ticket_link, owner=ticket_owner)
 				response = self.call_api('POST', '/issue/%s/sponsorships' % ticket_id, user=user, amount=amount)
 				if response.status_code != 200:
 					add_warning(req, "Unable to pledge - %s" % response.json().get('error', ''))
@@ -356,8 +369,6 @@ class BountyFundingPlugin(Component):
 				else:
 					if req.args.get('PLAIN'):
 						gateway = 'PLAIN'
-					elif req.args.get('PAYPAL_REST'):
-						gateway = 'PAYPAL_REST'
 					elif req.args.get('PAYPAL_STANDARD'):
 						gateway = 'PAYPAL_STANDARD'
 					elif req.args.get('PAYPAL_ADAPTIVE'):
@@ -375,7 +386,7 @@ class BountyFundingPlugin(Component):
 						else:
 							amount = req.args.get('amount')
 							if self.call_api('GET', '/issue/%s' % ticket_id).status_code == 404:
-								self.call_api('POST', '/issues', ref=ticket_id, status=ticket_status, title=ticket_title, link=ticket_link)
+								self.call_api('POST', '/issues', ref=ticket_id, status=ticket_status, title=ticket_title, link=ticket_link, owner=ticket_owner)
 							response = self.call_api('POST', '/issue/%s/sponsorships' % ticket_id, user=user, amount=amount)
 							if response.status_code != 200:
 								add_warning(req, "Unable to pledge - %s" % response.json().get('error', ''))
@@ -408,7 +419,7 @@ class BountyFundingPlugin(Component):
 						if pay == None or error:
 							return "payment.html", {'error': error}, None
 		
-					elif gateway == 'PAYPAL_REST' or gateway == 'PAYPAL_STANDARD' or gateway == 'PAYPAL_ADAPTIVE':
+					elif gateway == 'PAYPAL_STANDARD' or gateway == 'PAYPAL_ADAPTIVE':
 						return_url = req.abs_href('ticket', ticket_id, 'pay')
 						response = self.call_api('POST', 
 								'/issue/%s/sponsorship/%s/payments' % (ticket_id, user), 
@@ -490,10 +501,20 @@ class BountyFundingPlugin(Component):
 		pass
 
 	def ticket_changed(self, ticket, comment, author, old_values):
-		if 'status' in old_values or 'summary' in old_values:
-			status = self.convert_status(ticket.values['status'])
-			title = ticket['summary']
-			self.call_api('PUT', '/issue/%s' % ticket.id, status=status, title=title)
+		changes = {}
+	
+		if 'status' in old_values:
+			changes['status'] = self.convert_status(ticket.values['status'])
+	
+		if 'summary' in old_values:
+			changes['title'] = ticket['summary']
+
+		if 'owner' in old_values:
+			changes['owner'] = ticket['owner']
+
+		if changes: 
+			# Ignore error 404
+			self.call_api('PUT', '/issue/%s' % ticket.id, **changes)
 
 	def ticket_deleted(self, ticket):
 		pass

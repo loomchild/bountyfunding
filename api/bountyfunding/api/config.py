@@ -60,9 +60,7 @@ properties = {
 	'PROJECT_ROOT' : Property('Enable root projects', boolean, False, False, True, False),
 
 	'PAYPAL_SANDBOX' : Property('Use Paypal sandbox or live system', boolean, True, False, True, True),
-	'PAYPAL_RECEIVER_EMAIL' : Property('Email of the entity receiving payments; must match with other details like tokens, etc', str, '', False, True, True),
-	'PAYPAL_CLIENT_ID' : Property('RESTful API client ID', str, '', False, True, True),
-	'PAYPAL_CLIENT_SECRET' : Property('RESTful API client secret', str, '', False, True, True),
+	'PAYPAL_RECEIVER_EMAIL' : Property('Email of the entity receiving payments', str, '', False, True, True),
 	'PAYPAL_PDT_ACCESS_TOKEN' : Property('Paypal Payment Data Transfer (PDT) access token', str, '', False, True, True),
 
 	'PAYPAL_USER_ID': Property('Paypal user ID for Adaptive Payments', str, '', False, True, True),

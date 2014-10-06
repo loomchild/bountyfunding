@@ -1,6 +1,5 @@
 Flask>=0.10.1
 Flask-SQLAlchemy>=1.0
 requests>=2.0.0
-paypalrestsdk>=0.6.3
 git+git://github.com/freedomsponsors/python-paypalx.git@34d624ed8a7b6505aa6e6e12c0a5b854cacbc612#egg=paypalx
 

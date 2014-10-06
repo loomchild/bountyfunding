@@ -28,25 +28,6 @@ class Project(db.Model):
 	def is_mutable(self):
 		return True
 
-
-class Issue(db.Model):
-	issue_id = db.Column(db.Integer, primary_key=True)
-	project_id = db.Column(db.Integer, nullable=False)
-	issue_ref = db.Column(db.String(256), nullable=False)
-	status = db.Column(db.Integer, nullable=False)
-	title = db.Column(db.String(1024), nullable=False)
-	link = db.Column(db.String(1024), nullable=False)
-
-	def __init__(self, project_id, issue_ref, status, title, link):
-		self.project_id = project_id
-		self.issue_ref = issue_ref
-		self.status = status
-		self.title = title
-		self.link = link
-
-	def __repr__(self):
-		return '<Issue project_id: "%s", issue_ref: "%s">' % self.project_id, self.issue_ref
-
 class User(db.Model):
 	user_id = db.Column(db.Integer, primary_key=True)
 	project_id = db.Column(db.Integer, nullable=False)
@@ -60,6 +41,28 @@ class User(db.Model):
 
 	def __repr__(self):
 		return '<User project_id: "%s", name: "%s">' % self.project_id, self.name
+
+class Issue(db.Model):
+	issue_id = db.Column(db.Integer, primary_key=True)
+	project_id = db.Column(db.Integer, nullable=False)
+	issue_ref = db.Column(db.String(256), nullable=False)
+	status = db.Column(db.Integer, nullable=False)
+	title = db.Column(db.String(1024), nullable=False)
+	link = db.Column(db.String(1024), nullable=False)
+	owner_id = db.Column(db.Integer, db.ForeignKey(User.user_id), nullable=True)
+
+	owner = db.relation(User, lazy="joined")
+	
+	def __init__(self, project_id, issue_ref, status, title, link, owner_id):
+		self.project_id = project_id
+		self.issue_ref = issue_ref
+		self.status = status
+		self.title = title
+		self.link = link
+		self.owner_id = owner_id
+
+	def __repr__(self):
+		return '<Issue project_id: "%s", issue_ref: "%s">' % self.project_id, self.issue_ref
 
 class Sponsorship(db.Model):
 	sponsorship_id = db.Column(db.Integer, primary_key=True)
