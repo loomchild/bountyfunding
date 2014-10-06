@@ -93,7 +93,7 @@ def test_confirm():
 	confirm_button = browser.find_element_by_id('confirm-button')
 	confirm_button.click()
 	bf = get_bountyfunding()
-	payment_button = bf.find_element_by_name('PLAIN')
+	payment_button = bf.find_element_by_name('DUMMY')
 	payment_button.click()
 	
 	# Fill payment details

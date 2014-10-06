@@ -6,10 +6,10 @@ import re
 DATE_PATTERN = re.compile('^(0?[1-9]|1[012])/[0-9][0-9]$')
 
 
-class PlainGateway:
+class DummyGateway:
 
 	def create_payment(self, project_id, sponsorship, return_url):
-		payment = Payment(project_id, sponsorship.sponsorship_id, PaymentGateway.PLAIN)
+		payment = Payment(project_id, sponsorship.sponsorship_id, PaymentGateway.DUMMY)
 		return payment
 
 	def process_payment(self, project_id, sponsorship, payment, details):

@@ -19,8 +19,8 @@ admin = admin
 # Maximum pledge amount
 max_pledge_amount = 100
 
-# Available payment gateways; PLAIN, PAYPAL_STANDARD, PAYPAL_ADAPTIVE
-payment_gateways = PLAIN
+# Available payment gateways; DUMMY, PAYPAL_STANDARD, PAYPAL_ADAPTIVE
+payment_gateways = DUMMY
 
 
 [project]

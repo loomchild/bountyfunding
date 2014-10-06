@@ -23,7 +23,7 @@ class PaymentStatus(Enum):
 	CONFIRMED = 20
 
 class PaymentGateway(Enum):
-	PLAIN = 10
+	DUMMY = 10
 	PAYPAL_STANDARD = 21
 	PAYPAL_ADAPTIVE = 22
 

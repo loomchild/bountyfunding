@@ -245,8 +245,8 @@ class BountyFundingPlugin(Component):
 						response = self.call_api('GET', '/config/payment_gateways')
 						gateways = response.json().get('gateways')
 						gateway_tags = []
-						if 'PLAIN' in gateways:
-							gateway_tags.append(tag.input(type="submit", value="Payment Card", name='PLAIN'))
+						if 'DUMMY' in gateways:
+							gateway_tags.append(tag.input(type="submit", value="Payment Card", name='DUMMY'))
 						if 'PAYPAL_STANDARD' in gateways:
 							gateway_tags.append(tag.input(type="submit", value="PayPal", name='PAYPAL_STANDARD'))
 						if 'PAYPAL_ADAPTIVE' in gateways:
@@ -367,8 +367,8 @@ class BountyFundingPlugin(Component):
 					else:
 						self.update_ticket(ticket, True, user)
 				else:
-					if req.args.get('PLAIN'):
-						gateway = 'PLAIN'
+					if req.args.get('DUMMY'):
+						gateway = 'DUMMY'
 					elif req.args.get('PAYPAL_STANDARD'):
 						gateway = 'PAYPAL_STANDARD'
 					elif req.args.get('PAYPAL_ADAPTIVE'):
@@ -393,7 +393,7 @@ class BountyFundingPlugin(Component):
 								#TODO: prevent confirming, exception would be much nicer
 								gateway = None
 
-					if gateway == 'PLAIN':
+					if gateway == 'DUMMY':
 						pay = req.args.get('pay')
 						card_number = req.args.get('card_number')
 						card_date = req.args.get('card_date')
@@ -405,7 +405,7 @@ class BountyFundingPlugin(Component):
 							if card_number and card_date:
 								response = self.call_api('POST', 
 										'/issue/%s/sponsorship/%s/payments' % (ticket_id, user), 
-										gateway='PLAIN')
+										gateway='DUMMY')
 								if response.status_code != 200:
 									error = 'API cannot create plain payment'
 								response = self.call_api('PUT', 

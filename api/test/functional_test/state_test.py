@@ -150,7 +150,7 @@ def sponsorship_pledged():
 	return api.post('/issue/1/sponsorships', user=USER, amount=10)
 
 def payment_initiated():
-	return api.post('/issue/1/sponsorship/%s/payments' % USER, gateway=PaymentGateway.to_string(PaymentGateway.PLAIN))
+	return api.post('/issue/1/sponsorship/%s/payments' % USER, gateway=PaymentGateway.to_string(PaymentGateway.DUMMY))
 
 def payment_confirmed():
 	return api.put('/issue/1/sponsorship/%s/payment' % USER, status=PaymentStatus.to_string(PaymentStatus.CONFIRMED), card_number=CARD_NUMBER, card_date=CARD_DATE)
