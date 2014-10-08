@@ -6,9 +6,10 @@ import argparse
 import subprocess
 
 from bountyfunding.util.homer import BOUNTYFUNDING_HOME
+from bountyfunding.api import app
 from bountyfunding.api.const import PaymentGateway
 
-from bountyfunding.api.models import Config
+from bountyfunding.api.models import db, Config
 
 
 def parse(name, value):
@@ -79,7 +80,9 @@ class CommonConfig:
 		return ProjectConfig(project_id)
 
 	def init(self, args):
-		config_file = args.config_file
+		config_file = args.get('config_file')
+		if not config_file:
+			config_file = os.path.join('conf', 'bountyfunding.ini')
 		if not os.path.isabs(config_file):
 			config_file = os.path.abspath(os.path.join(BOUNTYFUNDING_HOME, config_file))
 		parser = ConfigParser.RawConfigParser()
@@ -89,7 +92,7 @@ class CommonConfig:
 		for name, prop in file_props:
 			self._init_value_from_file(parser, name)
 
-		if args.db_in_memory:
+		if args.get('db_in_memory'):
 			setattr(self, 'DATABASE_URL', 'sqlite://')
 
 		args_props = filter(lambda (k,v): v.in_args, properties.items())
@@ -114,7 +117,7 @@ class CommonConfig:
 			setattr(self, name, value)
 
 	def _init_value_from_args(self, args, option, name):
-		value = getattr(args, option)
+		value = args.get(option)
 		if value != None:
 			setattr(self, name, value)
 
@@ -143,6 +146,11 @@ class CommonConfig:
 
 			if not os.path.exists(path):
 				self.DATABASE_CREATE = True
+
+		app.config['SQLALCHEMY_DATABASE_URI'] = self.DATABASE_URL
+		db.init_app(app)
+		# See http://piotr.banaszkiewicz.org/blog/2012/06/29/flask-sqlalchemy-init_app/, option 2
+		db.app = app
 
 	def _init_property(self, name):
 		setattr(self, name, properties[name].default_value)
