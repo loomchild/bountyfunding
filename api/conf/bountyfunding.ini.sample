@@ -31,6 +31,9 @@ exceptions = True
 # Log SQL statements
 sql = False
 
+# Log outgoing HTTP requests
+http = False
+
 
 [project]
 

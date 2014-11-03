@@ -60,8 +60,9 @@ properties = {
 	'PROJECT_TEST' : Property('Enable test projects', boolean, True, False, True, False),
 	'PROJECT_ROOT' : Property('Enable root projects', boolean, False, False, True, False),
 
-	'LOG_EXCEPTIONS' : Property('Log Python exceptions in production mode', bool, True, True, False, False),
-	'LOG_SQL' : Property('Log SQL statements', bool, False, True, False, False),
+	'LOG_EXCEPTIONS' : Property('Log Python exceptions in production mode', boolean, True, False, True, False),
+	'LOG_SQL' : Property('Log SQL statements', boolean, False, False, True, False),
+	'LOG_HTTP' : Property('Log outgoing HTTP requests', boolean, False, False, True, False),
 
 	'PAYPAL_SANDBOX' : Property('Use Paypal sandbox or live system', boolean, True, False, True, True),
 	'PAYPAL_RECEIVER_EMAIL' : Property('Email of the entity receiving payments', str, '', False, True, True),
@@ -114,7 +115,7 @@ class CommonConfig:
 				section = prefix
 				option = option[len(prefix)+1:]
 				break
-		
+
 		if parser.has_option(section, option):
 			value = parser.get(section, option)
 			value = parse(name, value)
@@ -126,7 +127,7 @@ class CommonConfig:
 			setattr(self, name, value)
 
 	def _init_log(self):
-		import logging
+		import logging, httplib2
 
 		if self.LOG_EXCEPTIONS:
 			app.config['PROPAGATE_EXCEPTIONS'] = True
@@ -135,6 +136,9 @@ class CommonConfig:
 			logger = logging.getLogger('sqlalchemy.engine')
 			logger.setLevel(logging.INFO)
 			logger.handlers = app.logger.handlers
+
+		if self.LOG_HTTP:
+			httplib2.debuglevel = 1
 
 	def _init_version(self):
 		try:
@@ -188,7 +192,6 @@ class ProjectConfig:
 		prop = Config.query.filter_by(project_id=project_id, name=name).first()
 		return prop
 		
-
 config = CommonConfig()
 
 
