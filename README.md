@@ -116,6 +116,9 @@ Download the archive from github [master.zip](https://github.com/bountyfunding/b
 * To check if plugin has been installed properly go to Trac Admin / Plugins. Also you should see Bounty field on each ticket. It's also a good idea to check if email notifications are sent - create a ticket, sponsor it by one user and assign it or complete it by another user - first user should receive a notification. 
 
 ### Deploy API
+
+#### As Standalone Process During Development
+
 * Change directory
 
 		cd api
@@ -131,6 +134,32 @@ Download the archive from github [master.zip](https://github.com/bountyfunding/b
 * Run the API
 
 		./api.py >& log/bountyfunding.log &
+
+#### Using WSGI in Production on Apache HTTPD
+
+* Open additional port on localhost interface (for security reasons). Add the following line to Apache configuration file (/etc/apache2/ports.conf on Debian):
+
+		Listen 127.0.0.1:5000
+
+* Put the following in your apache config and restart Apache:
+
+		<VirtualHost 127.0.0.1:5000>
+
+        		WSGIDaemonProcess bountyfunding_api user=<server user> group=<server group> threads=1 python-path=/path/to/bountyfunding/api:/path/to/virtualenv/lib/python<version>/site-packages
+		        WSGIScriptAlias / /path/to/bountyfunding/api/cgi-bin/bountyfunding_api.wsgi
+
+		        <Directory /path/to/bountyfunding/api>
+        		        WSGIProcessGroup bountyfunding_api
+            		    WSGIApplicationGroup %{GLOBAL}
+           				WSGIScriptReloading On
+                		Order deny,allow
+                		Allow from all
+        		</Directory>
+
+		        ErrorLog /path/to/bountyfunding/api/log/bountyfunding_api.log
+        		CustomLog /path/to/bountyfunding/api/log/bountyfunding_api.log combined
+
+		</VirtualHost>
 
 Development
 -----------
