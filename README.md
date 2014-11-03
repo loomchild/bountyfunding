@@ -137,7 +137,7 @@ Download the archive from github [master.zip](https://github.com/bountyfunding/b
 
 #### Using WSGI in Production on Apache HTTPD
 
-* Open additional port on localhost interface (for security reasons). Add the following line to Apache configuration file (/etc/apache2/ports.conf on Debian):
+* Open additional port, but only on localhost interface (for security reasons; additionally I recommend using a firewall to block access to this port from the outside). Add the following line to Apache configuration file (/etc/apache2/ports.conf on Debian):
 
 		Listen 127.0.0.1:5000
 
@@ -145,7 +145,7 @@ Download the archive from github [master.zip](https://github.com/bountyfunding/b
 
 		<VirtualHost 127.0.0.1:5000>
 
-        		WSGIDaemonProcess bountyfunding_api user=<server user> group=<server group> threads=1 python-path=/path/to/bountyfunding/api:/path/to/virtualenv/lib/python<version>/site-packages
+        		WSGIDaemonProcess bountyfunding_api user=<server user> group=<server group> processes=1 threads=5 python-path=/path/to/bountyfunding/api:/path/to/virtualenv/lib/python<version>/site-packages
 		        WSGIScriptAlias / /path/to/bountyfunding/api/cgi-bin/bountyfunding_api.wsgi
 
 		        <Directory /path/to/bountyfunding/api>
