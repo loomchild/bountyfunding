@@ -6,9 +6,10 @@ import argparse
 import subprocess
 
 from bountyfunding.util.homer import BOUNTYFUNDING_HOME
+from bountyfunding.api import app
 from bountyfunding.api.const import PaymentGateway
 
-from bountyfunding.api.models import Config
+from bountyfunding.api.models import db, Config
 
 
 def parse(name, value):
@@ -59,6 +60,9 @@ properties = {
 	'PROJECT_TEST' : Property('Enable test projects', boolean, True, False, True, False),
 	'PROJECT_ROOT' : Property('Enable root projects', boolean, False, False, True, False),
 
+	'LOG_EXCEPTIONS' : Property('Log Python exceptions in production mode', bool, True, True, False, False),
+	'LOG_SQL' : Property('Log SQL statements', bool, False, True, False, False),
+
 	'PAYPAL_SANDBOX' : Property('Use Paypal sandbox or live system', boolean, True, False, True, True),
 	'PAYPAL_RECEIVER_EMAIL' : Property('Email of the entity receiving payments', str, '', False, True, True),
 	'PAYPAL_PDT_ACCESS_TOKEN' : Property('Paypal Payment Data Transfer (PDT) access token', str, '', False, True, True),
@@ -79,7 +83,9 @@ class CommonConfig:
 		return ProjectConfig(project_id)
 
 	def init(self, args):
-		config_file = args.config_file
+		config_file = args.get('config_file')
+		if not config_file:
+			config_file = os.path.join('conf', 'bountyfunding.ini')
 		if not os.path.isabs(config_file):
 			config_file = os.path.abspath(os.path.join(BOUNTYFUNDING_HOME, config_file))
 		parser = ConfigParser.RawConfigParser()
@@ -89,20 +95,21 @@ class CommonConfig:
 		for name, prop in file_props:
 			self._init_value_from_file(parser, name)
 
-		if args.db_in_memory:
+		if args.get('db_in_memory'):
 			setattr(self, 'DATABASE_URL', 'sqlite://')
 
 		args_props = filter(lambda (k,v): v.in_args, properties.items())
 		for name, prop in args_props:
 			self._init_value_from_args(args, name.lower(), name)
-		
+	
+		self._init_log()
 		self._init_version()
 		self._init_database()
 
 	def _init_value_from_file(self, parser, name):
 		option = name.lower()
 		section = 'general'
-		for prefix in ('paypal', 'project', ):
+		for prefix in ('paypal', 'project', 'log'):
 			if option.startswith(prefix):
 				section = prefix
 				option = option[len(prefix)+1:]
@@ -114,9 +121,20 @@ class CommonConfig:
 			setattr(self, name, value)
 
 	def _init_value_from_args(self, args, option, name):
-		value = getattr(args, option)
+		value = args.get(option)
 		if value != None:
 			setattr(self, name, value)
+
+	def _init_log(self):
+		import logging
+
+		if self.LOG_EXCEPTIONS:
+			app.config['PROPAGATE_EXCEPTIONS'] = True
+
+		if self.LOG_SQL:
+			logger = logging.getLogger('sqlalchemy.engine')
+			logger.setLevel(logging.INFO)
+			logger.handlers = app.logger.handlers
 
 	def _init_version(self):
 		try:
@@ -143,6 +161,11 @@ class CommonConfig:
 
 			if not os.path.exists(path):
 				self.DATABASE_CREATE = True
+
+		app.config['SQLALCHEMY_DATABASE_URI'] = self.DATABASE_URL
+		db.init_app(app)
+		# See http://piotr.banaszkiewicz.org/blog/2012/06/29/flask-sqlalchemy-init_app/, option 2
+		db.app = app
 
 	def _init_property(self, name):
 		setattr(self, name, properties[name].default_value)

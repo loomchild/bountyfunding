@@ -23,6 +23,15 @@ max_pledge_amount = 100
 payment_gateways = DUMMY
 
 
+[log]
+
+# Log Python exceptions in production mode
+exceptions = True
+
+# Log SQL statements
+sql = False
+
+
 [project]
 
 # Enable default project that can be accessed without a token (used when this API serves only one project)
