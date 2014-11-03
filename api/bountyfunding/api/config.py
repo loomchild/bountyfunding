@@ -60,6 +60,9 @@ properties = {
 	'PROJECT_TEST' : Property('Enable test projects', boolean, True, False, True, False),
 	'PROJECT_ROOT' : Property('Enable root projects', boolean, False, False, True, False),
 
+	'LOG_EXCEPTIONS' : Property('Log Python exceptions in production mode', bool, True, True, False, False),
+	'LOG_SQL' : Property('Log SQL statements', bool, False, True, False, False),
+
 	'PAYPAL_SANDBOX' : Property('Use Paypal sandbox or live system', boolean, True, False, True, True),
 	'PAYPAL_RECEIVER_EMAIL' : Property('Email of the entity receiving payments', str, '', False, True, True),
 	'PAYPAL_PDT_ACCESS_TOKEN' : Property('Paypal Payment Data Transfer (PDT) access token', str, '', False, True, True),
@@ -98,14 +101,15 @@ class CommonConfig:
 		args_props = filter(lambda (k,v): v.in_args, properties.items())
 		for name, prop in args_props:
 			self._init_value_from_args(args, name.lower(), name)
-		
+	
+		self._init_log()
 		self._init_version()
 		self._init_database()
 
 	def _init_value_from_file(self, parser, name):
 		option = name.lower()
 		section = 'general'
-		for prefix in ('paypal', 'project', ):
+		for prefix in ('paypal', 'project', 'log'):
 			if option.startswith(prefix):
 				section = prefix
 				option = option[len(prefix)+1:]
@@ -120,6 +124,17 @@ class CommonConfig:
 		value = args.get(option)
 		if value != None:
 			setattr(self, name, value)
+
+	def _init_log(self):
+		import logging
+
+		if self.LOG_EXCEPTIONS:
+			app.config['PROPAGATE_EXCEPTIONS'] = True
+
+		if self.LOG_SQL:
+			logger = logging.getLogger('sqlalchemy.engine')
+			logger.setLevel(logging.INFO)
+			logger.handlers = app.logger.handlers
 
 	def _init_version(self):
 		try:

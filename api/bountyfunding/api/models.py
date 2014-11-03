@@ -3,10 +3,6 @@ from datetime import datetime
 
 from bountyfunding.api.const import SponsorshipStatus, PaymentStatus, PaymentGateway
 
-#import logging
-#logging.basicConfig()
-#logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
-
 
 db = SQLAlchemy()
 
