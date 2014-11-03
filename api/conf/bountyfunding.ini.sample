@@ -1,6 +1,6 @@
 [general]
 
-# API port
+# API port; Used only when running standalone (no WSGI, etc.)
 port = 5000
 
 # Enable debug error messages; True/False, for security reasons in production it should be False
