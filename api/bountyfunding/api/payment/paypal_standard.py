@@ -70,9 +70,9 @@ class PayPalStandardGateway:
 			key, value = line.strip().split('=')
 			retrieved_payment[key] = urllib.unquote_plus(value)
 
-		admin = retrieve_admin(project_id)
+		receiver_email = config[project_id].PAYPAL_RECEIVER_EMAIL
 		# Check recipient email
-		if retrieved_payment['business'] != admin.paypal_email:
+		if retrieved_payment['business'] != receiver_email:
 			return False
 
 		# Check currency
