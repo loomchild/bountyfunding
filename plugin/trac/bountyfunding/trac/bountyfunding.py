@@ -473,11 +473,18 @@ class BountyFundingPlugin(Component):
 				request = self.call_api('GET', '/version')
 				if request == None:
 					raise HTTPInternalError('Unable to connect to BountyFunding API')
-				if request.status_code != 200:
-					raise HTTPInternalError('Invalid status code when connection to API' 
-							% request.status_code)
+				elif request.status_code == 403:
+					raise HTTPInternalError('Not permitted to connect to BountyFunding API, check token')
+				elif request.status_code != 200:
+					raise HTTPInternalError('Invalid HTTP status code %s when connecting to'
+							' BountyFunding API' % request.status_code)
 				else:
-					return "status.html", {'version': request.json().get('version')}, None
+					try:
+						version = request.json().get('version')
+						return "status.html", {'version': version}, None
+					except (ValueError, KeyError):
+						raise HTTPInternalError('Invalid response body from BountyFunding API')
+						
 			if action == 'sync':
 				#TODO: optimize by calling /issues, setting amount to 0 if not found
 				updated_ids = set()
