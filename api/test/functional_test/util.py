@@ -5,7 +5,6 @@ from collections import namedtuple
 DEFAULT_API_URL = 'http://localhost:5000'
 
 
-# TODO: Covert to SDK and use in plugins
 class Api:
 
 	def __init__(self, token, url=DEFAULT_API_URL):
