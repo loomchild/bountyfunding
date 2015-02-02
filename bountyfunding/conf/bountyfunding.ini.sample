@@ -1,6 +1,6 @@
 [general]
 
-# API port; Used only when running standalone (no WSGI, etc.)
+# WebApp port; Used only when running standalone (no WSGI, etc.)
 port = 5000
 
 # Enable debug error messages; True/False, for security reasons in production it should be False
@@ -37,13 +37,13 @@ http = False
 
 [project]
 
-# Enable default project that can be accessed without a token (used when this API serves only one project)
+# Enable default project that can be accessed without a token (used when this BountyFunding serves only one project)
 default = True
 
-# Enable test projects (disable when API is available from outside world)
+# Enable test projects (disable when BountyFunding is accessible from outside world)
 test = True
 
-# Enable default root project used to create other projects (disable when API is available from outside)
+# Enable default root project used to create other projects (disable when BountyFunding is accessible from outside)
 root = False
 
 
@@ -58,7 +58,7 @@ receiver_email = paypal-business@bountyfunding.org
 # Paypal Payment Data Transfer (PDT) access token
 pdt_access_token = FKTGVLLw3LXxveS9hx0sfDms_e7B7gYHiZ7RnFdfu22GX5KHMQm_OtH6bWS
 
-# Adaptive API credentials
+# PayPal Adaptive API credentials
 user_id = paypal-business_api1.bountyfunding.org
 password = PRTQUFRE33AADNHW
 signature = A381RCO10yoqbozM1Rmd.SSRX7XjATUXUDZoRv87AY83bFJiWXmwem0K

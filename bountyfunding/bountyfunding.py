@@ -17,12 +17,12 @@ def run():
 	app.run(port=config.PORT, debug=config.DEBUG)
 
 def create_db():
-	print 'Creating dabase in %s' % config.DATABASE_URL
+	print 'Creating database in %s' % config.DATABASE_URL
 	db.create_all()
 
 
 if __name__ == "__main__":
-	arg_parser = ArgumentParser(description='BountyFunding API')
+	arg_parser = ArgumentParser(description='BountyFunding')
 	
 	arg_parser.add_argument('action', 
 			action='store', default=Action.RUN, choices=Action.values(),

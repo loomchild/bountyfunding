@@ -24,7 +24,7 @@ from pkg_resources import resource_filename
 #from IPython import embed
 
 # Configuration
-DEFAULT_API_URL='http://localhost:5000'
+DEFAULT_BOUNTYFUNDING_URL='http://localhost:5000'
 DEFAULT_TOKEN = 'default'
 DEFAULT_MAPPING_READY = ['new', 'accepted', 'reopened']
 DEFAULT_MAPPING_STARTED = ['assigned']
@@ -77,7 +77,7 @@ class BountyFundingPlugin(Component):
 		self.configure()
 
 	def configure(self):
-		self.api_url = self.config.get('bountyfunding', 'api_url', DEFAULT_API_URL)
+		self.bountyfunding_url = self.config.get('bountyfunding', 'url', DEFAULT_BOUNTYFUNDING_URL)
 		self.token = self.config.get('bountyfunding', 'token', DEFAULT_TOKEN)
 		
 		self.status_mapping = {}
@@ -99,13 +99,13 @@ class BountyFundingPlugin(Component):
 			return default
 
 	def call_api(self, method, path, **kwargs):
-		url = self.api_url + path
+		url = self.bountyfunding_url + path
 		params = kwargs
 		params['token'] = self.token
 		try:
 			response = requests.request(method, url, params=kwargs)
 		except requests.exceptions.ConnectionError:
-			self.log.warn("Error connecting to BountyFunding API")
+			self.log.warn("Error connecting to BountyFunding")
 			response = None
 		return response
 	
@@ -288,7 +288,7 @@ class BountyFundingPlugin(Component):
 					error = "Connection error"
 					if request:
 						error = request.json().get("error", "Unknown error")
-					fragment.append(tag.span("[API Error]", title=error))
+					fragment.append(tag.span("[BountyFunding Error]", title=error))
 	
 				#chrome = Chrome(self.env)
 				#chrome.add_jquery_ui(req)
@@ -407,12 +407,12 @@ class BountyFundingPlugin(Component):
 										'/issue/%s/sponsorship/%s/payments' % (ticket_id, user), 
 										gateway='DUMMY')
 								if response.status_code != 200:
-									error = 'API cannot create plain payment'
+									error = 'BountyFunding cannot create plain payment'
 								response = self.call_api('PUT', 
 										'/issue/%s/sponsorship/%s/payment' % (ticket_id, user), 
 										status='CONFIRMED', card_number=card_number, card_date=card_date)
 								if response.status_code != 200:
-									error = 'API refused your plain payment'
+									error = 'BountyFunding refused your plain payment'
 								else:
 									self.update_ticket(ticket, True, user, 'Confirmed sponsorship.')
 								
@@ -431,9 +431,9 @@ class BountyFundingPlugin(Component):
 								redirect_url = response.json().get('url')
 								req.redirect(redirect_url)
 							else:
-								error = 'API cannot retrieve created PayPal payment'
+								error = 'BountyFunding cannot retrieve created PayPal payment'
 						else:
-							error = 'API cannot create PayPal payment'
+							error = 'BountyFunding cannot create PayPal payment'
 						add_warning(req, error)
 			
 			elif action == 'pay':
@@ -472,18 +472,18 @@ class BountyFundingPlugin(Component):
 			if action == 'status':
 				request = self.call_api('GET', '/version')
 				if request == None:
-					raise HTTPInternalError('Unable to connect to BountyFunding API')
+					raise HTTPInternalError('Unable to connect to BountyFunding')
 				elif request.status_code == 403:
-					raise HTTPInternalError('Not permitted to connect to BountyFunding API, check token')
+					raise HTTPInternalError('Not permitted to connect to BountyFunding, check token')
 				elif request.status_code != 200:
 					raise HTTPInternalError('Invalid HTTP status code %s when connecting to'
-							' BountyFunding API' % request.status_code)
+							' BountyFunding' % request.status_code)
 				else:
 					try:
 						version = request.json().get('version')
 						return "status.html", {'version': version}, None
 					except (ValueError, KeyError):
-						raise HTTPInternalError('Invalid response body from BountyFunding API')
+						raise HTTPInternalError('Invalid response body from BountyFunding')
 						
 			if action == 'sync':
 				#TODO: optimize by calling /issues, setting amount to 0 if not found

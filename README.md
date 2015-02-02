@@ -24,7 +24,7 @@ Run below commands to install python dependencies if needed. I use [pip](http://
 
 * Install requirements
 
-		pip install -r api/requirements.txt
+		pip install -r bountyfunding/requirements.txt
 		pip install -r plugin/trac/requirements.txt
 
 ### Install and Configure Trac
@@ -80,7 +80,7 @@ Download the archive from github [master.zip](https://github.com/bountyfunding/b
 		bounty.label = Bounty
 		
 		[bountyfunding]
-		api_url = http://localhost:5000
+		url = http://localhost:5000
 
 * You can add new bounty field to your existing reports using [TracQuery](http://trac.edgewall.org/wiki/TracQuery) or [TracReports](http://trac.edgewall.org/wiki/TracReports). Due to technical limitations this field can be only sorted in alphabetical order which is not ideal - there is a small workaround for TracReports to cast it as INTEGER. For example Active Tickets By Milestone report can look like this:
 		
@@ -106,7 +106,7 @@ Download the archive from github [master.zip](https://github.com/bountyfunding/b
 		status_mapping_started = assigned
 		status_mapping_completed = closed
 
-* If you are connecting multiple trac instances to a single API, set an access token:
+* If you are connecting multiple trac instances to a single BountyFunding webapp, set an access token:
   	
 		[bountyfunding]
 		...
@@ -115,25 +115,25 @@ Download the archive from github [master.zip](https://github.com/bountyfunding/b
 * Restart Trac
 * To check if plugin has been installed properly go to Trac Admin / Plugins. Also you should see Bounty field on each ticket. It's also a good idea to check if email notifications are sent - create a ticket, sponsor it by one user and assign it or complete it by another user - first user should receive a notification. 
 
-### Deploy API
+### Deploy BountyFunding webapp
 
 #### As Standalone Process During Development
 
 * Change directory
 
-		cd api
+		cd bountyfunding
 
-* Configure the API. Example configuration file can be found in api/conf/bountyfunding.ini.sample, for a simple installation it is enough to duplicate this file and remove the .sample extension, but it's a good idea to look inside to examine available options. You will probably need to change tracker URL and admin user. If you want to use PayPal you'll need to replace project sandbox API credentials with your real ones. 
+* Configure the BountyFunding webapp. Example configuration file can be found in bountyfunding/conf/bountyfunding.ini.sample, for a simple installation it is enough to duplicate this file and remove the .sample extension, but it's a good idea to look inside to examine available options. You will probably need to change tracker URL and admin user. If you want to use PayPal you'll need to replace project sandbox API credentials with your real ones. 
 
 		cp conf/bountyfunding.ini.sample conf/bountyfunding.ini
 
 * Populate the database. If you are using sqlite database backend (default) then database will be automatically created and populated on the first run. Otherwise you'll need to execute following command:
 
-		./api.py create-db
+		./bountyfunding.py create-db
 
-* Run the API
+* Run the BountyFunding webapp
 
-		./api.py >& log/bountyfunding.log &
+		./bountyfunding.py >& log/bountyfunding.log &
 
 #### Using WSGI in Production on Apache HTTPD
 
@@ -145,19 +145,19 @@ Download the archive from github [master.zip](https://github.com/bountyfunding/b
 
 		<VirtualHost 127.0.0.1:5000>
 
-        		WSGIDaemonProcess bountyfunding_api user=<server user> group=<server group> processes=1 threads=5 python-path=/path/to/bountyfunding/api:/path/to/virtualenv/lib/python<version>/site-packages
-		        WSGIScriptAlias / /path/to/bountyfunding/api/cgi-bin/bountyfunding_api.wsgi
+        		WSGIDaemonProcess bountyfunding user=<server user> group=<server group> processes=1 threads=5 python-path=/path/to/bountyfunding/bountyfunding:/path/to/virtualenv/lib/python<version>/site-packages
+		        WSGIScriptAlias / /path/to/bountyfunding/bountyfunding/bountyfunding.wsgi
 
-		        <Directory /path/to/bountyfunding/api>
-        		        WSGIProcessGroup bountyfunding_api
+		        <Directory /path/to/bountyfunding/bountyfunding>
+        		        WSGIProcessGroup bountyfunding
             		    WSGIApplicationGroup %{GLOBAL}
            				WSGIScriptReloading On
                 		Order deny,allow
                 		Allow from all
         		</Directory>
 
-		        ErrorLog /path/to/bountyfunding/api/log/bountyfunding_api.log
-        		CustomLog /path/to/bountyfunding/api/log/bountyfunding_api.log combined
+		        ErrorLog /path/to/bountyfunding/bountyfunding/log/bountyfunding.log
+        		CustomLog /path/to/bountyfunding/bountyfunding/log/bountyfunding.log combined
 
 		</VirtualHost>
 
@@ -167,7 +167,7 @@ Development
 ### Requirements
 For development you will need all python packages listed in [requirements-dev.txt](requirements-dev.txt):
 	
-		pip install -r api/requirements-dev.txt
+		pip install -r bountyfunding/requirements-dev.txt
 		pip install -r plugin/trac/requirements-dev.txt
 
 ### Tips
@@ -175,5 +175,4 @@ For development you will need all python packages listed in [requirements-dev.tx
 
 		cd plugin/trac
 		./setup.py develop -mxd <trac_home>/plugins
-* Since the API does not offer any security layer, it is necessary to run it behind a firewall.
-* When Trac and API tickets become out of sync (due to manual modification, temporary API downtime, etc.), go to the following URL: http://\<trac_url\>/bountyfunding/sync - this will refresh local Trac cache. This operation will be automated in the future.
+* When Trac and BountyFunding webapp tickets become out of sync (due to manual modification, temporary webapp downtime, etc.), go to the following URL: http://\<trac_url\>/bountyfunding/sync - this will refresh local Trac cache. This operation will be automated in the future.

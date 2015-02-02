@@ -1,4 +1,4 @@
-Core product, which is the API, is licensed under GNU Affero General Public License (AGPL, see api/LICENSE.txt or https://www.gnu.org/licenses/agpl.txt for full terms).
+Core BountyFunding webapp is licensed under GNU Affero General Public License (AGPL, see api/LICENSE.txt or https://www.gnu.org/licenses/agpl.txt for full terms).
 
 Issue tracker plugins are licensed under MIT license (see plugin/LICENSE.txt or http://opensource.org/licenses/MIT for full terms).
 
