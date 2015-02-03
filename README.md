@@ -19,12 +19,17 @@ Requirements
 Installation
 ------------
 
+### Download BountyFunding
+Download the archive from github [master.zip](https://github.com/bountyfunding/bountyfunding/archive/master.zip) or clone the repository:
+	
+	git clone https://github.com/bountyfunding/bountyfunding.git
+
 ### Install Python Libraries
 Run below commands to install python dependencies if needed. I use [pip](http://www.pip-installer.org), but they could also be installed with easy_install, packaging system native to your operating system or directly from source. You may consider using [virtualenv](http://www.virtualenv.org) to isolate the installation from other Python applications.
 
 * Install requirements
 
-		pip install -r bountyfunding/requirements.txt
+		pip install -r requirements.txt
 		pip install -r plugin/trac/requirements.txt
 
 ### Install and Configure Trac
@@ -51,11 +56,6 @@ Install Trac, at least version 1.0 is required. Make the following changes to th
 		...
 		log_level = DEBUG
 		log_type = stderr
-
-### Download BountyFunding
-Download the archive from github [master.zip](https://github.com/bountyfunding/bountyfunding/archive/master.zip) or clone the repository:
-	
-	git clone https://github.com/bountyfunding/bountyfunding.git
 
 ### Deploy Trac Plugin
 * Change directory
@@ -119,10 +119,6 @@ Download the archive from github [master.zip](https://github.com/bountyfunding/b
 
 #### As Standalone Process During Development
 
-* Change directory
-
-		cd bountyfunding
-
 * Configure the BountyFunding webapp. Example configuration file can be found in bountyfunding/conf/bountyfunding.ini.sample, for a simple installation it is enough to duplicate this file and remove the .sample extension, but it's a good idea to look inside to examine available options. You will probably need to change tracker URL and admin user. If you want to use PayPal you'll need to replace project sandbox API credentials with your real ones. 
 
 		cp conf/bountyfunding.ini.sample conf/bountyfunding.ini
@@ -145,10 +141,10 @@ Download the archive from github [master.zip](https://github.com/bountyfunding/b
 
 		<VirtualHost 127.0.0.1:5000>
 
-        		WSGIDaemonProcess bountyfunding user=<server user> group=<server group> processes=1 threads=5 python-path=/path/to/bountyfunding/bountyfunding:/path/to/virtualenv/lib/python<version>/site-packages
-		        WSGIScriptAlias / /path/to/bountyfunding/bountyfunding/bountyfunding.wsgi
+        		WSGIDaemonProcess bountyfunding user=<server user> group=<server group> processes=1 threads=5 python-path=/path/to/bountyfunding:/path/to/virtualenv/lib/python<version>/site-packages
+		        WSGIScriptAlias / /path/to/bountyfunding/bountyfunding.wsgi
 
-		        <Directory /path/to/bountyfunding/bountyfunding>
+		        <Directory /path/to/bountyfunding>
         		        WSGIProcessGroup bountyfunding
             		    WSGIApplicationGroup %{GLOBAL}
            				WSGIScriptReloading On
@@ -156,8 +152,8 @@ Download the archive from github [master.zip](https://github.com/bountyfunding/b
                 		Allow from all
         		</Directory>
 
-		        ErrorLog /path/to/bountyfunding/bountyfunding/log/bountyfunding.log
-        		CustomLog /path/to/bountyfunding/bountyfunding/log/bountyfunding.log combined
+		        ErrorLog /path/to/bountyfunding/log/bountyfunding.log
+        		CustomLog /path/to/bountyfunding/log/bountyfunding.log combined
 
 		</VirtualHost>
 
@@ -167,7 +163,7 @@ Development
 ### Requirements
 For development you will need all python packages listed in [requirements-dev.txt](requirements-dev.txt):
 	
-		pip install -r bountyfunding/requirements-dev.txt
+		pip install -r requirements-dev.txt
 		pip install -r plugin/trac/requirements-dev.txt
 
 ### Tips
