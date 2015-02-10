@@ -4,8 +4,7 @@
 doc/out/
 build/
 dist/
-virtualenv/
-virtualenv.sh
+venv/
 logs/
 bountyfunding.ini
 tags
