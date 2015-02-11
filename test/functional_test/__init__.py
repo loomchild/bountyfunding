@@ -10,7 +10,7 @@ def setup():
     print("Starting BountyFunding API...")
     bountyfunding_process = subprocess.Popen(
         [
-            "python", "api.py", 
+            "python", "bountyfunding.py", 
             "--db-in-memory", 
             "--config-file", "conf/bountyfunding.ini.sample",
         ], 

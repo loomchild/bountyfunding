@@ -1,4 +1,4 @@
-from bountyfunding.api import app
+from bountyfunding.api import api
 
 from bountyfunding.api.models import db, Project, Issue, User, Sponsorship, Email, Payment, Change, Token
 from bountyfunding.api.data import retrieve_user
@@ -10,7 +10,7 @@ from bountyfunding.api.errors import APIException
 from bountyfunding.api import security
 from bountyfunding.api.config import config
 
-from flask import Flask, url_for, render_template, make_response, redirect, abort, jsonify, request, g
+from flask import Flask, url_for, render_template, make_response, redirect, abort, jsonify, request, g, current_app
 from pprint import pprint
 import re, requests, threading, random, string
 
@@ -19,18 +19,18 @@ import re, requests, threading, random, string
 NOTIFY_INTERVAL = 5
 
 
-@app.route('/version', methods=['GET'])
+@api.route('/version', methods=['GET'])
 def status():
     return jsonify(version=config.VERSION)
 
-@app.route("/issues", methods=['GET'])
+@api.route("/issues", methods=['GET'])
 def get_issues():
     issues = retrieve_issues(g.project_id)
     issues = {'data': map(mapify_issue, issues)}
     response = jsonify(issues)
     return response
 
-@app.route("/issues", methods=['POST'])
+@api.route("/issues", methods=['POST'])
 def post_issue():
     ref = request.values.get('ref')
     status = IssueStatus.from_string(request.values.get('status'))
@@ -58,7 +58,7 @@ def post_issue():
 
     return jsonify(message='OK')
 
-@app.route("/issue/<issue_ref>", methods=['GET'])
+@api.route("/issue/<issue_ref>", methods=['GET'])
 def get_issue(issue_ref):
     issue = retrieve_issue(g.project_id, issue_ref)
 
@@ -67,7 +67,7 @@ def get_issue(issue_ref):
 
     return jsonify(mapify_issue(issue))
 
-@app.route("/issue/<issue_ref>", methods=['PUT'])
+@api.route("/issue/<issue_ref>", methods=['PUT'])
 def put_issue(issue_ref):
     # Does not allow to create new issue despite it could because we know the ID. 
     # This is done for simplicity and to provide only one way of doing one thing.
@@ -122,13 +122,13 @@ def put_issue(issue_ref):
 
     return jsonify(message='OK')
 
-@app.route("/sponsored_issues", methods=['GET'])
+@api.route("/sponsored_issues", methods=['GET'])
 def get_sponsored_issues():
     issues = retrieve_sponsored_issues(g.project_id)
     response = jsonify(issues)
     return response
 
-@app.route("/issue/<issue_ref>/sponsorships", methods=['GET'])
+@api.route("/issue/<issue_ref>/sponsorships", methods=['GET'])
 def get_sponsorships(issue_ref):
     sponsorships = []
     issue = retrieve_issue(g.project_id, issue_ref)
@@ -144,7 +144,7 @@ def get_sponsorships(issue_ref):
         response = jsonify(error='Issue not found'), 404
     return response
 
-@app.route("/issue/<issue_ref>/sponsorships", methods=['POST'])
+@api.route("/issue/<issue_ref>/sponsorships", methods=['POST'])
 def post_sponsorship(issue_ref):
     user_name = request.values.get('user')
     amount = int(request.values.get('amount'))
@@ -171,7 +171,7 @@ def post_sponsorship(issue_ref):
     response = jsonify(message='Sponsorship updated')
     return response
 
-@app.route("/issue/<issue_ref>/sponsorship/<user_name>", methods=['GET'])
+@api.route("/issue/<issue_ref>/sponsorship/<user_name>", methods=['GET'])
 def get_sponsorship(issue_ref, user_name):
     issue = retrieve_issue(g.project_id, issue_ref)
     user = retrieve_user(g.project_id, user_name)
@@ -192,7 +192,7 @@ def get_sponsorship(issue_ref, user_name):
     
     return response
 
-@app.route("/issue/<issue_ref>/sponsorship/<user_name>", methods=['DELETE'])
+@api.route("/issue/<issue_ref>/sponsorship/<user_name>", methods=['DELETE'])
 def delete_sponsorship(issue_ref, user_name):
     issue = retrieve_issue(g.project_id, issue_ref)
     user = retrieve_user(g.project_id, user_name)
@@ -213,7 +213,7 @@ def delete_sponsorship(issue_ref, user_name):
     
     return response
     
-@app.route("/issue/<issue_ref>/sponsorship/<user_name>", methods=['PUT'])
+@api.route("/issue/<issue_ref>/sponsorship/<user_name>", methods=['PUT'])
 def update_sponsorship(issue_ref, user_name):
     # Does not allow to create new sponsorship despite it could because we know the ID. 
     # This is done for simplicity and to provide only one way of doing one thing.
@@ -282,7 +282,7 @@ def update_sponsorship(issue_ref, user_name):
 
     return jsonify(message='Sponsorship updated')
 
-@app.route("/issue/<issue_ref>/sponsorship/<user_name>/payment", methods=['GET'])
+@api.route("/issue/<issue_ref>/sponsorship/<user_name>/payment", methods=['GET'])
 def get_payment(issue_ref, user_name):
     
     issue = retrieve_issue(g.project_id, issue_ref)
@@ -307,7 +307,7 @@ def get_payment(issue_ref, user_name):
     
     return response
 
-@app.route("/issue/<issue_ref>/sponsorship/<user_name>/payment", methods=['PUT'])
+@api.route("/issue/<issue_ref>/sponsorship/<user_name>/payment", methods=['PUT'])
 def update_payment(issue_ref, user_name):
     status = PaymentStatus.from_string(request.values.get('status')) 
     if status != PaymentStatus.CONFIRMED:
@@ -348,7 +348,7 @@ def update_payment(issue_ref, user_name):
     
     return response
 
-@app.route("/issue/<issue_ref>/sponsorship/<user_name>/payments", methods=['POST'])
+@api.route("/issue/<issue_ref>/sponsorship/<user_name>/payments", methods=['POST'])
 def create_payment(issue_ref, user_name):
     gateway = PaymentGateway.from_string(request.values.get('gateway')) 
     if gateway not in config.PAYMENT_GATEWAYS:
@@ -379,7 +379,7 @@ def create_payment(issue_ref, user_name):
     
     return jsonify(message='Payment created')
 
-@app.route("/user/<user_name>", methods=['GET'])
+@api.route("/user/<user_name>", methods=['GET'])
 def get_user(user_name):
     user = retrieve_user(g.project_id, user_name)
 
@@ -388,7 +388,7 @@ def get_user(user_name):
 
     return jsonify(mapify_user(user))
 
-@app.route("/user/<user_name>", methods=['PUT'])
+@api.route("/user/<user_name>", methods=['PUT'])
 def put_user(user_name):
     paypal_email = request.values.get('paypal_email')
     
@@ -407,7 +407,7 @@ def put_user(user_name):
 
     return jsonify(message='User updated')
 
-@app.route('/emails', methods=['GET'])
+@api.route('/emails', methods=['GET'])
 def get_emails():
     emails = Email.query.all()
 
@@ -418,7 +418,7 @@ def get_emails():
     response = jsonify(data=response)
     return response 
 
-@app.route('/email/<email_id>', methods=['DELETE'])
+@api.route('/email/<email_id>', methods=['DELETE'])
 def delete_email(email_id):
     email = Email.query.get(email_id)
 
@@ -432,11 +432,11 @@ def delete_email(email_id):
     return response
 
 
-@app.route('/', methods=['GET'])
+@api.route('/', methods=['GET'])
 def get_project():
     return jsonify(mapify_project(g.project))
 
-@app.route('/', methods=['PUT'])
+@api.route('/', methods=['PUT'])
 def put_project():
     name = request.values.get('name')
     description = request.values.get('description')
@@ -459,7 +459,7 @@ def put_project():
 
     return jsonify(message='OK')
 
-@app.route('/', methods=['POST'])
+@api.route('/', methods=['POST'])
 def post_project():
     name = request.values.get('name')
     description = request.values.get('description')
@@ -474,7 +474,7 @@ def post_project():
 
     return jsonify(message='OK', token=token.token)
 
-@app.route('/', methods=['DELETE'])
+@api.route('/', methods=['DELETE'])
 def delete_project():
     project = g.project
     if not project.type == ProjectType.TEST:
@@ -492,7 +492,7 @@ def delete_project():
     return jsonify(message="Project deleted")
 
 
-@app.route('/config/payment_gateways', methods=['GET'])
+@api.route('/config/payment_gateways', methods=['GET'])
 def get_config_payment_gateways():
     gateways = [PaymentGateway.to_string(pg) for pg in config[g.project_id].PAYMENT_GATEWAYS]
     return jsonify(gateways=gateways)
@@ -502,28 +502,28 @@ def get_config_payment_gateways():
 # before the second, because I need project_id to log the change
 # http://t27668.web-flask-general.webdiscuss.info/priority-for-before-request-t27668.html
 
-@app.before_request
+@api.before_request
 def check_access_and_set_project():
     token = request.values.get('token')
     project = security.get_project(token)
     g.project = project
     g.project_id = project.project_id
 
-@app.before_request
+@api.before_request
 def log_change():
     if request.method == 'POST' or request.method == 'PUT' or request.method == 'DELETE':
         arguments = ", ".join(map(lambda (k, v): '%s:%s' % (k, v),\
                 sorted(request.values.iteritems(True))))
         g.change_id = create_change(g.project_id, request.method, request.path, arguments)
 
-@app.after_request
+@api.after_request
 def log_change_result(response):
     # Documentation says that this may not be executed and that data will be removed - investigate
     if 'change_id' in g:
         update_change(g.change_id, response.status_code, response.data)
     return response
 
-@app.before_first_request
+@api.before_app_first_request
 def init():
     # For in-memory DB need to initialize memory database in the same thread
     if config.DATABASE_CREATE:
@@ -536,7 +536,7 @@ def init():
         notify()
 
 
-@app.errorhandler(APIException)
+@api.errorhandler(APIException)
 def handle_api_exception(exception):
     return jsonify(error=exception.message), exception.status_code
 
@@ -663,7 +663,7 @@ def create_change(project_id, method, path, arguments):
 def update_change(change_id, status, response):
     change = Change.query.get(change_id)
     if change == None:
-        app.logger.warn('Change %s not found', change_id)
+        current_app.logger.warn('Change %s not found', change_id)
         return
     change.status = status
     change.response = response
@@ -689,7 +689,7 @@ def send_emails():
             try:
                 requests.get(notify_url + 'email', timeout=1)
             except requests.exceptions.RequestException:
-                app.logger.warn('Unable to connect to issue tracker at ' + notify_url)
+                current_app.logger.warn('Unable to connect to issue tracker at ' + notify_url)
 
 
 def check_pledge_amount(project_id, amount):

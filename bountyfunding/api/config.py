@@ -6,7 +6,7 @@ import argparse
 import subprocess
 
 from bountyfunding.util.homer import BOUNTYFUNDING_HOME
-from bountyfunding.api import app
+from bountyfunding import app
 from bountyfunding.api.const import PaymentGateway
 
 from bountyfunding.api.models import db, Config

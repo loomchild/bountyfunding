@@ -1,5 +1,5 @@
-from flask import Flask
+from flask import Blueprint
 
-app = Flask(__name__)
+api = Blueprint('api', __name__)
 
 import bountyfunding.api.views

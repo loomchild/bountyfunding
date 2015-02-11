@@ -3,7 +3,7 @@
 from os import path
 from argparse import ArgumentParser
 
-from bountyfunding.api import app
+from bountyfunding import app
 from bountyfunding.util.enum import Enum
 from bountyfunding.api.config import config
 from bountyfunding.api.models import db
