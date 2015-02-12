@@ -51,6 +51,8 @@ properties = {
     'DATABASE_IN_MEMORY' : Property('Use empty in-memory database', boolean, False, False, False, False),
     'DATABASE_CREATE' : Property('Create database', boolean, False, False, False, False),
     
+    'SECRET' : Property('Webapp secret key', str, '', False, True, False),
+
     'TRACKER_URL' : Property('Externally accessible location of bug tracker', str, '', False, True, True),
     'ADMIN' : Property('Admin user identifier', str, '', False, True, True),
     'MAX_PLEDGE_AMOUNT' : Property('Maximum pledge amount', int, 100, False, True, True),
@@ -106,6 +108,7 @@ class CommonConfig:
         self._init_log()
         self._init_version()
         self._init_database()
+        self._init_secret()
 
     def _init_value_from_file(self, parser, name):
         option = name.lower()
@@ -170,6 +173,13 @@ class CommonConfig:
         db.init_app(app)
         # See http://piotr.banaszkiewicz.org/blog/2012/06/29/flask-sqlalchemy-init_app/, option 2
         db.app = app
+
+    def _init_secret(self):
+        if not self.SECRET:
+            app.logger.warn('Secret not defined, generating random one. ' 
+                    'User sessions will expire after startup.')
+            self.SECRET = os.urandom(24)
+        app.config['SECRET_KEY'] = self.SECRET
 
     def _init_property(self, name):
         setattr(self, name, properties[name].default_value)

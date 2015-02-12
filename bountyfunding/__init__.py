@@ -6,3 +6,7 @@ from bountyfunding.api import api
 
 app.register_blueprint(api)
 
+from bountyfunding.gui import gui
+
+app.register_blueprint(gui)
+

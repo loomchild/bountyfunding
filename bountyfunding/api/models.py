@@ -38,6 +38,19 @@ class User(db.Model):
     def __repr__(self):
         return '<User project_id: "%s", name: "%s">' % self.project_id, self.name
 
+    # Flask-Login integration
+    def is_authenticated(self):
+        return True
+
+    def is_active(self):
+        return True
+
+    def is_anonymous(self):
+        return False
+
+    def get_id(self):
+        return unicode(self.user_id)
+
 class Issue(db.Model):
     issue_id = db.Column(db.Integer, primary_key=True)
     project_id = db.Column(db.Integer, nullable=False)
