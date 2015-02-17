@@ -45,7 +45,7 @@ class Property:
 properties = {
     'VERSION' : Property('Software version', str, 'Unknown', False, False, False),
     'PORT' : Property('Port number', int, 5000, True, True, False),
-    'DEBUG' : Property('Enable debug mode (use only for testing)', boolean, False, True, True, False),
+    'THREADS' : Property('Number of worker threads', int, 4, True, True, False),
 
     'DATABASE_URL' : Property('SQLAlchemy database url', str, '', False, True, False),
     'DATABASE_IN_MEMORY' : Property('Use empty in-memory database', boolean, False, False, False, False),
@@ -157,6 +157,8 @@ class CommonConfig:
         if self.DATABASE_URL == 'sqlite://':
             self.DATABASE_IN_MEMORY = True
             self.DATABASE_CREATE = True
+            # Only one thread supported when using in-memory database
+            self.THREADS = 1
 
         elif self.DATABASE_URL.startswith('sqlite:///'):
             path = self.DATABASE_URL[10:]
@@ -177,7 +179,7 @@ class CommonConfig:
     def _init_secret(self):
         if not self.SECRET:
             app.logger.warn('Secret not defined, generating random one. ' 
-                    'User sessions will expire after startup.')
+                    'User sessions will expire after shutdown.')
             self.SECRET = os.urandom(24)
         app.config['SECRET_KEY'] = self.SECRET
 

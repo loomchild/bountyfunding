@@ -3,8 +3,8 @@
 # WebApp port; Used only when running standalone (no WSGI, etc.)
 port = 5000
 
-# Enable debug error messages; True/False, for security reasons in production it should be False
-debug = True
+# Number of worker threads
+threads = 4
 
 # Secret used for signing session cookies
 secret = BountyFunding

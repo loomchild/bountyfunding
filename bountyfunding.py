@@ -2,6 +2,7 @@
 
 from os import path
 from argparse import ArgumentParser
+from waitress import serve
 
 from bountyfunding import app
 from bountyfunding.util.enum import Enum
@@ -14,7 +15,7 @@ class Action(Enum):
     CREATE_DB = 'create-db'
 
 def run():
-    app.run(port=config.PORT, debug=config.DEBUG)
+    serve(app, host='0.0.0.0', port=config.PORT, threads=config.THREADS)
 
 def create_db():
     print 'Creating database in %s' % config.DATABASE_URL
@@ -50,8 +51,12 @@ if __name__ == "__main__":
             action='store_true', default=None,
             help='Use empty in-memory database')
 
+    arg_parser.add_argument('--threads', 
+            action='store', type=int, default=None,
+            help='Number of worker threads')
+
     args = vars(arg_parser.parse_args())
-    
+   
     config.init(args)
 
     action = args['action']
