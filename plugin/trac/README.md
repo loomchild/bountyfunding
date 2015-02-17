@@ -71,7 +71,7 @@ Install Trac, at least version 1.0 is required. Make the following changes to th
 		bounty.label = Bounty
 		
 		[bountyfunding]
-		url = http://localhost:5000
+		url = http://localhost:8080
 
 * You can add new bounty field to your existing reports using [TracQuery](http://trac.edgewall.org/wiki/TracQuery) or [TracReports](http://trac.edgewall.org/wiki/TracReports). Due to technical limitations this field can be only sorted in alphabetical order which is not ideal - there is a small workaround for TracReports to cast it as INTEGER. For example Active Tickets By Milestone report can look like this:
 		

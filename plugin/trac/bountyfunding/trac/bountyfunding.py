@@ -24,7 +24,7 @@ from pkg_resources import resource_filename
 #from IPython import embed
 
 # Configuration
-DEFAULT_BOUNTYFUNDING_URL='http://localhost:5000'
+DEFAULT_BOUNTYFUNDING_URL='http://localhost:8080'
 DEFAULT_TOKEN = 'default'
 DEFAULT_MAPPING_READY = ['new', 'accepted', 'reopened']
 DEFAULT_MAPPING_STARTED = ['assigned']

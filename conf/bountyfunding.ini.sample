@@ -1,7 +1,7 @@
 [general]
 
-# WebApp port; Used only when running standalone (no WSGI, etc.)
-port = 5000
+# Webapp port
+port = 8080
 
 # Number of worker threads
 threads = 4

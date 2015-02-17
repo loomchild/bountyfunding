@@ -32,9 +32,7 @@ Run below command to install python dependencies if needed. I use [pip](http://w
 
 		pip install -r requirements.txt
 
-### Deploy BountyFunding webapp
-
-#### As Standalone Process During Development
+### Run BountyFunding webapp
 
 * Configure the BountyFunding webapp. Example configuration file can be found in bountyfunding/conf/bountyfunding.ini.sample, for a simple installation it is enough to duplicate this file and remove the .sample extension, but it's a good idea to look inside to examine available options. You will probably need to change tracker URL and admin user. If you want to use PayPal you'll need to replace project sandbox API credentials with your real ones. 
 
@@ -48,31 +46,7 @@ Run below command to install python dependencies if needed. I use [pip](http://w
 
 		./bountyfunding.py >& log/bountyfunding.log &
 
-#### Using WSGI in Production on Apache HTTPD
-
-* Open additional port, but only on localhost interface (for security reasons; additionally I recommend using a firewall to block access to this port from the outside). Add the following line to Apache configuration file (/etc/apache2/ports.conf on Debian):
-
-		Listen 127.0.0.1:5000
-
-* Put the following in your apache config and restart Apache:
-
-		<VirtualHost 127.0.0.1:5000>
-
-        		WSGIDaemonProcess bountyfunding user=<server user> group=<server group> processes=1 threads=5 python-path=/path/to/bountyfunding:/path/to/virtualenv/lib/python<version>/site-packages
-		        WSGIScriptAlias / /path/to/bountyfunding/bountyfunding.wsgi
-
-		        <Directory /path/to/bountyfunding>
-        		        WSGIProcessGroup bountyfunding
-            		    WSGIApplicationGroup %{GLOBAL}
-           				WSGIScriptReloading On
-                		Order deny,allow
-                		Allow from all
-        		</Directory>
-
-		        ErrorLog /path/to/bountyfunding/log/bountyfunding.log
-        		CustomLog /path/to/bountyfunding/log/bountyfunding.log combined
-
-		</VirtualHost>
+* Although BountyFunding embeds production-quality WSGI server (Waitress), it's possible to run it using another one. To do that use bountyfunding.wsgi file located in the main project directory.
 
 Development
 -----------

@@ -12,6 +12,7 @@ def setup():
         [
             "python", "bountyfunding.py", 
             "--db-in-memory", 
+            "--port", "8081",
             "--config-file", "conf/bountyfunding.ini.sample",
         ], 
         cwd=BOUNTYFUNDING_HOME, 

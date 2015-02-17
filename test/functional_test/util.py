@@ -2,7 +2,7 @@ import requests
 from collections import namedtuple
 
 
-DEFAULT_API_URL = 'http://localhost:5000'
+DEFAULT_API_URL = 'http://localhost:8081'
 
 
 class Api:

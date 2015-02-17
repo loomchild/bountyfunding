@@ -44,7 +44,7 @@ class Property:
 
 properties = {
     'VERSION' : Property('Software version', str, 'Unknown', False, False, False),
-    'PORT' : Property('Port number', int, 5000, True, True, False),
+    'PORT' : Property('Port number', int, 8080, True, True, False),
     'THREADS' : Property('Number of worker threads', int, 4, True, True, False),
 
     'DATABASE_URL' : Property('SQLAlchemy database url', str, '', False, True, False),
