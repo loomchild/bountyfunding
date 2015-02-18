@@ -15,6 +15,7 @@ login_manager.login_view = 'gui.login'
 def record_once(state):
     login_manager.init_app(state.app)
     Bootstrap(state.app)
+    state.app.config['BOOTSTRAP_SERVE_LOCAL'] = True
 
 
 @gui.route('/login', methods=['GET', 'POST'])

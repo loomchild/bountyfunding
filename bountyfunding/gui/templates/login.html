@@ -1,10 +1,13 @@
+{% extends "base.html" %}
 {% import "bootstrap/wtf.html" as wtf %}
+
+{% block title %}BountyFunding - Login{% endblock %}
 
 {% block page_content %}
 <div class="page-header">
 	<h1>Login</h1>
 </div>
-<div class="col-md-4">
+<div class="col-md-6">
 	{{ wtf.quick_form(form) }}
 </div>
 {% endblock %}
