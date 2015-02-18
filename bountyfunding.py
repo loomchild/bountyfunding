@@ -7,12 +7,15 @@ from waitress import serve
 from bountyfunding import app
 from bountyfunding.util.enum import Enum
 from bountyfunding.api.config import config
+from bountyfunding.api import models
 from bountyfunding.api.models import db
 
 
+# TODO: merge with functions or use real action classes with docstrings
 class Action(Enum):
     RUN = 'run'
     CREATE_DB = 'create-db'
+    SHELL = 'shell'
 
 def run():
     serve(app, host='0.0.0.0', port=config.PORT, threads=config.THREADS)
@@ -20,6 +23,20 @@ def run():
 def create_db():
     print 'Creating database in %s' % config.DATABASE_URL
     db.create_all()
+
+def shell():
+    namespace = dict(app=app, db=db, config=config, models=models)
+  
+    with app.app_context():
+        # Use IPython if available, otherwise use basic Python shell
+        # Trick copied from flask-script
+        try:
+            from IPython import embed
+            embed(user_ns=namespace)
+        
+        except ImportError:
+            import code
+            code.interact(local=namespace)
 
 
 if __name__ == "__main__":
@@ -66,5 +83,8 @@ if __name__ == "__main__":
     elif action == Action.CREATE_DB:
         create_db()
     
+    elif action == Action.SHELL:
+        shell()
+
     else: 
         assert False, 'Invalid action: %s' % args.action 
