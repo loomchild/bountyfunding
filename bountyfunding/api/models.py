@@ -19,7 +19,7 @@ class Project(db.Model):
         self.type = type
 
     def __repr__(self):
-        return '<Project project_id: "%s", name: "%s">' % self.project_id, self.name
+        return '<Project project_id: "%s", name: "%s">' % (self.project_id, self.name)
     
     def is_mutable(self):
         return True
@@ -36,7 +36,7 @@ class User(db.Model):
         paypal_email = None
 
     def __repr__(self):
-        return '<User project_id: "%s", name: "%s">' % self.project_id, self.name
+        return '<User project_id: "%s", name: "%s">' % (self.project_id, self.name)
 
     # Flask-Login integration
     def is_authenticated(self):
@@ -71,7 +71,7 @@ class Issue(db.Model):
         self.owner_id = owner_id
 
     def __repr__(self):
-        return '<Issue project_id: "%s", issue_ref: "%s">' % self.project_id, self.issue_ref
+        return '<Issue project_id: "%s", issue_ref: "%s">' % (self.project_id, self.issue_ref)
 
 class Sponsorship(db.Model):
     sponsorship_id = db.Column(db.Integer, primary_key=True)
@@ -113,7 +113,7 @@ class Payment(db.Model):
         self.timestamp = datetime.now()
 
     def __repr__(self):
-        return '<Payment payment_id: "%s">' % self.payment_id
+        return '<Payment payment_id: "%s">' % (self.payment_id,)
 
 class Email(db.Model):
     email_id = db.Column(db.Integer, primary_key=True)
