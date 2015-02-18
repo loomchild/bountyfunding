@@ -14,11 +14,15 @@ from bountyfunding.api.models import db
 # TODO: merge with functions or use real action classes with docstrings
 class Action(Enum):
     RUN = 'run'
+    DEV = 'dev'
     CREATE_DB = 'create-db'
     SHELL = 'shell'
 
 def run():
     serve(app, host='0.0.0.0', port=config.PORT, threads=config.THREADS)
+
+def dev():
+    app.run(debug=True, host="0.0.0.0", port=config.PORT)
 
 def create_db():
     print 'Creating database in %s' % config.DATABASE_URL
@@ -77,8 +81,12 @@ if __name__ == "__main__":
     config.init(args)
 
     action = args['action']
+
     if action == Action.RUN:
         run()
+
+    if action == Action.DEV:
+        dev()
 
     elif action == Action.CREATE_DB:
         create_db()

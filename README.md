@@ -1,4 +1,4 @@
-# BountyFunding - Open-Source Bounty Funding Platform
+BountyFunding - Open-Source Bounty Funding Platform
 ===================================
 Website (with live demo): [https://bountyfunding.com](https://bountyfunding.com) 
 Development website: [http://bountyfunding.org](http://bountyfunding.org)
