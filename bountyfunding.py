@@ -85,7 +85,7 @@ if __name__ == "__main__":
     if action == Action.RUN:
         run()
 
-    if action == Action.DEV:
+    elif action == Action.DEV:
         dev()
 
     elif action == Action.CREATE_DB:
@@ -95,4 +95,4 @@ if __name__ == "__main__":
         shell()
 
     else: 
-        assert False, 'Invalid action: %s' % args.action 
+        assert False, 'Invalid action: %s' % action 
