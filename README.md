@@ -50,9 +50,13 @@ Run below command to install python dependencies if needed. I use [pip](http://w
 
 Development
 -----------
-For development you will need all python packages listed in [requirements-dev.txt](requirements-dev.txt):
+* For development you will need all python packages listed in [requirements-dev.txt](requirements-dev.txt):
 	
 		pip install -r requirements-dev.txt
+
+* During development it's sometimes useful to restart the server after every change in the source code. This can be done automatically by using [reload](https://github.com/loomchild/reload) program. Just start the server as follows:
+
+  		reload ./bountyfunding.py
 
 Plugins
 -------
