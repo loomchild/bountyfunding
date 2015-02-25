@@ -46,7 +46,30 @@ Run below command to install python dependencies if needed. I use [pip](http://w
 
 		./bountyfunding.py >& log/bountyfunding.log &
 
-* Although BountyFunding embeds production-quality WSGI server (Waitress), it's possible to run it using another one. To do that use bountyfunding.wsgi file located in the main project directory.
+#### Using Apache mod_wsgi
+
+Although BountyFunding embeds production-quality WSGI server (Waitress), it's possible to run it on another one. To do that use bountyfunding.wsgi file located in the main project directory. For example mod_wsgi configuration could look like this:
+
+* Put the following in your apache config and restart Apache:
+
+		<VirtualHost *:80>
+
+        		WSGIDaemonProcess bountyfunding user=<server user> group=<server group> processes=1 threads=5 python-path=/path/to/bountyfunding:/path/to/virtualenv/lib/python<version>/site-packages
+		        WSGIScriptAlias / /path/to/bountyfunding/bountyfunding.wsgi
+
+		        <Directory /path/to/bountyfunding>
+        		        WSGIProcessGroup bountyfunding
+            		    WSGIApplicationGroup %{GLOBAL}
+           				WSGIScriptReloading On
+                		Order deny,allow
+                		Allow from all
+        		</Directory>
+
+		        ErrorLog /path/to/bountyfunding/log/bountyfunding.log
+        		CustomLog /path/to/bountyfunding/log/bountyfunding.log combined
+
+		</VirtualHost>
+
 
 Development
 -----------
