@@ -18,7 +18,7 @@ class Action(Enum):
     SHELL = 'shell'
 
 def run():
-    serve(app, host='0.0.0.0', port=config.PORT, threads=config.THREADS)
+    serve(app, host=config.HOST, port=config.PORT, threads=config.THREADS)
 
 def create_db():
     print 'Creating database in %s' % config.DATABASE_URL
@@ -55,6 +55,9 @@ if __name__ == "__main__":
     arg_parser.add_argument('--id', 
             action='store', default='',
             help='Process ID to kill it easier; this parameter is ignored')
+    
+    arg_parser.add_argument('--host', 
+            action='store', default=None, help='Host name / IP address')
     
     arg_parser.add_argument('--port', 
             action='store', type=int, default=None,

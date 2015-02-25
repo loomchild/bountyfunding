@@ -1,5 +1,8 @@
 [general]
 
+# Hostname / IP address of the host serving the webapp
+host = 127.0.0.1
+
 # Webapp port
 port = 8080
 
