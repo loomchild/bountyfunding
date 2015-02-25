@@ -5,7 +5,7 @@ from setuptools import find_packages, setup
 setup(
     name='BountyFunding', 
     namespace_packages = ['bountyfunding'],
-    version='0.6',
+    version='0.9',
     packages=find_packages(),
     entry_points = {
         'trac.plugins': [
