@@ -13,15 +13,15 @@
     <div class="container">
         <div class="navbar-header">
 			<span class="navbar-brand">
-				<img src="{{ url_for('gui.static', filename='logo.png') }}"/>
+				<img src="{{ url_for('.static', filename='logo.png') }}"/>
 			<span>
         </div>
         <div class="navbar-collapse collapse">
             <ul class="nav navbar-nav navbar-right">
                 {% if current_user.is_authenticated() %}
-                <li><a href="{{ url_for('gui.logout') }}">Log Out</a></li>
+                <li><a href="{{ url_for('.logout') }}">Log Out</a></li>
                 {% else %}
-                <li><a href="{{ url_for('gui.login') }}">Log In</a></li>
+                <li><a href="{{ url_for('.login') }}">Log In</a></li>
                 {% endif %}
             </ul>
         </div>
