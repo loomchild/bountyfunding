@@ -23,8 +23,7 @@ def login():
     form = LoginForm()
     if form.validate_on_submit():
         user = User.query.filter_by(name=form.name.data).first()
-        #if user is not None and user.verify_password(form.password.data):
-        if user is not None:
+        if user is not None and user.verify_password(form.password.data):
             login_user(user)
             next = request.values.get('next')
             return redirect(next or "/")
