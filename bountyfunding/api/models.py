@@ -1,7 +1,10 @@
 from flask.ext.sqlalchemy import SQLAlchemy
 from datetime import datetime
 
+from werkzeug.security import generate_password_hash, check_password_hash
+
 from bountyfunding.api.const import SponsorshipStatus, PaymentStatus, PaymentGateway
+
 
 
 db = SQLAlchemy()
@@ -29,10 +32,12 @@ class User(db.Model):
     project_id = db.Column(db.Integer, nullable=False)
     name = db.Column(db.String(256), nullable=False)
     paypal_email = db.Column(db.String(256), nullable=True)
+    password_hash = db.Column(db.String(128), nullable=True)
 
-    def __init__(self, project_id, name):
+    def __init__(self, project_id, name, password=None):
         self.project_id = project_id
         self.name = name
+        self.password = password
         paypal_email = None
 
     def __repr__(self):
@@ -50,6 +55,22 @@ class User(db.Model):
 
     def get_id(self):
         return unicode(self.user_id)
+
+    @property
+    def password(self):
+        raise AttributeError('password is not a readable attribute')
+    
+    @password.setter
+    def password(self, password):
+        if password == None:
+            self.password_hash = None
+        else:
+            self.password_hash = generate_password_hash(password)
+
+    def verify_password(self, password):
+        if password == None or self.password_hash == None:
+            return False
+        return check_password_hash(self.password_hash, password)
 
 class Issue(db.Model):
     issue_id = db.Column(db.Integer, primary_key=True)
