@@ -2,7 +2,7 @@ from selenium import webdriver
 
 def create_browser():
     #TODO: automatically locate binary
-    binary = webdriver.firefox.firefox_binary.FirefoxBinary('/opt/firefox/firefox')
+    binary = webdriver.firefox.firefox_binary.FirefoxBinary('/opt/firefox-dev/firefox')
     browser = webdriver.Firefox(firefox_binary=binary)
     #browser = webdriver.Firefox()
     
