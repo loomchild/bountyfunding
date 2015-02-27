@@ -1,0 +1,13 @@
+.slider-tick.in-selection {
+	background-color: #bababa;
+	background-image: none;
+}
+
+#ex1Slider {
+	width: 100%;
+}
+
+#ex1Slider .slider-selection {
+	background: #BABABA;
+}
+

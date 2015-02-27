@@ -4,8 +4,20 @@
 
 {% block head %}
 {{ super() }}
-<link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
-<link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
+<link rel="shortcut icon" href="{{ url_for('.static', filename='images/favicon.ico') }}" type="image/x-icon">
+<link rel="icon" href="{{ url_for('.static', filename='images/favicon.ico') }}" type="image/x-icon">
+{% endblock %}
+
+{% block styles %}
+{{ super() }}
+<link rel="stylesheet" href="{{url_for('.static', filename='styles/bootstrap-slider.min.css')}}">
+<link rel="stylesheet" href="{{url_for('.static', filename='styles/bountyfunding.css')}}">
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="{{ url_for('.static', filename='scripts/bootstrap-slider.js')}}"></script>
+<script src="{{ url_for('.static', filename='scripts/bountyfunding.js')}}"></script>
 {% endblock %}
 
 {% block navbar %}
@@ -13,7 +25,7 @@
     <div class="container">
         <div class="navbar-header">
 			<span class="navbar-brand">
-				<img src="{{ url_for('.static', filename='logo.png') }}"/>
+				<img src="{{ url_for('.static', filename='images/logo.png') }}"/>
 			<span>
         </div>
         <div class="navbar-collapse collapse">
@@ -44,6 +56,3 @@
 </div>
 {% endblock %}
 
-{% block scripts %}
-{{ super() }}
-{% endblock %}

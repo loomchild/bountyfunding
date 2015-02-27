@@ -30,6 +30,11 @@ def login():
         flash('Invalid username or password.')
     return render_template('login.html', form=form)
 
+@gui.route("/issue", methods=['GET'])
+@login_required
+def issue():
+    return render_template('issue.html', project="Segment", id="#4", title="Unicode Text Segmentation Algorithm", url="http://trac.loomchild.net/segment/ticket/4")
+
 @gui.route('/logout')
 @login_required
 def logout():

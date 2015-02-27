@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% import "bootstrap/wtf.html" as wtf %}
+
+{% block title %}BountyFunding - Login{% endblock %}
+
+{% block page_content %}
+<div class="page-header">
+	<h1><a href="{{ url }}">{{ id }} {{ title }}</a></h1>
+</div>
+	
+<div class="row">
+	<h2>Bounty</h2>
+
+	<h2>Sponsor</h2>
+	<input id="ex1" data-slider-id='ex1Slider' type="text" data-slider-step="1" data-slider-value="{{ value }}"/>
+</div>
+
+<div class="row" style="margin-top: 30px">
+	<div style="width: 200px" class="center-block">
+		<div class="input-group input-group-lg">
+	  		<input id="amount" type="text" class="form-control" value="{{ value }}">
+			<span class="input-group-addon">€</span>
+		</div>
+	</div>
+</div>
+
+{% endblock %}
+
