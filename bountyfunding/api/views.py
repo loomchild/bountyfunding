@@ -1,8 +1,7 @@
 from bountyfunding.api import api
 
-from bountyfunding.api.models import db, Project, Issue, User, Sponsorship, Email, Payment, Change, Token
-from bountyfunding.api.data import retrieve_user
-from bountyfunding.api.const import ProjectType, IssueStatus, SponsorshipStatus, PaymentStatus, PaymentGateway
+from bountyfunding.api.data import *
+from bountyfunding.api.const import *
 
 from bountyfunding.api.payment.factory import payment_factory
 from bountyfunding.api.errors import APIException
@@ -11,12 +10,6 @@ from bountyfunding.api import security
 from bountyfunding.api.config import config
 
 from flask import Flask, url_for, render_template, make_response, redirect, abort, jsonify, request, g, current_app
-from pprint import pprint
-import re, requests, threading, random, string
-
-
-#TODO: move to config
-NOTIFY_INTERVAL = 5
 
 
 @api.route('/version', methods=['GET'])
@@ -160,13 +153,8 @@ def post_sponsorship(issue_ref):
     sponsorship = retrieve_sponsorship(issue.issue_id, user.user_id)
     if sponsorship != None:
         return jsonify(error="Sponsorship already exists"), 409
-
-    sponsorship = Sponsorship(g.project_id, issue.issue_id, user.user_id)
     
-    sponsorship.amount = amount
-    
-    db.session.add(sponsorship)
-    db.session.commit()
+    sponsorship = create_sponsorship(g.project_id, issue.issue_id, user.user_id, amount)
 
     response = jsonify(message='Sponsorship updated')
     return response
@@ -208,13 +196,13 @@ def delete_sponsorship(issue_ref, user_name):
         if sponsorship.status != SponsorshipStatus.PLEDGED:
             return jsonify(error='Can only delete sponsorhip in PLEDGED status'), 403
 
-        delete_sponsorship(issue.issue_id, user.user_id)
+        remove_sponsorship(issue.issue_id, user.user_id)
         response = jsonify(message="Sponsorship deleted")
     
     return response
     
 @api.route("/issue/<issue_ref>/sponsorship/<user_name>", methods=['PUT'])
-def update_sponsorship(issue_ref, user_name):
+def put_sponsorship(issue_ref, user_name):
     # Does not allow to create new sponsorship despite it could because we know the ID. 
     # This is done for simplicity and to provide only one way of doing one thing.
     status_string = request.values.get('status')
@@ -277,8 +265,7 @@ def update_sponsorship(issue_ref, user_name):
 
         sponsorship.amount = amount
 
-    db.session.add(sponsorship)
-    db.session.commit()
+    update_sponsorship(sponsorship)
 
     return jsonify(message='Sponsorship updated')
 
@@ -308,7 +295,7 @@ def get_payment(issue_ref, user_name):
     return response
 
 @api.route("/issue/<issue_ref>/sponsorship/<user_name>/payment", methods=['PUT'])
-def update_payment(issue_ref, user_name):
+def put_payment(issue_ref, user_name):
     status = PaymentStatus.from_string(request.values.get('status')) 
     if status != PaymentStatus.CONFIRMED:
         return jsonify(error='You can only change the status to CONFIRMED'), 403
@@ -335,12 +322,13 @@ def update_payment(issue_ref, user_name):
         approved = payment_gateway.process_payment(g.project_id, sponsorship, payment, request.values)
         if not approved:
             return jsonify(error='Payment not confirmed by the gateway'), 403
-
+        
         payment.status = status
-        db.session.add(payment)
+        update_payment(payment)
+ 
         sponsorship.status = SponsorshipStatus.CONFIRMED
-        db.session.add(sponsorship)
-        db.session.commit()
+        update_sponsorship(sponsorship)
+        
         response = jsonify(message='Payment updated')
     
     else:
@@ -373,9 +361,7 @@ def create_payment(issue_ref, user_name):
     payment_gateway = payment_factory.get_payment_gateway(gateway)
     
     payment = payment_gateway.create_payment(g.project_id, sponsorship, return_url)
-
-    db.session.add(payment)
-    db.session.commit()
+    update_payment(payment)
     
     return jsonify(message='Payment created')
 
@@ -409,7 +395,7 @@ def put_user(user_name):
 
 @api.route('/emails', methods=['GET'])
 def get_emails():
-    emails = Email.query.all()
+    emails = retrieve_all_emails()
 
     response = []
     for email in emails:
@@ -420,11 +406,9 @@ def get_emails():
 
 @api.route('/email/<email_id>', methods=['DELETE'])
 def delete_email(email_id):
-    email = Email.query.get(email_id)
-
+    email = retrieve_email(email_id)
     if email != None:
-        db.session.delete(email)
-        db.session.commit()
+        remove_email(email)
         response = jsonify(message='Email deleted')
     else:
         response = jsonify(error='Email not found'), 404
@@ -481,14 +465,8 @@ def delete_project():
         return jsonify(error="You can't delete non-test project"), 403
     project_id = g.project_id
 
-    Payment.query.filter_by(project_id=project_id).delete()
-    Sponsorship.query.filter_by(project_id=project_id).delete()
-    User.query.filter_by(project_id=project_id).delete()
-    Issue.query.filter_by(project_id=project_id).delete()
-    Email.query.filter_by(project_id=project_id).delete()
-    #TODO: add new tables
-    db.session.commit()
-
+    remove_project(project_id)
+    
     return jsonify(message="Project deleted")
 
 
@@ -529,7 +507,7 @@ def init():
     if config.DATABASE_CREATE:
         if not config.DATABASE_IN_MEMORY:
             print "Creating database in %s" % config.DATABASE_URL
-        db.create_all()
+        create_database()
     
     # Multiple threads do not work with memory database
     if not config.DATABASE_IN_MEMORY:
@@ -540,169 +518,3 @@ def init():
 def handle_api_exception(exception):
     return jsonify(error=exception.message), exception.status_code
 
-
-def create_project(name, description):
-    project = Project(name, description, ProjectType.NORMAL)
-    db.session.add(project)
-    db.session.flush()
-
-    token = Token(project.project_id, generate_token())
-    db.session.add(token)
-
-    db.session.commit()
-    return project, token
-
-def update_project(project):
-    db.session.add(project)
-    db.session.commit()
-
-def mapify_project(project):
-    type = ProjectType.to_string(project.type)
-    return dict(name=project.name, description=project.description, type=type)
-
-def generate_token():
-    return ''.join(random.choice(string.ascii_lowercase) for _ in xrange(32))
-
-
-def retrieve_issues(project_id):
-    issues = Issue.query.filter_by(project_id=project_id).all()
-    return issues
-
-def retrieve_issue(project_id, issue_ref):
-    issue = Issue.query.filter_by(project_id=project_id, issue_ref=issue_ref).first()
-    return issue
-
-def create_issue(project_id, ref, status, title, link, owner_id):
-    issue = Issue(project_id, ref, status, title, link, owner_id)
-    db.session.add(issue)
-    db.session.commit()
-    return issue
-
-def update_issue(issue):
-    db.session.add(issue)
-    db.session.commit()
-
-def mapify_issue(issue):
-    result = dict(ref=issue.issue_ref, title=issue.title)	
-
-    result['status'] = IssueStatus.to_string(issue.status)
-    result['link'] = config[issue.project_id].TRACKER_URL + issue.link
-
-    if issue.owner != None:
-        result['owner'] = issue.owner.name
-
-    return result
-
-def retrieve_sponsored_issues(project_id):
-    issues = db.engine.execute("""
-        SELECT i.issue_ref, i.status, i.title, i.link, sum(s.amount) AS amount
-        FROM issue AS i JOIN sponsorship AS s ON (i.issue_id = s.issue_id) 
-        WHERE i.project_id = :1
-        GROUP BY i.issue_id
-        HAVING amount > 0
-        ORDER BY amount DESC
-    """, [project_id]).fetchall()
-
-    issues = {'data': map(lambda i: {
-        'ref': i[0],
-        'status': IssueStatus.to_string(i[1]),
-        'title': i[2],
-        'link': config[project_id].TRACKER_URL + i[3],
-        'amount': i[4]
-    }, issues)}
-    
-    return issues
-
-def retrieve_create_user(project_id, name):
-    user = retrieve_user(project_id, name)
-    if user == None:
-        user = User(project_id=project_id, name=name)
-        db.session.add(user)
-        db.session.commit()
-    return user
-
-def update_user(user):
-    db.session.add(user)
-    db.session.commit()
-
-def mapify_user(user):
-    result = dict(name=user.name, paypal_email=user.paypal_email)
-
-    # Remove empty values
-    result = {k: v for k, v in result.items() if v != None}
-
-    return result
-
-def retrieve_sponsorship(issue_id, user_id):
-    sponsorship = Sponsorship.query.filter_by(issue_id=issue_id, user_id=user_id).first()
-    return sponsorship
-
-def retrieve_all_sponsorships(issue_id):
-    sponsorships = Sponsorship.query.filter_by(issue_id=issue_id).all()
-    return sponsorships
-
-def delete_sponsorship(issue_id, user_id):
-    sponsorship = retrieve_sponsorship(issue_id, user_id)
-    Payment.query.filter_by(sponsorship_id=sponsorship.sponsorship_id).delete()
-    db.session.delete(sponsorship)
-    db.session.commit()
-    
-
-def retrieve_last_payment(sponsorship_id):
-    payment = Payment.query.filter_by(sponsorship_id=sponsorship_id) \
-            .order_by(Payment.payment_id.desc()).first()
-    return payment
-
-
-def create_change(project_id, method, path, arguments):
-    change = Change(project_id, method, path, arguments)
-    db.session.add(change)
-    db.session.commit()
-    return change.change_id
-
-def update_change(change_id, status, response):
-    change = Change.query.get(change_id)
-    if change == None:
-        current_app.logger.warn('Change %s not found', change_id)
-        return
-    change.status = status
-    change.response = response
-    db.session.add(change)
-    db.session.commit()
-
-def notify_sponsors(project_id, issue_id, status, body):
-    sponsorships = Sponsorship.query.filter_by(issue_id=issue_id, status=status)
-    for sponsorship in sponsorships:
-        create_email(project_id, sponsorship.user.user_id, issue_id, body)
-
-def create_email(project_id, user_id, issue_id, body):
-    email = Email(project_id, user_id, issue_id, body)
-    db.session.add(email)
-    db.session.commit()
-
-def send_emails():
-    emails = Email.query.all()
-    if len(emails) > 0:
-        project_ids = set(map(lambda email: email.project_id, emails))
-        for project_id in project_ids:
-            notify_url = config[project_id].TRACKER_URL + '/bountyfunding/'
-            try:
-                requests.get(notify_url + 'email', timeout=1)
-            except requests.exceptions.RequestException:
-                current_app.logger.warn('Unable to connect to issue tracker at ' + notify_url)
-
-
-def check_pledge_amount(project_id, amount):
-    if amount <= 0:
-        raise APIException("Amount must be positive", 400)
-    max_pledge_amount = config[project_id].MAX_PLEDGE_AMOUNT
-    if amount > max_pledge_amount:
-        raise APIException("Amount may be up to %d" % max_pledge_amount, 400)
-
-
-
-def notify():
-    send_emails()
-    t = threading.Timer(NOTIFY_INTERVAL, notify)
-    t.daemon = True
-    t.start()
