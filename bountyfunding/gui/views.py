@@ -2,6 +2,7 @@ from bountyfunding.gui import gui
 from bountyfunding.api.models import User
 from bountyfunding.gui.forms import LoginForm
 from bountyfunding.api.models import Project, Issue
+from bountyfunding.api.data import retrieve_all_sponsorships
 
 from flask import redirect, render_template, request, url_for, flash
 from flask.ext.login import LoginManager, login_required, login_user, logout_user
@@ -35,9 +36,19 @@ def login():
 @gui.route("/projects/<project_name>/issues/<issue_ref>.html", methods=['GET'])
 @login_required
 def issue(project_name, issue_ref):
+    #TODO: retrieve user from db, but first need to make users project-agnostic
+    user_name = 'dev'
     project = Project.query.filter_by(name=project_name).first()
     issue = Issue.query.filter_by(issue_ref=issue_ref).first()
-    return render_template('issue.html', project=project.name, id=issue.issue_ref, title=issue.title, url=issue.full_link, bounty=60, value=10)
+    sponsorships = retrieve_all_sponsorships(issue.issue_id)
+    bounty = sum(s.amount for s in sponsorships)
+    sponsorship_map = {s.user.name: s for s in sponsorships} 
+    user_sponsorship = sponsorship_map.get('dev')
+    user_bounty = user_sponsorship.amount if user_sponsorship else 0
+
+    return render_template('issue.html', project=project.name, 
+        id=issue.issue_ref, title=issue.title, url=issue.full_link, 
+        bounty=bounty, user_bounty=user_bounty)
 
 @gui.route('/logout')
 @login_required

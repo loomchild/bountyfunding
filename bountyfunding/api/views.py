@@ -44,9 +44,9 @@ def post_issue():
 
     issue = retrieve_issue(g.project_id, ref)
 
-    if issue != None:
+    if issue != None:        
         return jsonify(error="Issue already exists"), 409
-
+    
     issue = create_issue(g.project_id, ref, status, title, link, owner_id)
 
     return jsonify(message='OK')
@@ -128,11 +128,12 @@ def get_sponsorships(issue_ref):
 
     if issue != None:
         sponsorships = retrieve_all_sponsorships(issue.issue_id)
-        sponsorships = dict(map(\
-                lambda s: (s.user.name, \
-                {'amount': s.amount, 'status': SponsorshipStatus.to_string(s.status)}),\
-                sponsorships))
-        response = jsonify(sponsorships)
+        sponsorship_map = {s.user.name: {
+                'amount': s.amount, 
+                'status': SponsorshipStatus.to_string(s.status)
+            } for s in sponsorships} 
+        
+        response = jsonify(sponsorship_map)
     else:
         response = jsonify(error='Issue not found'), 404
     return response
