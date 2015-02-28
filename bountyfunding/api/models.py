@@ -6,8 +6,27 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from bountyfunding.api.const import SponsorshipStatus, PaymentStatus, PaymentGateway
 
 
-
 db = SQLAlchemy()
+
+class Config(db.Model):
+    config_id = db.Column(db.Integer, primary_key=True)
+    project_id = db.Column(db.Integer, nullable=False)
+    name = db.Column(db.String(64), nullable=False)
+    value = db.Column(db.String(256), nullable=False)
+    
+    def __init__(self, project_id, name, value):
+        self.project_id = project_id
+        self.name = name
+        self.value = value
+
+    def __repr__(self):
+        return '<Config %s-%s: "%s">' % (self.project_id, self.name, self.value)
+
+db.Index('idx_config_pid_name', Config.project_id, Config.name, unique=True)
+
+#TODO: this is ugly. It would be nice to separate models from tables or rething config.
+from bountyfunding.api.config import config
+
 
 
 class Project(db.Model):
@@ -94,6 +113,10 @@ class Issue(db.Model):
     def __repr__(self):
         return '<Issue project_id: "%s", issue_ref: "%s">' % (self.project_id, self.issue_ref)
 
+    @property
+    def full_link(self):
+        return config[self.project_id].TRACKER_URL + self.link
+
 class Sponsorship(db.Model):
     sponsorship_id = db.Column(db.Integer, primary_key=True)
     project_id = db.Column(db.Integer, nullable=False)
@@ -177,23 +200,6 @@ class Change(db.Model):
     def __repr__(self):
         return '<Change change_id: "%s"' % (self.change_id,)
 
-class Config(db.Model):
-    config_id = db.Column(db.Integer, primary_key=True)
-    project_id = db.Column(db.Integer, nullable=False)
-    name = db.Column(db.String(64), nullable=False)
-    value = db.Column(db.String(256), nullable=False)
-    
-    def __init__(self, project_id, name, value):
-        self.project_id = project_id
-        self.name = name
-        self.value = value
-
-    def __repr__(self):
-        return '<Config %s-%s: "%s">' % (self.project_id, self.name, self.value)
-
-db.Index('idx_config_pid_name', Config.project_id, Config.name, unique=True)
-
-
 class Token(db.Model):
     token_id = db.Column(db.Integer, primary_key=True)
     project_id = db.Column(db.Integer, db.ForeignKey(Project.project_id), nullable=False)
@@ -207,4 +213,5 @@ class Token(db.Model):
         return '<Token project_id: "%s", token: "%s">' % (self.project_id, self.token)
 
 db.Index('idx_token_token', Token.token, unique=True)
+
 

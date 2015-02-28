@@ -12,6 +12,9 @@ NOTIFY_INTERVAL = 5
 
 #TODO: generic update and delete methods, use constructors to create, autocommit
 
+#TODO: move trivial queries back to the views, trivial creates too
+
+#TODO: replace mapify with iter https://stackoverflow.com/questions/23252370/overloading-dict-on-python-class
 
 def create_database():
     db.create_all()
@@ -74,7 +77,7 @@ def mapify_issue(issue):
     result = dict(ref=issue.issue_ref, title=issue.title)	
 
     result['status'] = IssueStatus.to_string(issue.status)
-    result['link'] = config[issue.project_id].TRACKER_URL + issue.link
+    result['link'] = issue.full_link
 
     if issue.owner != None:
         result['owner'] = issue.owner.name
