@@ -86,16 +86,15 @@ class CommonConfig:
 
     def init(self, args):
         config_file = args.get('config_file')
-        if not config_file:
-            config_file = os.path.join('conf', 'bountyfunding.ini')
-        if not os.path.isabs(config_file):
-            config_file = os.path.abspath(os.path.join(BOUNTYFUNDING_HOME, config_file))
-        parser = ConfigParser.RawConfigParser()
-        parser.readfp(open(config_file))
-        
-        file_props = filter(lambda (k,v): v.in_file, properties.items())
-        for name, prop in file_props:
-            self._init_value_from_file(parser, name)
+        if config_file:
+            if not os.path.isabs(config_file):
+                config_file = os.path.abspath(os.path.join(BOUNTYFUNDING_HOME, config_file))
+            parser = ConfigParser.RawConfigParser()
+            parser.readfp(open(config_file))
+            
+            file_props = filter(lambda (k,v): v.in_file, properties.items())
+            for name, prop in file_props:
+                self._init_value_from_file(parser, name)
 
         if args.get('db_in_memory'):
             setattr(self, 'DATABASE_URL', 'sqlite://')

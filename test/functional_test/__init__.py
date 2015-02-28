@@ -1,28 +1,32 @@
-import os
-import signal
-import subprocess
-import time
-from bountyfunding.util.homer import BOUNTYFUNDING_HOME
+import requests
 
 
-def setup():
-    global bountyfunding_process
-    print("Starting BountyFunding API...")
-    bountyfunding_process = subprocess.Popen(
-        [
-            "python", "bountyfunding.py", 
-            "--db-in-memory", 
-            "--port", "8081",
-            "--config-file", "conf/bountyfunding.ini.sample",
-        ], 
-        cwd=BOUNTYFUNDING_HOME, 
-        preexec_fn=os.setsid,
-    )
-    time.sleep(2)
+DEFAULT_API_URL = 'http://localhost:8080'
 
-def teardown():
-    global bountyfunding_process
-    print("Stopping BountyFunding API...")
-    # Based on http://stackoverflow.com/a/4791612/1106546, won't work on Windows
-    os.killpg(bountyfunding_process.pid, signal.SIGKILL)
+class Api:
+
+    def __init__(self, token, url=DEFAULT_API_URL):
+        self.token = token
+        self.url = url
+
+    def call(self, method, path, **kwargs):
+        full_url = self.url + path
+        params = kwargs
+        params['token'] = self.token
+        return requests.request(method, full_url, params=params)
+
+    def get(self, path, **kwargs):
+        return self.call('GET', path, **kwargs)
     
+    def post(self, path, **kwargs):
+        return self.call('POST', path, **kwargs)
+
+    def put(self, path, **kwargs):
+        return self.call('PUT', path, **kwargs)
+    
+    def delete(self, path, **kwargs):
+        return self.call('DELETE', path, **kwargs)
+
+    #TODO: Add ensure calls that throw an exception if code is not 200/201
+
+

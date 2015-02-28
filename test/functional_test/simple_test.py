@@ -1,4 +1,7 @@
-from util import Api, dict_to_object
+__test__ = False
+
+from test import to_object
+from test.functional_test import Api
 
 from bountyfunding.api.const import IssueStatus, SponsorshipStatus, PaymentStatus, PaymentGateway
 
@@ -45,7 +48,7 @@ def test_create_issue():
     
     r = api.get("/issue/1")
     eq_(r.status_code, 200)
-    issue = dict_to_object(r.json())
+    issue = to_object(r.json())
     eq_(issue.ref, '1')
     eq_(IssueStatus.from_string(issue.status), status)
     eq_(issue.title, title)
@@ -61,7 +64,7 @@ def test_sponsor_issue():
     eq_(r.status_code, 200)
     sponsorships = r.json()
     eq_(len(sponsorships), 1)
-    sponsorship = dict_to_object(sponsorships[user])
+    sponsorship = to_object(sponsorships[user])
     eq_(sponsorship.amount, amount) 
     eq_(SponsorshipStatus.from_string(sponsorship.status), 
             SponsorshipStatus.PLEDGED) 
@@ -76,7 +79,7 @@ def test_sponsor_issue_2():
     eq_(r.status_code, 200)
     sponsorships = r.json()
     eq_(len(sponsorships), 2)
-    sponsorship = dict_to_object(sponsorships[user])
+    sponsorship = to_object(sponsorships[user])
     eq_(sponsorship.amount, amount) 
     eq_(SponsorshipStatus.from_string(sponsorship.status), 
             SponsorshipStatus.PLEDGED) 
@@ -91,7 +94,7 @@ def test_update_amount():
     eq_(r.status_code, 200)
     sponsorships = r.json()
     eq_(len(sponsorships), 2)
-    sponsorship = dict_to_object(sponsorships[user])
+    sponsorship = to_object(sponsorships[user])
     eq_(sponsorship.amount, amount) 
     eq_(SponsorshipStatus.from_string(sponsorship.status), 
             SponsorshipStatus.PLEDGED) 

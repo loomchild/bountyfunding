@@ -48,7 +48,7 @@ if __name__ == "__main__":
             help='Action to be performed')
 
     arg_parser.add_argument('-c', '--config-file', 
-            action='store', default=None,
+            action='store', default=path.join('conf', 'bountyfunding.ini'),
             metavar='FILE',
             help='Specify config file location')
 
