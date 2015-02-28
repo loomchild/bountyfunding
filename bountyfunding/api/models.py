@@ -4,29 +4,10 @@ from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
 
 from bountyfunding.api.const import SponsorshipStatus, PaymentStatus, PaymentGateway
+from bountyfunding.api.config import config
 
 
 db = SQLAlchemy()
-
-class Config(db.Model):
-    config_id = db.Column(db.Integer, primary_key=True)
-    project_id = db.Column(db.Integer, nullable=False)
-    name = db.Column(db.String(64), nullable=False)
-    value = db.Column(db.String(256), nullable=False)
-    
-    def __init__(self, project_id, name, value):
-        self.project_id = project_id
-        self.name = name
-        self.value = value
-
-    def __repr__(self):
-        return '<Config %s-%s: "%s">' % (self.project_id, self.name, self.value)
-
-db.Index('idx_config_pid_name', Config.project_id, Config.name, unique=True)
-
-#TODO: this is ugly. It would be nice to separate models from tables or rething config.
-from bountyfunding.api.config import config
-
 
 
 class Project(db.Model):
@@ -179,6 +160,21 @@ class Email(db.Model):
         return '<Email project_id: "%s", user_id: "%s", issue_id: "%s">' %\
                 (self.project_id, self.user_id, self.issue_id)
 
+class Config(db.Model):
+    config_id = db.Column(db.Integer, primary_key=True)
+    project_id = db.Column(db.Integer, nullable=False)
+    name = db.Column(db.String(64), nullable=False)
+    value = db.Column(db.String(256), nullable=False)
+    
+    def __init__(self, project_id, name, value):
+        self.project_id = project_id
+        self.name = name
+        self.value = value
+
+    def __repr__(self):
+        return '<Config %s-%s: "%s">' % (self.project_id, self.name, self.value)
+
+db.Index('idx_config_pid_name', Config.project_id, Config.name, unique=True)
 
 class Change(db.Model):
     change_id = db.Column(db.Integer, primary_key=True)
@@ -213,5 +209,4 @@ class Token(db.Model):
         return '<Token project_id: "%s", token: "%s">' % (self.project_id, self.token)
 
 db.Index('idx_token_token', Token.token, unique=True)
-
 

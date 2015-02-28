@@ -9,8 +9,6 @@ from bountyfunding.util.homer import BOUNTYFUNDING_HOME
 from bountyfunding import app
 from bountyfunding.api.const import PaymentGateway
 
-from bountyfunding.api.models import db, Config
-
 
 def parse(name, value):
     p = properties[name]
@@ -205,6 +203,10 @@ class ProjectConfig:
         prop = Config.query.filter_by(project_id=project_id, name=name).first()
         return prop
         
+
 config = CommonConfig()
 
+
+# Tricky because DB needs config and config needs DB
+from bountyfunding.api.models import db, Config
 
