@@ -1,6 +1,8 @@
 from bountyfunding.gui import gui
 from bountyfunding.api.models import User
 from bountyfunding.gui.forms import LoginForm
+from bountyfunding.api.models import Project, Issue
+
 from flask import redirect, render_template, request, url_for, flash
 from flask.ext.login import LoginManager, login_required, login_user, logout_user
 from flask_bootstrap import Bootstrap
@@ -30,10 +32,12 @@ def login():
         flash('Invalid username or password.')
     return render_template('login.html', form=form)
 
-@gui.route("/issue", methods=['GET'])
+@gui.route("/projects/<project_name>/issues/<issue_ref>.html", methods=['GET'])
 @login_required
-def issue():
-    return render_template('issue.html', project="Segment", id="#4", title="Unicode Text Segmentation Algorithm", url="http://trac.loomchild.net/segment/ticket/4")
+def issue(project_name, issue_ref):
+    project = Project.query.filter_by(name=project_name).first()
+    issue = Issue.query.filter_by(issue_ref=issue_ref).first()
+    return render_template('issue.html', project=project.name, id=issue.issue_ref, title=issue.title, url=issue.full_link, bounty=60, value=10)
 
 @gui.route('/logout')
 @login_required
