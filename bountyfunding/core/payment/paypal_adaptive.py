@@ -5,7 +5,7 @@ from bountyfunding.core.models import db, Payment
 from bountyfunding.core.errors import Error
 from bountyfunding.core.data import retrieve_user
 from bountyfunding.core.const import PaymentGateway
-from bountyfunding.api.payment.util import get_paypal_url
+from bountyfunding.core.payment import get_paypal_url
 
 
 

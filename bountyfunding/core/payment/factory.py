@@ -1,10 +1,10 @@
 from bountyfunding.core.const import PaymentGateway
 from bountyfunding.core.errors import Error
 
-from bountyfunding.api.payment.dummy import DummyGateway
+from bountyfunding.core.payment.dummy import DummyGateway
 
-from bountyfunding.api.payment.paypal_standard import PayPalStandardGateway
-from bountyfunding.api.payment.paypal_adaptive import PayPalAdaptiveGateway
+from bountyfunding.core.payment.paypal_standard import PayPalStandardGateway
+from bountyfunding.core.payment.paypal_adaptive import PayPalAdaptiveGateway
 
 
 class PaymentFactory:

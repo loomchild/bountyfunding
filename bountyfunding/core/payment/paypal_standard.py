@@ -6,7 +6,7 @@ from bountyfunding.core.config import config
 from bountyfunding.core.models import db, Payment
 from bountyfunding.core.const import PaymentGateway
 from bountyfunding.core.errors import Error
-from bountyfunding.api.payment.util import get_paypal_url
+from bountyfunding.core.payment import get_paypal_url
 
 
 class PayPalStandardGateway:

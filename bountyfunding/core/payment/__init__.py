@@ -1,3 +1,6 @@
+#import httplib2
+#httplib2.debuglevel = 1
+
 from bountyfunding.core.config import config
 
 

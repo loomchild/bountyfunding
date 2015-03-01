@@ -3,7 +3,7 @@ from bountyfunding.api import api
 from bountyfunding.core.data import *
 from bountyfunding.core.const import *
 
-from bountyfunding.api.payment.factory import payment_factory
+from bountyfunding.core.payment.factory import payment_factory
 from bountyfunding.core.errors import Error, SecurityError
 
 from bountyfunding.api import security
