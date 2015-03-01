@@ -40,6 +40,9 @@ class Email_Test:
         ok_(email.issue_id)
         ok_(email.body)
 
+        r = self.app.delete("/email/%s" % email.id)
+        eq_(r.status_code, 200)
+
     def get_emails(self):
         r = self.app.get("/emails")
         eq_(r.status_code, 200)

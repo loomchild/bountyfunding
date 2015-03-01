@@ -4,19 +4,17 @@ from bountyfunding.api.const import *
 from bountyfunding.api.models import db, Project, Issue, User, Sponsorship, Email, Payment, Change, Token
 from bountyfunding.api.config import config
 
-import re, requests, threading, random, string
+import re, requests, threading, random, string, os, binascii
 
 
 #TODO: move to config, 0 means no notifications, set for tests, automatically when in-memory-database in config
 NOTIFY_INTERVAL = 5
 
-#TODO: generic update and delete methods, use constructors to create, autocommit
+#TODO: generic update and delete methods, use constructors to create
 
 #TODO: move trivial queries back to the views, trivial creates too
 
 #TODO: replace mapify with iter https://stackoverflow.com/questions/23252370/overloading-dict-on-python-class
-
-#TODO: use autocommit
 
 def create_database():
     db.drop_all()
@@ -29,7 +27,6 @@ def retrieve_user(project_id, name):
 def create_project(name, description):
     project = Project(name, description, ProjectType.NORMAL)
     db.session.add(project)
-    db.session.flush()
 
     token = Token(project.project_id, generate_token())
     db.session.add(token)
@@ -46,7 +43,7 @@ def mapify_project(project):
     return dict(name=project.name, description=project.description, type=type)
 
 def generate_token():
-    return ''.join(random.choice(string.ascii_lowercase) for _ in xrange(32))
+    return binascii.b2a_hex(os.urandom(16))  # 16 bytes = 32 chars
 
 
 def retrieve_issues(project_id):
@@ -182,7 +179,7 @@ def create_email(project_id, user_id, issue_id, body):
 def retrieve_all_emails():
     return Email.query.all()
 
-def retrieve_email():
+def retrieve_email(email_id):
     email = Email.query.get(email_id)
     return email
 
