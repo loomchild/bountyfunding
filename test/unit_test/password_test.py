@@ -1,6 +1,6 @@
 from nose.tools import *
 
-from bountyfunding.api.models import User
+from bountyfunding.core.models import User
 
 
 def test_password_setter():

@@ -1,8 +1,8 @@
 from bountyfunding.api.errors import APIException
-from bountyfunding.api.models import Project, Token
+from bountyfunding.core.models import Project, Token
 from bountyfunding.core.const import ProjectType
 from bountyfunding.core.config import config
-from bountyfunding.api.data import retrieve_project
+from bountyfunding.core.data import retrieve_project
 
 
 class ImmutableProject:

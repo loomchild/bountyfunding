@@ -1,7 +1,7 @@
 #This is future data access layer
 
 from bountyfunding.core.const import *
-from bountyfunding.api.models import db, Project, Issue, User, Sponsorship, Email, Payment, Change, Token
+from bountyfunding.core.models import db, Project, Issue, User, Sponsorship, Email, Payment, Change, Token
 from bountyfunding.core.config import config
 
 import re, requests, threading, random, string 

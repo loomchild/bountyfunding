@@ -1,5 +1,5 @@
 from bountyfunding.core.const import PaymentGateway
-from bountyfunding.api.models import Payment
+from bountyfunding.core.models import Payment
 
 import re
 

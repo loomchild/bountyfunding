@@ -1,6 +1,6 @@
 import bountyfunding
 from bountyfunding.core.const import *
-from bountyfunding.api.data import create_database
+from bountyfunding.core.data import create_database
 
 from test import to_dict, to_object
 

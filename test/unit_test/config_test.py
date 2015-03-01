@@ -2,7 +2,7 @@ from nose.tools import *
 from mock import MagicMock
 
 from bountyfunding.core.config import ProjectConfig
-from bountyfunding.api.models import Config
+from bountyfunding.core.models import Config
 
 
 def test_project_config():

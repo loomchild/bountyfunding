@@ -210,5 +210,5 @@ config = CommonConfig()
 
 
 # Tricky because DB needs config and config needs DB
-from bountyfunding.api.models import db, Config
+from bountyfunding.core.models import db, Config
 

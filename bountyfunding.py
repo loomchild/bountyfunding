@@ -8,7 +8,7 @@ from bountyfunding import app
 from bountyfunding.util.enum import Enum
 from bountyfunding.core.config import config
 from bountyfunding.api import models
-from bountyfunding.api.models import db
+from bountyfunding.core.models import db
 
 
 # TODO: merge with functions or use real action classes with docstrings

@@ -1,6 +1,6 @@
 from bountyfunding.api import api
 
-from bountyfunding.api.data import *
+from bountyfunding.core.data import *
 from bountyfunding.core.const import *
 
 from bountyfunding.api.payment.factory import payment_factory
