@@ -4,7 +4,8 @@ from bountyfunding.api.const import *
 from bountyfunding.api.models import db, Project, Issue, User, Sponsorship, Email, Payment, Change, Token
 from bountyfunding.api.config import config
 
-import re, requests, threading, random, string, os, binascii
+import re, requests, threading, random, string 
+from flask import current_app
 
 
 #TODO: move to config, 0 means no notifications, set for tests, automatically when in-memory-database in config
@@ -43,7 +44,7 @@ def mapify_project(project):
     return dict(name=project.name, description=project.description, type=type)
 
 def generate_token():
-    return binascii.b2a_hex(os.urandom(16))  # 16 bytes = 32 chars
+    return ''.join(random.choice(string.ascii_lowercase) for _ in xrange(32))
 
 
 def retrieve_issues(project_id):
