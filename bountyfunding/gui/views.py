@@ -1,7 +1,6 @@
 from bountyfunding.gui import gui
-from bountyfunding.core.models import User
 from bountyfunding.gui.forms import LoginForm
-from bountyfunding.core.models import Project, Issue
+from bountyfunding.core.models import User, Project, Issue
 from bountyfunding.core.data import retrieve_all_sponsorships
 
 from flask import redirect, render_template, request, url_for, flash
