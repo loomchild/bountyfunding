@@ -3,6 +3,7 @@
 from bountyfunding.core.const import *
 from bountyfunding.core.models import db, Project, Issue, User, Sponsorship, Email, Payment, Change, Token
 from bountyfunding.core.config import config
+from bountyfunding.core.errors import Error
 
 import re, requests, threading, random, string 
 from flask import current_app
@@ -193,10 +194,10 @@ def remove_email(email):
 
 def check_pledge_amount(project_id, amount):
     if amount <= 0:
-        raise APIException("Amount must be positive", 400)
+        raise Error("Amount must be positive")
     max_pledge_amount = config[project_id].MAX_PLEDGE_AMOUNT
     if amount > max_pledge_amount:
-        raise APIException("Amount may be up to %d" % max_pledge_amount, 400)
+        raise Error("Amount may be up to %d" % max_pledge_amount)
 
 def send_emails():
     emails = Email.query.all()

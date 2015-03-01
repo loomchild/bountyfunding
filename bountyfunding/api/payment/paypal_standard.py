@@ -5,7 +5,7 @@ import urllib
 from bountyfunding.core.config import config
 from bountyfunding.core.models import db, Payment
 from bountyfunding.core.const import PaymentGateway
-from bountyfunding.api.errors import APIException
+from bountyfunding.core.errors import Error
 from bountyfunding.api.payment.util import get_paypal_url
 
 
@@ -16,7 +16,7 @@ class PayPalStandardGateway:
         Returns authorization URL
         """
         if not return_url:
-            raise APIException('return_url cannot be blank', 400)
+            raise Error('return_url cannot be blank')
 
         receiver_email = config[project_id].PAYPAL_RECEIVER_EMAIL
 

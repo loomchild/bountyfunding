@@ -1,4 +1,4 @@
-from bountyfunding.api.errors import APIException
+from bountyfunding.core.errors import SecurityError
 from bountyfunding.core.models import Project, Token
 from bountyfunding.core.const import ProjectType
 from bountyfunding.core.config import config
@@ -40,25 +40,25 @@ def get_project(token):
         if config.PROJECT_DEFAULT:
             return DEFAULT_PROJECT
         else:
-            raise APIException("Default token disabled", 403)
+            raise SecurityError("Default token disabled")
 
         
     if token in TEST_TOKENS:
         if config.PROJECT_TEST:
             return TEST_TOKENS[token]
         else:
-            raise APIException("Test tokens disabled", 403)
+            raise SecurityError("Test tokens disabled")
 
     if token == ROOT_TOKEN:
         if config.PROJECT_ROOT:
             return ROOT_PROJECT
         else:
-            raise APIException("Root token disabled", 403)
+            raise SecurityError("Root token disabled")
 
     project = retrieve_project(token)
     if project != None:
         return project
     else:
-        raise APIException("Invalid token", 403)
+        raise SecurityError("Invalid token")
 
         

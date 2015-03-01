@@ -2,7 +2,7 @@ from paypalx import AdaptivePayments, PaypalError
 
 from bountyfunding.core.config import config
 from bountyfunding.core.models import db, Payment
-from bountyfunding.api.errors import APIException
+from bountyfunding.core.errors import Error
 from bountyfunding.core.data import retrieve_user
 from bountyfunding.core.const import PaymentGateway
 from bountyfunding.api.payment.util import get_paypal_url
@@ -13,7 +13,7 @@ class PayPalAdaptiveGateway:
 
     def create_payment(self, project_id, sponsorship, return_url):
         if not return_url:
-            raise APIException('return_url cannot be blank', 400)
+            raise Error('return_url cannot be blank')
 
         receiver_email = config[project_id].PAYPAL_RECEIVER_EMAIL
         receivers = [{'amount': sponsorship.amount, 'email': receiver_email}]

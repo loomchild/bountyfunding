@@ -4,7 +4,7 @@ from bountyfunding.core.data import *
 from bountyfunding.core.const import *
 
 from bountyfunding.api.payment.factory import payment_factory
-from bountyfunding.api.errors import APIException
+from bountyfunding.core.errors import Error, SecurityError
 
 from bountyfunding.api import security
 from bountyfunding.core.config import config
@@ -503,7 +503,11 @@ def init():
         notify()
 
 
-@api.errorhandler(APIException)
-def handle_api_exception(exception):
-    return jsonify(error=exception.message), exception.status_code
+@api.errorhandler(SecurityError)
+def handle_security_error(error):
+    return jsonify(error=error.message), 403
+
+@api.errorhandler(Error)
+def handle_error(error):
+    return jsonify(error=error.message), 400
 

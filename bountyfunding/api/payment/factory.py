@@ -1,5 +1,5 @@
 from bountyfunding.core.const import PaymentGateway
-from bountyfunding.api.errors import APIException
+from bountyfunding.core.errors import Error
 
 from bountyfunding.api.payment.dummy import DummyGateway
 
@@ -21,7 +21,7 @@ class PaymentFactory:
         try:
             return self.gateways[gateway]
         except KeyError:
-            raise APIException("Unknown payment gateway")
+            raise Error("Unknown payment gateway")
 
 
 payment_factory = PaymentFactory()
