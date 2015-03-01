@@ -255,7 +255,7 @@ class BountyFundingPlugin(Component):
                             action = tag.form(
                                 tag.input(type="button", name="confirm", value=u"Confirm %d\u20ac" % user_sponsorship.amount, id="confirm-button"), 
                                 tag.span(gateway_tags, id="confirm-options"), 
-                                tag.input(type="submit", name="cancel", value="Cancel"), 
+                                tag.input(type="submit", name="delete", value="Delete"), 
                                 method="post", action=req.href.ticket(identifier, "confirm"))
                         else:
                             #TODO: should be separate action
@@ -275,7 +275,7 @@ class BountyFundingPlugin(Component):
                         if user_sponsorship.status == None:
                             action = tag.form(tag.input(name="amount", type="text", size="3", value=user_sponsorship.amount, pattern="[0-9]*", title="money amount"), tag.input(type="submit", value="Pledge"), method="post", action=req.href.ticket(identifier, "sponsor"))
                         elif user_sponsorship.status == 'PLEDGED':
-                            action = tag.form(tag.input(name="amount", type="text", size=3, value=user_sponsorship.amount, pattern="[0-9]*", title="money amount"), tag.input(type="submit", name="update", value="Update"), tag.input(type="submit", name="cancel", value="Cancel"), method="post", action=req.href.ticket(identifier, "update_sponsorship"))
+                            action = tag.form(tag.input(name="amount", type="text", size=3, value=user_sponsorship.amount, pattern="[0-9]*", title="money amount"), tag.input(type="submit", name="update", value="Update"), tag.input(type="submit", name="delete", value="Delete"), method="post", action=req.href.ticket(identifier, "update_sponsorship"))
                     
                     elif (user == None):
                         action = tag.span(u"\u00A0", tag.a("Login", href=req.href.login()), " or ", tag.a("Register", href=req.href.register()), " to sponsor")
@@ -353,17 +353,17 @@ class BountyFundingPlugin(Component):
                         add_warning(req, "Unable to pledge - %s" % response.json().get('error', ''))
                     else:
                         self.update_ticket(ticket, True, user)
-                elif req.args.get('cancel'):
+                elif req.args.get('delete'):
                     response = self.call_api('DELETE', '/issue/%s/sponsorship/%s' % (ticket_id, user))
                     if response.status_code != 200:
-                        add_warning(req, "Unable to cancel pledge - %s" % response.json().get('error', ''))
+                        add_warning(req, "Unable to delete pledge - %s" % response.json().get('error', ''))
                     else:
                         self.update_ticket(ticket, True, user)
             elif action == 'confirm':
-                if req.args.get('cancel'):
+                if req.args.get('delete'):
                     response = self.call_api('DELETE', '/issue/%s/sponsorship/%s' % (ticket_id, user))
                     if response.status_code != 200:
-                        add_warning(req, "Unable to cancel pledge - %s" % response.json().get('error', ''))
+                        add_warning(req, "Unable to delete pledge - %s" % response.json().get('error', ''))
                     else:
                         self.update_ticket(ticket, True, user)
                 else:
