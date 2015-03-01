@@ -200,9 +200,9 @@ def send_emails():
     if len(emails) > 0:
         project_ids = set(map(lambda email: email.project_id, emails))
         for project_id in project_ids:
-            notify_url = config[project_id].TRACKER_URL + '/bountyfunding/'
+            notify_url = config[project_id].TRACKER_URL + '/bountyfunding/email'
             try:
-                requests.get(notify_url + 'email', timeout=1)
+                requests.get(notify_url, timeout=1)
             except requests.exceptions.RequestException:
                 current_app.logger.warn('Unable to connect to issue tracker at ' + notify_url)
 
