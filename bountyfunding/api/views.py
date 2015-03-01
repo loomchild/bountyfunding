@@ -459,7 +459,6 @@ def post_project():
 
     return jsonify(message='OK', token=token.token)
 
-
 @api.route('/config/payment_gateways', methods=['GET'])
 def get_config_payment_gateways():
     gateways = [PaymentGateway.to_string(pg) for pg in config[g.project_id].PAYMENT_GATEWAYS]

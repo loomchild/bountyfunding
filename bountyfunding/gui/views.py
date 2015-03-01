@@ -20,6 +20,10 @@ def record_once(state):
     Bootstrap(state.app)
     state.app.config['BOOTSTRAP_SERVE_LOCAL'] = True
 
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
+
 
 @gui.route('/login', methods=['GET', 'POST'])
 def login():
@@ -62,7 +66,4 @@ def logout():
 def test():
     return "Test"
 
-@login_manager.user_loader
-def load_user(user_id):
-    return User.query.get(int(user_id))
 
