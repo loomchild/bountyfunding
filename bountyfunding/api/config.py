@@ -146,7 +146,7 @@ class CommonConfig:
 
     def _init_version(self):
         try:
-            description = subprocess.check_output(["git", "describe", "--long", "--tags"], 
+            description = subprocess.check_output(["git", "describe", "--long",  "--match", "v*"], 
                     stderr=subprocess.STDOUT, cwd=BOUNTYFUNDING_HOME)
             m = re.match(r"v([\w\.]+)-\d+-g(\w+)", description)
             if m:
