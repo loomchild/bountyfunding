@@ -16,18 +16,11 @@ NOTIFY_INTERVAL = 5
 
 #TODO: replace mapify with iter https://stackoverflow.com/questions/23252370/overloading-dict-on-python-class
 
+#TODO: use autocommit
+
 def create_database():
     db.drop_all()
     db.create_all()
-
-def remove_project(project_id):
-    Payment.query.filter_by(project_id=project_id).delete()
-    Sponsorship.query.filter_by(project_id=project_id).delete()
-    User.query.filter_by(project_id=project_id).delete()
-    Issue.query.filter_by(project_id=project_id).delete()
-    Email.query.filter_by(project_id=project_id).delete()
-    #TODO: add new tables
-    db.session.commit()
 
 def retrieve_user(project_id, name):
     user = User.query.filter_by(project_id=project_id, name=name).first()

@@ -459,17 +459,6 @@ def post_project():
 
     return jsonify(message='OK', token=token.token)
 
-@api.route('/', methods=['DELETE'])
-def delete_project():
-    project = g.project
-    if not project.type == ProjectType.TEST:
-        return jsonify(error="You can't delete non-test project"), 403
-    project_id = g.project_id
-
-    remove_project(project_id)
-    
-    return jsonify(message="Project deleted")
-
 
 @api.route('/config/payment_gateways', methods=['GET'])
 def get_config_payment_gateways():
