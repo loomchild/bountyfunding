@@ -86,7 +86,10 @@ class CommonConfig:
 
     def init(self, args):
         config_file = args.get('config_file')
-        if config_file:
+        
+        if config_file != "":
+            if config_file == None:
+                config_file = os.path.join('conf', 'bountyfunding.ini')
             if not os.path.isabs(config_file):
                 config_file = os.path.abspath(os.path.join(BOUNTYFUNDING_HOME, config_file))
             parser = ConfigParser.RawConfigParser()
