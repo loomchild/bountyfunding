@@ -1,8 +1,8 @@
 #This is future data access layer
 
-from bountyfunding.api.const import *
+from bountyfunding.core.const import *
 from bountyfunding.api.models import db, Project, Issue, User, Sponsorship, Email, Payment, Change, Token
-from bountyfunding.api.config import config
+from bountyfunding.core.config import config
 
 import re, requests, threading, random, string 
 from flask import current_app
@@ -34,6 +34,9 @@ def create_project(name, description):
 
     db.session.commit()
     return project, token
+
+def retrieve_project(token):
+    return Project.query.join(Token).filter_by(token=token).scalar()
 
 def update_project(project):
     db.session.add(project)

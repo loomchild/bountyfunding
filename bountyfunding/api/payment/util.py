@@ -1,6 +1,4 @@
-from bountyfunding.api.errors import APIException
-from bountyfunding.api.data import retrieve_user
-from bountyfunding.api.config import config
+from bountyfunding.core.config import config
 
 
 def get_paypal_url(project_id):
@@ -10,6 +8,4 @@ def get_paypal_url(project_id):
         paypal_url = 'https://www.paypal.com'
     paypal_url += '/cgi-bin/webscr'
     return paypal_url
-
-
 

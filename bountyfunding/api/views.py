@@ -1,13 +1,13 @@
 from bountyfunding.api import api
 
 from bountyfunding.api.data import *
-from bountyfunding.api.const import *
+from bountyfunding.core.const import *
 
 from bountyfunding.api.payment.factory import payment_factory
 from bountyfunding.api.errors import APIException
 
 from bountyfunding.api import security
-from bountyfunding.api.config import config
+from bountyfunding.core.config import config
 
 from flask import Flask, url_for, render_template, make_response, redirect, abort, jsonify, request, g, current_app
 

@@ -6,7 +6,7 @@ from waitress import serve
 
 from bountyfunding import app
 from bountyfunding.util.enum import Enum
-from bountyfunding.api.config import config
+from bountyfunding.core.config import config
 from bountyfunding.api import models
 from bountyfunding.api.models import db
 

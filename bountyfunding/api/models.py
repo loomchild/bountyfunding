@@ -3,8 +3,8 @@ from datetime import datetime
 
 from werkzeug.security import generate_password_hash, check_password_hash
 
-from bountyfunding.api.const import SponsorshipStatus, PaymentStatus, PaymentGateway
-from bountyfunding.api.config import config
+from bountyfunding.core.const import SponsorshipStatus, PaymentStatus, PaymentGateway
+from bountyfunding.core.config import config
 
 
 db = SQLAlchemy()

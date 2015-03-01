@@ -1,7 +1,7 @@
 from nose.tools import *
 from mock import MagicMock
 
-from bountyfunding.api.config import ProjectConfig
+from bountyfunding.core.config import ProjectConfig
 from bountyfunding.api.models import Config
 
 

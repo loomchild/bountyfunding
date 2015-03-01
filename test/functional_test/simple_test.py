@@ -3,7 +3,7 @@ __test__ = False
 from test import to_object
 from test.functional_test import Api
 
-from bountyfunding.api.const import IssueStatus, SponsorshipStatus, PaymentStatus, PaymentGateway
+from bountyfunding.core.const import IssueStatus, SponsorshipStatus, PaymentStatus, PaymentGateway
 
 import os, binascii
 from nose.tools import *

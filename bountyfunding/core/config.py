@@ -7,7 +7,7 @@ import subprocess
 
 from bountyfunding.util.homer import BOUNTYFUNDING_HOME
 from bountyfunding import app
-from bountyfunding.api.const import PaymentGateway
+from bountyfunding.core.const import PaymentGateway
 
 
 def parse(name, value):

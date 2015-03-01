@@ -1,7 +1,8 @@
 from bountyfunding.api.errors import APIException
-from bountyfunding.api.config import config
 from bountyfunding.api.models import Project, Token
-from bountyfunding.api.const import ProjectType
+from bountyfunding.core.const import ProjectType
+from bountyfunding.core.config import config
+from bountyfunding.api.data import retrieve_project
 
 
 class ImmutableProject:
@@ -60,7 +61,4 @@ def get_project(token):
     else:
         raise APIException("Invalid token", 403)
 
-
-def retrieve_project(token):
-    return Project.query.join(Token).filter_by(token=token).scalar()
         

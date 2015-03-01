@@ -2,9 +2,9 @@ import requests
 
 import urllib
 
-from bountyfunding.api.config import config
+from bountyfunding.core.config import config
 from bountyfunding.api.models import db, Payment
-from bountyfunding.api.const import PaymentGateway
+from bountyfunding.core.const import PaymentGateway
 from bountyfunding.api.errors import APIException
 from bountyfunding.api.payment.util import get_paypal_url
 

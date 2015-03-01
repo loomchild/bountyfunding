@@ -1,10 +1,10 @@
 from paypalx import AdaptivePayments, PaypalError
 
-from bountyfunding.api.config import config
+from bountyfunding.core.config import config
 from bountyfunding.api.models import db, Payment
 from bountyfunding.api.errors import APIException
 from bountyfunding.api.data import retrieve_user
-from bountyfunding.api.const import PaymentGateway
+from bountyfunding.core.const import PaymentGateway
 from bountyfunding.api.payment.util import get_paypal_url
 
 

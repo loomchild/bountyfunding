@@ -1,4 +1,4 @@
-from bountyfunding.api.const import PaymentGateway
+from bountyfunding.core.const import PaymentGateway
 from bountyfunding.api.errors import APIException
 
 from bountyfunding.api.payment.dummy import DummyGateway
