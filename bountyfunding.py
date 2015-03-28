@@ -7,8 +7,9 @@ from waitress import serve
 from bountyfunding import app
 from bountyfunding.util.enum import Enum
 from bountyfunding.core.config import config
-from bountyfunding.api import models
+from bountyfunding.core import models
 from bountyfunding.core.models import db
+from bountyfunding.core import const
 
 
 # TODO: merge with functions or use real action classes with docstrings
@@ -25,7 +26,7 @@ def create_db():
     db.create_all()
 
 def shell():
-    namespace = dict(app=app, db=db, config=config, models=models)
+    namespace = dict(app=app, db=db, config=config, models=models, const=const)
   
     with app.app_context():
         # Use IPython if available, otherwise use basic Python shell
