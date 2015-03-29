@@ -43,6 +43,24 @@ def login():
         flash('Invalid username or password.')
     return render_template('login.html', form=form)
 
+@gui.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    flash('You have been logged out.')
+    return redirect("/")
+
+@gui.route('/register', methods=['GET', 'POST'])
+def register():
+    form = RegisterForm()
+    if form.validate_on_submit():
+        account = Account(form.email.data, form.name.data, form.password.data)
+        db.session.add(account)
+        db.session.commit()
+        flash('Account has been registered, please log in.')
+        return redirect(url_for(".login"))
+    return render_template('register.html', form=form)
+
 @gui.route("/projects/<project_name>/issues/<issue_ref>.html", methods=['GET'])
 @login_required
 def issue(project_name, issue_ref):
@@ -65,21 +83,4 @@ def issue(project_name, issue_ref):
         id=issue.issue_ref, title=issue.title, url=issue.full_link, 
         bounty=bounty, user_bounty=user_bounty)
 
-@gui.route('/logout')
-@login_required
-def logout():
-    logout_user()
-    flash('You have been logged out.')
-    return redirect("/")
-
-@gui.route('/register', methods=['GET', 'POST'])
-def register():
-    form = RegisterForm()
-    if form.validate_on_submit():
-        account = Account(form.email.data, form.name.data, form.password.data)
-        db.session.add(account)
-        db.session.commit()
-        flash('Account has been registered, please log in.')
-        return redirect(url_for(".login"))
-    return render_template('register.html', form=form)
 

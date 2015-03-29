@@ -5,6 +5,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 
 from bountyfunding.core.const import SponsorshipStatus, PaymentStatus, PaymentGateway
 from bountyfunding.core.config import config
+from bountyfunding.core.errors import Error
 
 
 db = SQLAlchemy()
@@ -144,10 +145,14 @@ class Sponsorship(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey(User.user_id), nullable=True)
     user = db.relation(User, lazy="joined")
     
-    def __init__(self, project_id, issue_id, user_id, amount=0):
+    def __init__(self, project_id, issue_id, user_id=None, account_id=None, amount=0):
+        if user_id == None and account_id == None:
+            raise Error("account_id or user_id must be provided") 
+
         self.project_id = project_id
         self.issue_id = issue_id
         self.user_id = user_id
+        self.account_id = account_id
         self.amount = amount
         self.status = SponsorshipStatus.PLEDGED
 

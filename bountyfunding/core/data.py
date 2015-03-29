@@ -122,7 +122,7 @@ def mapify_user(user):
     return result
 
 def create_sponsorship(project_id, issue_id, user_id, amount):
-    sponsorship = Sponsorship(project_id, issue_id, user_id, amount)
+    sponsorship = Sponsorship(project_id, issue_id, user_id=user_id, amount=amount)
     db.session.add(sponsorship)
     db.session.commit()
     return sponsorship.sponsorship_id
