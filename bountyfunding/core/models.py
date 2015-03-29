@@ -27,21 +27,23 @@ class Project(db.Model):
     def is_mutable(self):
         return True
 
-class User(db.Model):
-    user_id = db.Column(db.Integer, primary_key=True)
-    project_id = db.Column(db.Integer, nullable=False)
-    name = db.Column(db.String(256), nullable=False)
-    paypal_email = db.Column(db.String(256), nullable=True)
+
+class Account(db.Model):
+    account_id = db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String(256), nullable=False)
     password_hash = db.Column(db.String(128), nullable=True)
 
-    def __init__(self, project_id, name, password=None):
-        self.project_id = project_id
-        self.name = name
+    users = db.relation("User", lazy="joined")
+    
+    def __init__(self, email, password=None):
+        self.email = email
         self.password = password
-        paypal_email = None
 
-    def __repr__(self):
-        return '<User project_id: "%s", name: "%s">' % (self.project_id, self.name)
+    def get_user(self, project_id):
+        for user in self.users:
+            if user.project_id == project_id:
+                return user
+        return None
 
     # Flask-Login integration
     def is_authenticated(self):
@@ -54,7 +56,7 @@ class User(db.Model):
         return False
 
     def get_id(self):
-        return unicode(self.user_id)
+        return unicode(self.account_id)
 
     @property
     def password(self):
@@ -71,6 +73,31 @@ class User(db.Model):
         if password == None or self.password_hash == None:
             return False
         return check_password_hash(self.password_hash, password)
+
+    def __repr__(self):
+        return '<Account email: "%s">' % (self.email,)
+
+
+class User(db.Model):
+    user_id = db.Column(db.Integer, primary_key=True)
+    project_id = db.Column(db.Integer, nullable=False)
+    name = db.Column(db.String(256), nullable=False)
+    account_id = db.Column(db.Integer, db.ForeignKey(Account.account_id), nullable=True)
+
+    #TODO: move to Account
+    paypal_email = db.Column(db.String(256), nullable=True)
+
+    def __init__(self, project_id, name):
+        self.project_id = project_id
+        self.name = name
+        paypal_email = None
+
+    def __repr__(self):
+        return '<User project_id: "%s", name: "%s">' % (self.project_id, self.name)
+
+db.Index('idx_user_project_id_account_id', User.project_id, User.account_id, unique=True)
+db.Index('idx_user_account_id', User.account_id, unique=False)
+
 
 class Issue(db.Model):
     issue_id = db.Column(db.Integer, primary_key=True)
@@ -102,10 +129,15 @@ class Sponsorship(db.Model):
     sponsorship_id = db.Column(db.Integer, primary_key=True)
     project_id = db.Column(db.Integer, nullable=False)
     issue_id = db.Column(db.Integer, db.ForeignKey(Issue.issue_id), nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey(User.user_id), nullable=False)
     amount = db.Column(db.Integer, nullable=False)
     status = db.Column(db.Integer, nullable=False)
 
+    #TODO: change nullable to False
+    account_id = db.Column(db.Integer, db.ForeignKey(Account.account_id), nullable=True)
+    account = db.relation(Account, lazy="joined")
+
+    #TODO: delete
+    user_id = db.Column(db.Integer, db.ForeignKey(User.user_id), nullable=True)
     user = db.relation(User, lazy="joined")
     
     def __init__(self, project_id, issue_id, user_id, amount=0):

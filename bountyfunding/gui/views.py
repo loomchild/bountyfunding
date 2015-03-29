@@ -1,10 +1,10 @@
 from bountyfunding.gui import gui
 from bountyfunding.gui.forms import LoginForm
-from bountyfunding.core.models import User, Project, Issue
+from bountyfunding.core.models import Account, Project, Issue
 from bountyfunding.core.data import retrieve_all_sponsorships
 
-from flask import redirect, render_template, request, url_for, flash
-from flask.ext.login import LoginManager, login_required, login_user, logout_user
+from flask import redirect, render_template, request, url_for, flash, abort
+from flask.ext.login import LoginManager, login_required, login_user, logout_user, current_user as account
 from flask_bootstrap import Bootstrap
 
 
@@ -20,17 +20,17 @@ def record_once(state):
     state.app.config['BOOTSTRAP_SERVE_LOCAL'] = True
 
 @login_manager.user_loader
-def load_user(user_id):
-    return User.query.get(int(user_id))
+def load_user(account_id):
+    return Account.query.get(int(account_id))
 
 
 @gui.route('/login', methods=['GET', 'POST'])
 def login():
     form = LoginForm()
     if form.validate_on_submit():
-        user = User.query.filter_by(name=form.name.data).first()
-        if user is not None and user.verify_password(form.password.data):
-            login_user(user)
+        account = Account.query.filter_by(email=form.email.data).first()
+        if account is not None and account.verify_password(form.password.data):
+            login_user(account)
             next = request.values.get('next')
             return redirect(next or "/")
         flash('Invalid username or password.')
@@ -39,15 +39,20 @@ def login():
 @gui.route("/projects/<project_name>/issues/<issue_ref>.html", methods=['GET'])
 @login_required
 def issue(project_name, issue_ref):
-    #TODO: retrieve user from db, but first need to make users project-agnostic
-    user_name = 'dev'
     project = Project.query.filter_by(name=project_name).first()
     issue = Issue.query.filter_by(issue_ref=issue_ref).first()
+    if project == None or issue == None:
+        abort(404)
+    
     sponsorships = retrieve_all_sponsorships(issue.issue_id)
     bounty = sum(s.amount for s in sponsorships)
     sponsorship_map = {s.user.name: s for s in sponsorships} 
-    user_sponsorship = sponsorship_map.get('dev')
-    user_bounty = user_sponsorship.amount if user_sponsorship else 0
+    
+    user = account.get_user(project.project_id)
+    if user != None and user.name in sponsorship_map:
+        user_bounty = sponsorship_map[user.name].amount
+    else:
+        user_bounty = 0
 
     return render_template('issue.html', project=project.name, 
         id=issue.issue_ref, title=issue.title, url=issue.full_link, 
