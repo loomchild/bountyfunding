@@ -1,5 +1,5 @@
 from flask.ext.wtf import Form
-from wtforms import StringField, PasswordField, SubmitField
+from wtforms import StringField, IntegerField, PasswordField, SubmitField
 from wtforms.validators import ValidationError, Required, Email, Length, Regexp, EqualTo
 
 from bountyfunding.core.models import Account
@@ -21,4 +21,9 @@ class RegisterForm(Form):
     def validate_email(self, field):
         if Account.query.filter_by(email=field.data).first():
             raise ValidationError("Email already registered")
+
+
+class IssueForm(Form):
+    amount = IntegerField('Amount')
+    submit = SubmitField('Submit')
 

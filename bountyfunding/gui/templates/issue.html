@@ -1,11 +1,11 @@
 {% extends "base.html" %}
 {% import "bootstrap/wtf.html" as wtf %}
 
-{% block title %}BountyFunding - {{ id }} - {{ title }}{% endblock %}
+{% block title %}BountyFunding - {{ issue_ref }} - {{ title }}{% endblock %}
 
 {% block page_content %}
 <div class="page-header">
-	<h1><a href="{{ url }}">{{ id }} - {{ title }}</a></h1>
+	<h1><a href="{{ url }}">{{ issue_ref }} - {{ title }}</a></h1>
 </div>
 	
 <div class="row">
@@ -18,16 +18,28 @@
 	</div>
 </div>
 
-<div class="row">
-	<h2>Sponsor</h2>
-	<input id="ex1" data-slider-id='ex1Slider' type="text" data-slider-step="1" data-slider-value="{{ value }}"/>
-	<div style="width: 200px; float: right" class="center-block">
-		<div class="input-group input-group-lg">
-	  		<input id="amount" type="text" class="form-control" value="{{ value }}">
-			<span class="input-group-addon">€</span>
+<form class="form form-horizontal" method="post" role="form" action="{{ url_for(".issue", project_name=project_name, issue_ref=issue_ref) }}">
+	{{ form.hidden_tag() }}
+	{{ wtf.form_errors(form, hiddens="only") }}
+	<div class="row">
+		<h2>Sponsor</h2>
+	</div>
+	<div class="row">
+		<div class="col-md-6">
+			<input id="ex1" data-slider-id='ex1Slider' type="text" data-slider-step="1" data-slider-value="{{ my_bounty }}"/>
+		</div>
+		<div class="col-md-3">
+			<div class="input-group input-group-lg">
+				<input id="amount" type="text" name="amount" class="form-control" value="{{ my_bounty }}" autocomplete="off">
+				<span class="input-group-addon">€</span>
+			</div>
+		</div>
+		<div class="col-md-3">
+			{% set operation = 'Sponsor' if my_bounty == 0 else 'Update' %} 
+			<input id="submit" class="btn btn-success btn-lg" type="submit" value="{{ operation }}" name="submit">
 		</div>
 	</div>
-</div>
+</form>
 
 {% endblock %}
 

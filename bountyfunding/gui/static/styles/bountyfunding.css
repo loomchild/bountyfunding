@@ -3,11 +3,10 @@
 	background-image: none;
 }
 
-#ex1Slider {
-	width: 50%;
-}
-
 #ex1Slider .slider-selection {
 	background: #BABABA;
 }
 
+#ex1Slider {
+	width: 95%;
+}

@@ -1,6 +1,6 @@
 from bountyfunding.gui import gui
-from bountyfunding.gui.forms import LoginForm, RegisterForm
-from bountyfunding.core.models import db, Account, Project, Issue
+from bountyfunding.gui.forms import LoginForm, RegisterForm, IssueForm
+from bountyfunding.core.models import db, Account, Project, Issue, Sponsorship
 from bountyfunding.core.data import retrieve_all_sponsorships
 
 from flask import redirect, render_template, request, url_for, flash, abort
@@ -61,26 +61,41 @@ def register():
         return redirect(url_for(".login"))
     return render_template('register.html', form=form)
 
-@gui.route("/projects/<project_name>/issues/<issue_ref>.html", methods=['GET'])
+@gui.route("/projects/<project_name>/issues/<issue_ref>.html", methods=['GET', 'POST'])
 @login_required
 def issue(project_name, issue_ref):
     project = Project.query.filter_by(name=project_name).first()
     issue = Issue.query.filter_by(issue_ref=issue_ref).first()
     if project == None or issue == None:
         abort(404)
-    
+
     sponsorships = retrieve_all_sponsorships(issue.issue_id)
     bounty = sum(s.amount for s in sponsorships)
-    sponsorship_map = {s.user.name: s for s in sponsorships} 
+    sponsorship_map = {s.account.account_id: s for s in sponsorships if s.account} 
     
-    user = current_account.get_user(project.project_id)
-    if user != None and user.name in sponsorship_map:
-        user_bounty = sponsorship_map[user.name].amount
-    else:
-        user_bounty = 0
+    my_sponsorship = sponsorship_map.get(current_account.account_id)
+    my_bounty = my_sponsorship.amount if my_sponsorship else 0
 
-    return render_template('issue.html', project=project.name, 
-        id=issue.issue_ref, title=issue.title, url=issue.full_link, 
-        bounty=bounty, user_bounty=user_bounty)
+    form = IssueForm()
+    if form.validate_on_submit():
+        #TODO: move to business logic (model / data)
+        amount = form.amount.data
+        if amount == 0 and my_bounty > 0:
+            db.session.delete(my_sponsorship)
+            db.session.commit()
+            flash('Sponsorship deleted.')
+        elif amount != my_bounty:
+            if not my_sponsorship:
+                my_sponsorship = Sponsorship(project.project_id, issue.issue_id,
+                    account_id=current_account.account_id)
+            my_sponsorship.amount = form.amount.data
+            db.session.add(my_sponsorship)
+            db.session.commit()
+            flash('Sponsorship updated.')
+        return redirect(url_for(".issue", project_name=project_name, issue_ref=issue_ref))
+    return render_template('issue.html', form=form, 
+        project_name=project.name, issue_ref=issue_ref, 
+        title=issue.title, url=issue.full_link, 
+        bounty=bounty, my_bounty=my_bounty)
 
 
