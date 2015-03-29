@@ -24,6 +24,10 @@ def load_user(account_id):
     return Account.query.get(int(account_id))
 
 
+@gui.route('/', methods=['GET'])
+def index():
+    return render_template('index.html')
+
 @gui.route('/login', methods=['GET', 'POST'])
 def login():
     form = LoginForm()
@@ -64,6 +68,10 @@ def logout():
     logout_user()
     flash('You have been logged out.')
     return redirect("/")
+
+@gui.route('/register', methods=['GET'])
+def register():
+    return "TODO"
 
 @gui.route("/test", methods=['GET'])
 @login_required

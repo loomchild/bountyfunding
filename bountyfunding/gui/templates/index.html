@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block title %}BountyFunding{% endblock %}
+
+{% block page_content %}
+<div class="page-header">
+	<h1>BountyFunding</h1>
+</div>
+	
+<div class="row">
+	<p>Welcome to BountyFunding, a crowdfunding platform for free / open source software.</p>
+	<p>To continue please <a href="{{ url_for('.login') }}">Login</a> or <a href="{{ url_for('.register') }}">Register</a>.</p>
+</div>
+
+{% endblock %}
+
+
