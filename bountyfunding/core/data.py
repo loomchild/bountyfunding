@@ -176,6 +176,10 @@ def notify_sponsors(project_id, issue_id, status, body):
     for sponsorship in sponsorships:
         create_email(project_id, sponsorship.user.user_id, issue_id, body)
 
+def notify_admins(project_id, issue_id, body):
+    admin = retrieve_create_user(project_id, config.ADMIN)
+    create_email(project_id, admin.user_id, issue_id, body)
+
 def create_email(project_id, user_id, issue_id, body):
     email = Email(project_id, user_id, issue_id, body)
     db.session.add(email)
