@@ -1,10 +1,10 @@
 from bountyfunding.gui import gui
-from bountyfunding.gui.forms import LoginForm
-from bountyfunding.core.models import Account, Project, Issue
+from bountyfunding.gui.forms import LoginForm, RegisterForm
+from bountyfunding.core.models import db, Account, Project, Issue
 from bountyfunding.core.data import retrieve_all_sponsorships
 
 from flask import redirect, render_template, request, url_for, flash, abort
-from flask.ext.login import LoginManager, login_required, login_user, logout_user, current_user as account
+from flask.ext.login import LoginManager, login_required, login_user, logout_user, current_user as current_account
 from flask_bootstrap import Bootstrap
 
 
@@ -23,6 +23,9 @@ def record_once(state):
 def load_user(account_id):
     return Account.query.get(int(account_id))
 
+@gui.context_processor
+def utility_processor():
+    return dict(current_account=current_account)
 
 @gui.route('/', methods=['GET'])
 def index():
@@ -52,7 +55,7 @@ def issue(project_name, issue_ref):
     bounty = sum(s.amount for s in sponsorships)
     sponsorship_map = {s.user.name: s for s in sponsorships} 
     
-    user = account.get_user(project.project_id)
+    user = current_account.get_user(project.project_id)
     if user != None and user.name in sponsorship_map:
         user_bounty = sponsorship_map[user.name].amount
     else:
@@ -69,13 +72,14 @@ def logout():
     flash('You have been logged out.')
     return redirect("/")
 
-@gui.route('/register', methods=['GET'])
+@gui.route('/register', methods=['GET', 'POST'])
 def register():
-    return "TODO"
-
-@gui.route("/test", methods=['GET'])
-@login_required
-def test():
-    return "Test"
-
+    form = RegisterForm()
+    if form.validate_on_submit():
+        account = Account(form.email.data, form.name.data, form.password.data)
+        db.session.add(account)
+        db.session.commit()
+        flash('Account has been registered, please log in.')
+        return redirect(url_for(".login"))
+    return render_template('register.html', form=form)
 

@@ -31,12 +31,14 @@ class Project(db.Model):
 class Account(db.Model):
     account_id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(256), nullable=False)
+    name = db.Column(db.String(128), nullable=False)
     password_hash = db.Column(db.String(128), nullable=True)
 
     users = db.relation("User", lazy="joined")
     
-    def __init__(self, email, password=None):
+    def __init__(self, email, name, password=None):
         self.email = email
+        self.name = name
         self.password = password
 
     def get_user(self, project_id):
@@ -76,6 +78,8 @@ class Account(db.Model):
 
     def __repr__(self):
         return '<Account email: "%s">' % (self.email,)
+
+db.Index('idx_account_email', Account.email, unique=True)
 
 
 class User(db.Model):

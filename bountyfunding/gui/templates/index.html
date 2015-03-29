@@ -9,7 +9,9 @@
 	
 <div class="row">
 	<p>Welcome to BountyFunding, a crowdfunding platform for free / open source software.</p>
-	<p>To continue please <a href="{{ url_for('.login') }}">Login</a> or <a href="{{ url_for('.register') }}">Register</a>.</p>
+    {% if not current_account.is_authenticated() %}
+		<p>To continue please <a href="{{ url_for('.login') }}">Log In</a> or <a href="{{ url_for('.register') }}">Register</a>.</p>
+    {% endif %}
 </div>
 
 {% endblock %}

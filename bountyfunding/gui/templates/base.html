@@ -30,10 +30,11 @@
         </div>
         <div class="navbar-collapse collapse">
             <ul class="nav navbar-nav navbar-right">
-                {% if current_user.is_authenticated() %}
+                {% if current_account.is_authenticated() %}
                 <li><a href="{{ url_for('.logout') }}">Log Out</a></li>
                 {% else %}
                 <li><a href="{{ url_for('.login') }}">Log In</a></li>
+                <li><a href="{{ url_for('.register') }}">Register</a></li>
                 {% endif %}
             </ul>
         </div>
