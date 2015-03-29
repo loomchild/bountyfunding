@@ -415,11 +415,11 @@ def delete_email(email_id):
     return response
 
 
-@api.route('/', methods=['GET'])
+@api.route('/project', methods=['GET'])
 def get_project():
     return jsonify(mapify_project(g.project))
 
-@api.route('/', methods=['PUT'])
+@api.route('/project', methods=['PUT'])
 def put_project():
     name = request.values.get('name')
     description = request.values.get('description')
@@ -442,7 +442,7 @@ def put_project():
 
     return jsonify(message='OK')
 
-@api.route('/', methods=['POST'])
+@api.route('/projects', methods=['POST'])
 def post_project():
     name = request.values.get('name')
     description = request.values.get('description')
