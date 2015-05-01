@@ -5,9 +5,8 @@ from bountyfunding.core.models import db, Project, Issue, User, Sponsorship, Ema
 from bountyfunding.core.config import config
 from bountyfunding.core.errors import Error
 
-import re, requests, threading, random, string 
+import re, requests, threading, random, string, contextlib
 from flask import current_app
-
 
 #TODO: move to config, 0 means no notifications, set for tests, automatically when in-memory-database in config
 NOTIFY_INTERVAL = 5
@@ -21,6 +20,13 @@ NOTIFY_INTERVAL = 5
 def create_database():
     db.drop_all()
     db.create_all()
+
+def clean_database():
+    with contextlib.closing(db.engine.connect()) as con:
+        trans = con.begin()
+        for table in reversed(db.metadata.sorted_tables):
+            con.execute(table.delete())
+        trans.commit()
 
 def retrieve_user(project_id, name):
     user = User.query.filter_by(project_id=project_id, name=name).first()

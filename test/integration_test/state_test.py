@@ -1,6 +1,6 @@
 import bountyfunding
 from bountyfunding.core.const import *
-from bountyfunding.core.data import create_database
+from bountyfunding.core.data import clean_database
 
 from test import to_dict, to_object
 
@@ -19,7 +19,7 @@ class State_Test:
     def setup(self):
         global app
         app = bountyfunding.app.test_client()
-        create_database()
+        clean_database()
 
     def test_change_sponsorship_status_to_invalid_status(self):
         """

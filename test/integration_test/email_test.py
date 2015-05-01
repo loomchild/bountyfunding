@@ -1,6 +1,6 @@
 import bountyfunding
 from bountyfunding.core.const import *
-from bountyfunding.core.data import create_database
+from bountyfunding.core.data import clean_database
 
 from test import to_dict, to_object
 
@@ -13,7 +13,7 @@ class Email_Test:
 
     def setup(self):
         self.app = bountyfunding.app.test_client()
-        create_database()
+        clean_database()
     
     def test_email(self):
         eq_(len(self.get_emails()), 0)
