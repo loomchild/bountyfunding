@@ -73,6 +73,10 @@ properties = {
     'PAYPAL_PASSWORD': Property('Paypal password for Adaptive Payments', str, '', False, True, True),
     'PAYPAL_SIGNATURE': Property('Paypal signature for Adaptive Payments', str, '', False, True, True),
     'PAYPAL_APPLICATION_ID': Property('Paypal application ID for Adaptive Payments', str, '', False, True, True),
+    
+    'GITHUB_CLIENT_ID': Property('Gihub Client ID', str, '', False, True, True),
+    'GITHUB_CLIENT_SECRET': Property('Gihub Client Secret', str, '', False, True, True),
+    'GITHUB_TOKEN': Property('Gihub Token for server to server communication', str, '', False, True, True),
 }
 
 
@@ -114,7 +118,7 @@ class CommonConfig:
     def _init_value_from_file(self, parser, name):
         option = name.lower()
         section = 'general'
-        for prefix in ('paypal', 'project', 'log'):
+        for prefix in ('paypal', 'project', 'log', 'github'):
             if option.startswith(prefix):
                 section = prefix
                 option = option[len(prefix)+1:]
