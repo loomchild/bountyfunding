@@ -30,11 +30,20 @@ class Api(object):
     def delete(self, path, **kwargs):
         return self.call('DELETE', path, **kwargs)
 
+    #TODO: throw exceptions on error, perhaps optionally, maybe provide a 
+    # wrapper that will always throw them and automatically call json() 
+    # and pack into python object
+    # or make it default behavior and let the user handle exception if needed
 
 
 class BountyFundingApi(Api):
     
     def __init__(self, url='http://localhost:8080', token=None):
-        super(BountyFundingApi, self).__init__(url, dict(token=token))
+        super(BountyFundingApi, self).__init__(url, params=dict(token=token))
 
+
+class GithubApi(Api):
+    
+    def __init__(self, url='https://api.github.com', token=None):
+        super(GithubApi, self).__init__(url, headers=dict(Authorization="token " + token))
 
