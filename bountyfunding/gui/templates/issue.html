@@ -9,11 +9,21 @@
 </div>
 	
 <div class="row">
-	<h2>Bounty</h2>
-	<div style="width: 200px">
-		<div class="input-group input-group-lg">
-	  		<input id="bounty" type="text" class="form-control" value="{{ bounty }}" readonly>
-			<span class="input-group-addon">€</span>
+	<div class="form-horizontal">
+		<div class="form-group form-group-lg">
+			<label class="col-md-2 control-label" for="status">Status</label>
+			<div class="col-md-4">
+		  		<input id="status" type="text" class="form-control" value="{{ status }}" readonly>
+			</div>
+		</div>
+		<div class="form-group form-group-lg">
+			<label class="col-md-2 control-label" for="bounty">Bounty</label>
+			<div class="col-md-4">
+				<div class="input-group input-group-lg">
+					<input id="bounty" type="text" class="form-control" value="{{ bounty }}" readonly>
+					<span class="input-group-addon">€</span>
+				</div>
+			</div>
 		</div>
 	</div>
 </div>

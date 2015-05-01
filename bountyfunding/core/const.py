@@ -4,6 +4,7 @@ class ProjectType(Enum):
     NORMAL = 10
     TEST = 20
     ROOT = 30
+    GITHUB = 40
 
 class IssueStatus(Enum):
     READY = 10

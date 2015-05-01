@@ -2,6 +2,8 @@ from bountyfunding.gui import gui
 from bountyfunding.gui.forms import LoginForm, RegisterForm, IssueForm
 from bountyfunding.core.models import db, Account, Project, Issue, Sponsorship
 from bountyfunding.core.data import retrieve_all_sponsorships
+from bountyfunding.core.const import IssueStatus, ProjectType
+from bountyfunding.trackers.github import import_issue
 
 from flask import redirect, render_template, request, url_for, flash, abort
 from flask.ext.login import LoginManager, login_required, login_user, logout_user, current_user as current_account
@@ -66,7 +68,15 @@ def register():
 def issue(project_name, issue_ref):
     project = Project.query.filter_by(name=project_name).first()
     issue = Issue.query.filter_by(issue_ref=issue_ref).first()
-    if project == None or issue == None:
+    
+    if project == None:
+        abort(404)
+    
+    if issue == None:
+        if project.type == ProjectType.GITHUB:
+            issue = import_issue(project.project_id, issue_ref)
+    
+    if issue == None:
         abort(404)
 
     sponsorships = retrieve_all_sponsorships(issue.issue_id)
@@ -95,7 +105,7 @@ def issue(project_name, issue_ref):
         return redirect(url_for(".issue", project_name=project_name, issue_ref=issue_ref))
     return render_template('issue.html', form=form, 
         project_name=project.name, issue_ref=issue_ref, 
-        title=issue.title, url=issue.full_link, 
+        title=issue.title, url=issue.full_link, status=IssueStatus.to_string(issue.status), 
         bounty=bounty, my_bounty=my_bounty)
 
 
