@@ -1,17 +1,15 @@
 __test__ = False
 
 from test import to_object
-from test.functional_test import Api
+from bountyfunding.util.api import BountyFundingApi
 
 from bountyfunding.core.const import IssueStatus, SponsorshipStatus, PaymentStatus, PaymentGateway
 
 import os, binascii
 from nose.tools import *
 
-TOKEN = 'test';
 
-
-api = Api(TOKEN)
+api = BountyFundingApi(token='test')
 
 issue_ref = 'test_' + binascii.b2a_hex(os.urandom(16))
 issue_path = '/issue/%s' % issue_ref
