@@ -8,3 +8,4 @@ venv/
 logs/
 bountyfunding.ini
 tags
+.ipynb_checkpoints/
