@@ -2,7 +2,7 @@ import bountyfunding
 from bountyfunding.core.const import *
 from bountyfunding.core.data import clean_database
 
-from test import to_dict, to_object
+from test import to_object
 
 from nose.tools import *
 
@@ -46,5 +46,5 @@ class Email_Test:
     def get_emails(self):
         r = self.app.get("/emails")
         eq_(r.status_code, 200)
-        return to_object(r, "data")
+        return to_object(r).data
 

@@ -2,7 +2,7 @@ import bountyfunding
 from bountyfunding.core.const import *
 from bountyfunding.core.data import clean_database
 
-from test import to_dict, to_object
+from test import to_object
 
 from nose.tools import *
 

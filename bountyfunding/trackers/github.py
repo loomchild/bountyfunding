@@ -8,17 +8,12 @@ from bountyfunding.util.api import GithubApi
 def import_issue(project_id, issue_ref):
     api = GithubApi(token=config[project_id].GITHUB_TOKEN)
 
-    r = api.get('/repos/loomchild/sandbox/issues/%s' % issue_ref)
+    github_issue = api.get('/repos/loomchild/sandbox/issues/%s' % issue_ref)
     
-    if r.status_code == 404:
+    if github_issue == None:
         return None
         
-    if r.status_code != 200:
-        raise GithubError('Error accessing github repo', r)
-
-    github_issue = r.json()
-    
-    title = github_issue['title']
+    title = github_issue.title
     link = get_link(github_issue)
     status = get_status(github_issue)
     owner_id = get_owner_id(github_issue, project_id)
@@ -28,13 +23,13 @@ def import_issue(project_id, issue_ref):
     return issue
 
 def get_link(github_issue):
-    number = github_issue['number']
+    number = github_issue.number
     link = '/issues/%s' % number
     return link
 
 def get_status(github_issue):
-    state = github_issue['state']
-    assignee = github_issue['assignee']
+    state = github_issue.state
+    assignee = github_issue.assignee
     status = IssueStatus.READY
     if state == "closed":
         status = IssueStatus.COMPLETED
@@ -44,9 +39,9 @@ def get_status(github_issue):
 
 def get_owner_id(github_issue, project_id):
     owner_id = None
-    assignee = github_issue['assignee']
+    assignee = github_issue.assignee
     if assignee:
-        login = assignee['login']
+        login = assignee.login
         user = retrieve_create_user(project_id, login)
         owner_id = user.user_id
     return owner_id 

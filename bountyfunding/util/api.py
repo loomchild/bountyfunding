@@ -1,4 +1,19 @@
+from collections import namedtuple
 import requests
+
+
+def to_object(json):
+    if isinstance(json, dict):
+        obj = _dict_to_object({k : to_object(v) for (k,v) in json.iteritems()})
+    elif isinstance(json, list):
+        obj = [to_object(e) for e in json]
+    else:
+        obj = json
+    return obj
+
+def _dict_to_object(d):
+    return namedtuple('DictObject', d.keys())(*d.values())
+
 
 class Api(object):
 
@@ -7,7 +22,7 @@ class Api(object):
         self.params = params
         self.headers = headers
 
-    def call(self, method, path, **kwargs):
+    def call(self, method, path, status_codes, **kwargs):
         full_url = self.url + path
 
         params = {}
@@ -16,24 +31,32 @@ class Api(object):
         
         headers = self.headers
         
-        return requests.request(method, full_url, params=params, headers=headers)
+        response = requests.request(method, full_url, params=params, headers=headers)
+
+        if not response.status_code in status_codes:
+            raise ExternalApiError("Error calling external API", self.url, 
+                    method, path, response.status_code, get_reason(response))
+
+        return response
 
     def get(self, path, **kwargs):
-        return self.call('GET', path, **kwargs)
+        r = self.call('GET', path, [200, 404], **kwargs)
+        if r.status_code == 404:
+            return None
+        else:
+            return to_object(r.json())
     
     def post(self, path, **kwargs):
-        return self.call('POST', path, **kwargs)
+        return self.call('POST', path, [200, 201], **kwargs).status_code
 
     def put(self, path, **kwargs):
-        return self.call('PUT', path, **kwargs)
+        return self.call('PUT', path, [200], **kwargs).status_code
     
     def delete(self, path, **kwargs):
-        return self.call('DELETE', path, **kwargs)
+        return self.call('DELETE', [200, 204], path, **kwargs).status_code
 
-    #TODO: throw exceptions on error, perhaps optionally, maybe provide a 
-    # wrapper that will always throw them and automatically call json() 
-    # and pack into python object
-    # or make it default behavior and let the user handle exception if needed
+    def get_reason(response):
+        return response.text
 
 
 class BountyFundingApi(Api):
@@ -46,4 +69,7 @@ class GithubApi(Api):
     
     def __init__(self, url='https://api.github.com', token=None):
         super(GithubApi, self).__init__(url, headers=dict(Authorization="token " + token))
+    
+    def get_reason(response):
+        return response.json().get("message")
 

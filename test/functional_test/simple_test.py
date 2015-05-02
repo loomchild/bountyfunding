@@ -1,5 +1,8 @@
 __test__ = False
 
+#TODO: rename to simple_api_test
+#allow delete operation when database in memory, no need for test project.
+
 from test import to_object
 from bountyfunding.util.api import BountyFundingApi
 
