@@ -145,13 +145,19 @@ def update_sponsorship(sponsorship):
     db.session.add(sponsorship)
     db.session.commit()
 
+def create_update_sponsorship(project_id, issue_id, account_id, amount):
+    sponsorship = Sponsorship.query.filter_by(issue_id=issue_id, account_id=account_id).first()
+    if not sponsorship:
+        sponsorship = Sponsorship(project_id, issue_id, account_id=account_id)
+    sponsorship.amount = amount
+    update_sponsorship(sponsorship)
+
 def remove_sponsorship(issue_id, user_id):
     sponsorship = retrieve_sponsorship(issue_id, user_id)
     Payment.query.filter_by(sponsorship_id=sponsorship.sponsorship_id).delete()
     db.session.delete(sponsorship)
     db.session.commit()
     
-
 def retrieve_last_payment(sponsorship_id):
     payment = Payment.query.filter_by(sponsorship_id=sponsorship_id) \
             .order_by(Payment.payment_id.desc()).first()

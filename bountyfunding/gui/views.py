@@ -1,7 +1,7 @@
 from bountyfunding.gui import gui
 from bountyfunding.gui.forms import LoginForm, RegisterForm, IssueForm
 from bountyfunding.core.models import db, Account, Project, Issue, Sponsorship
-from bountyfunding.core.data import retrieve_all_sponsorships
+from bountyfunding.core.data import retrieve_all_sponsorships, create_update_sponsorship
 from bountyfunding.core.const import IssueStatus, ProjectType
 from bountyfunding.trackers.github import import_issue
 
@@ -88,19 +88,12 @@ def issue(project_name, issue_ref):
 
     form = IssueForm()
     if form.validate_on_submit():
-        #TODO: move to business logic (model / data)
         amount = form.amount.data
+        create_update_sponsorship(project.project_id, issue.issue_id,
+                    account_id=current_account.account_id, amount=amount)
         if amount == 0 and my_bounty > 0:
-            db.session.delete(my_sponsorship)
-            db.session.commit()
             flash('Sponsorship deleted.')
         elif amount != my_bounty:
-            if not my_sponsorship:
-                my_sponsorship = Sponsorship(project.project_id, issue.issue_id,
-                    account_id=current_account.account_id)
-            my_sponsorship.amount = form.amount.data
-            db.session.add(my_sponsorship)
-            db.session.commit()
             flash('Sponsorship updated.')
         return redirect(url_for(".issue", project_name=project_name, issue_ref=issue_ref))
     return render_template('issue.html', form=form, 
