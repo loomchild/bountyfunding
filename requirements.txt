@@ -6,3 +6,4 @@ flask-bootstrap>=3.3
 requests>=2.0.0
 git+git://github.com/freedomsponsors/python-paypalx.git@34d624ed8a7b6505aa6e6e12c0a5b854cacbc612#egg=paypalx
 waitress>=0.8
+Pillow
