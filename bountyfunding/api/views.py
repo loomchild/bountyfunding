@@ -1,5 +1,4 @@
 from bountyfunding.api import api
-from bountyfunding.api.image import create_image
 
 from bountyfunding.core.data import *
 from bountyfunding.core.const import *
@@ -10,7 +9,7 @@ from bountyfunding.core.errors import Error, SecurityError
 from bountyfunding.api import security
 from bountyfunding.core.config import config
 
-from flask import Flask, url_for, render_template, make_response, redirect, abort, jsonify, request, g, current_app, send_file
+from flask import Flask, url_for, render_template, make_response, redirect, abort, jsonify, request, g, current_app, send_file, Response
 
 @api.route('/version', methods=['GET'])
 def status():
@@ -60,15 +59,16 @@ def get_issue(issue_ref):
 
     return jsonify(mapify_issue(issue))
 
-@api.route("/issue/<issue_ref>.png", methods=['GET'])
+@api.route("/issue/<issue_ref>.svg", methods=['GET'])
 def get_issue_image(issue_ref):
     issue = retrieve_issue(g.project_id, issue_ref)
     if issue == None:
         abort(404)
+    
+    sponsorships = retrieve_all_sponsorships(issue.issue_id)
+    bounty = sum(s.amount for s in sponsorships)
 
-    image = create_image(issue)
-
-    return send_file(image, mimetype='image/png')
+    return Response(render_template('issue.svg', bounty=bounty), mimetype="image/svg+xml")
 
 @api.route("/issue/<issue_ref>", methods=['PUT'])
 def put_issue(issue_ref):
