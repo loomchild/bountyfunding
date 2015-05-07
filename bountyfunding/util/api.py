@@ -1,4 +1,7 @@
+from bountyfunding.core.errors import ExternalApiError
+
 from collections import namedtuple
+import json
 import requests
 
 
@@ -22,7 +25,7 @@ class Api(object):
         self.params = params
         self.headers = headers
 
-    def call(self, method, path, status_codes, **kwargs):
+    def call(self, method, path, status_codes, data=None, **kwargs):
         full_url = self.url + path
 
         params = {}
@@ -30,12 +33,16 @@ class Api(object):
         params.update(kwargs)
         
         headers = self.headers
+
+        if data:
+            data = self.get_data(data)
         
-        response = requests.request(method, full_url, params=params, headers=headers)
+        response = requests.request(method, full_url, data=data, params=params, headers=headers)
 
         if not response.status_code in status_codes:
-            raise ExternalApiError("Error calling external API", self.url, 
-                    method, path, response.status_code, get_reason(response))
+            raise ExternalApiError("Invalid response code", self.url, 
+                    method, path, response.status_code,
+                    self.get_reason(response))
 
         return response
 
@@ -46,16 +53,22 @@ class Api(object):
         else:
             return to_object(r.json())
     
-    def post(self, path, **kwargs):
-        return self.call('POST', path, [200, 201], **kwargs).status_code
+    def post(self, path, data=None, **kwargs):
+        return self.call('POST', path, [200, 201], data, **kwargs).status_code
 
-    def put(self, path, **kwargs):
-        return self.call('PUT', path, [200], **kwargs).status_code
+    def put(self, path, data=None, **kwargs):
+        return self.call('PUT', path, [200], data, **kwargs).status_code
+    
+    def patch(self, path, data=None, **kwargs):
+        return self.call('PATCH', path, [200], data, **kwargs).status_code
     
     def delete(self, path, **kwargs):
         return self.call('DELETE', [200, 204], path, **kwargs).status_code
 
-    def get_reason(response):
+    def get_data(self, data):
+        return data
+
+    def get_reason(self, response):
         return response.text
 
 
@@ -70,6 +83,9 @@ class GithubApi(Api):
     def __init__(self, url='https://api.github.com', token=None):
         super(GithubApi, self).__init__(url, headers=dict(Authorization="token " + token))
     
-    def get_reason(response):
+    def get_data(self, data):
+        return json.dumps(data)
+    
+    def get_reason(self, response):
         return response.json().get("message")
 

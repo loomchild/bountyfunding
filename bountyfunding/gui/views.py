@@ -3,7 +3,7 @@ from bountyfunding.gui.forms import LoginForm, RegisterForm, IssueForm
 from bountyfunding.core.models import db, Account, Project, Issue, Sponsorship
 from bountyfunding.core.data import retrieve_all_sponsorships, create_update_sponsorship
 from bountyfunding.core.const import IssueStatus, ProjectType
-from bountyfunding.trackers.github import import_issue
+from bountyfunding.core.trackers.github import create_update_issue
 
 from flask import redirect, render_template, request, url_for, flash, abort
 from flask.ext.login import LoginManager, login_required, login_user, logout_user, current_user as current_account
@@ -74,7 +74,7 @@ def issue(project_name, issue_ref):
     
     if issue == None:
         if project.type == ProjectType.GITHUB:
-            issue = import_issue(project.project_id, issue_ref)
+            issue = create_update_issue(project.project_id, issue_ref)
     
     if issue == None:
         abort(404)
