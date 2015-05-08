@@ -11,6 +11,20 @@ from bountyfunding.core.config import config
 
 from flask import Flask, url_for, render_template, make_response, redirect, abort, jsonify, request, g, current_app, send_file, Response
 
+
+@api.route("/projects/<project_name>/issues/<issue_ref>.svg", methods=['GET'])
+def get_issue_image(project_name, issue_ref):
+    project = Project.query.filter_by(name=project_name).first()
+    issue = retrieve_issue(project.project_id, issue_ref)
+    if issue == None:
+        abort(404)
+    
+    sponsorships = retrieve_all_sponsorships(issue.issue_id)
+    bounty = sum(s.amount for s in sponsorships)
+
+    return Response(render_template('issue.svg', bounty=bounty), mimetype="image/svg+xml")
+
+
 @api.route('/version', methods=['GET'])
 def status():
     return jsonify(version=config.VERSION)
@@ -58,17 +72,6 @@ def get_issue(issue_ref):
         return jsonify(error='Issue not found'), 404
 
     return jsonify(mapify_issue(issue))
-
-@api.route("/issue/<issue_ref>.svg", methods=['GET'])
-def get_issue_image(issue_ref):
-    issue = retrieve_issue(g.project_id, issue_ref)
-    if issue == None:
-        abort(404)
-    
-    sponsorships = retrieve_all_sponsorships(issue.issue_id)
-    bounty = sum(s.amount for s in sponsorships)
-
-    return Response(render_template('issue.svg', bounty=bounty), mimetype="image/svg+xml")
 
 @api.route("/issue/<issue_ref>", methods=['PUT'])
 def put_issue(issue_ref):
