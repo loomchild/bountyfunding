@@ -1,7 +1,7 @@
 from bountyfunding.core.errors import ExternalApiError
 
-from collections import namedtuple
-import json
+from collections import namedtuple, Sequence
+import re, json
 import requests
 
 
@@ -16,6 +16,21 @@ def to_object(json):
 
 def _dict_to_object(d):
     return namedtuple('DictObject', d.keys())(*d.values())
+
+
+class PagedList(Sequence):
+    
+    def __init__(self, elements):
+        self.elements = elements
+
+    def __getitem__(self, index):
+        return self.elements[index]
+
+    def __len__(self):
+        return len(self.elements)
+
+    def __repr__(self):
+        return repr(self.elements)
 
 
 class Api(object):
@@ -48,10 +63,17 @@ class Api(object):
 
     def get(self, path, **kwargs):
         r = self.call('GET', path, [200, 404], **kwargs)
+        
         if r.status_code == 404:
             return None
-        else:
-            return to_object(r.json())
+        
+        result = to_object(r.json())
+        
+        if isinstance(result, list):
+            result = PagedList(result)
+            self.add_paging(r, result)
+
+        return result
     
     def post(self, path, data=None, **kwargs):
         return self.call('POST', path, [200, 201], data, **kwargs).status_code
@@ -71,6 +93,8 @@ class Api(object):
     def get_reason(self, response):
         return response.text
 
+    def add_paging(self, response, result):
+        pass
 
 class BountyFundingApi(Api):
     
@@ -78,14 +102,26 @@ class BountyFundingApi(Api):
         super(BountyFundingApi, self).__init__(url, params=dict(token=token))
 
 
+LINK_PATTERN = re.compile(r'<([^>]+)>;\s*rel="([a-z]+)"', flags=re.M)
+
 class GithubApi(Api):
     
     def __init__(self, url='https://api.github.com', token=None):
-        super(GithubApi, self).__init__(url, headers=dict(Authorization="token " + token))
+        headers = {}
+        if token:
+            headers["Authorization"] = "token " + token
+        super(GithubApi, self).__init__(url, headers=headers)
     
     def get_data(self, data):
         return json.dumps(data)
     
     def get_reason(self, response):
         return response.json().get("message")
+
+    def add_paging(self, response, result):
+        link_header = response.headers.get("Link")
+        if link_header:
+            links = {l[1]: l[0] for l in re.findall(LINK_PATTERN, link_header)}
+            for link in ("next", "prev", "first", "last"):
+                setattr(result, link, links.get(link))
 
