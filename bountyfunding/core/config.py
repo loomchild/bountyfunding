@@ -44,6 +44,7 @@ properties = {
     'VERSION' : Property('Software version', str, 'Unknown', False, False, False),
     'HOST' : Property('Host name / IP address on which to serve the webapp', str, "127.0.0.1", True, True, False),
     'PORT' : Property('Port number', int, 8080, True, True, False),
+    'URL' : Property('Externally accessible location of the webapp, needs to be changed when using a proxy', str, 'http://localhost:8080', False, True, False),
     'THREADS' : Property('Number of worker threads', int, 4, True, True, False),
 
     'DATABASE_URL' : Property('SQLAlchemy database url', str, '', False, True, False),

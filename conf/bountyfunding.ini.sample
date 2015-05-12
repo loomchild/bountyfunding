@@ -6,6 +6,9 @@ host = 127.0.0.1
 # Webapp port
 port = 8080
 
+# Externally accessible location of the webapp, needs to be changed when using a proxy
+url = http://localhost:8080
+
 # Number of worker threads
 threads = 4
 

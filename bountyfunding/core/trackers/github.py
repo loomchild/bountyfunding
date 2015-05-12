@@ -16,18 +16,28 @@ def create_update_issue(project_id, issue_ref):
     update_button(project_id, github_issue)
     return issue
 
+RESULTS_PER_PAGE = 100
+
 def sync_issues(project_id):
     project = Project.query.get(project_id)
     api = GithubApi(token=config[project_id].GITHUB_TOKEN)
-    github_issues = api.get('/repos/%s/issues' % config[project_id].TRACKER_PROJECT)
     updated_issues = []
+    page = 1
 
-    #TODO: add paging
-    for github_issue in github_issues:
-        issue = create_update_issue_from_github_issue(project_id, github_issue)
-        button = update_button(project, github_issue)
-        if issue or button:
-            updated_issues.append(github_issue.number)
+    while True:
+        github_issues = api.get('/repos/%s/issues' % config[project_id].TRACKER_PROJECT,
+                per_page=RESULTS_PER_PAGE, page=page)
+
+        if not github_issues:
+            break
+
+        for github_issue in github_issues:
+            issue = create_update_issue_from_github_issue(project_id, github_issue)
+            button = update_button(project, github_issue)
+            if issue or button:
+                updated_issues.append(github_issue.number)
+        
+        page += 1
 
     return updated_issues
 
@@ -97,8 +107,7 @@ def remove_button(body):
     return re.sub(button_pattern, "", body)
 
 def add_button(body, project, issue_ref):
-    #TODO: retrieve url from config
-    base_url = "http://bountyfunding.ngrok.io"
+    base_url = config.URL
     image_url = "%s/projects/%s/issues/%s.svg" % (base_url, project.name, issue_ref)
     issue_url = "%s/projects/%s/issues/%s.html" % (base_url, project.name, issue_ref)
     button = "[![Bounty](%s)](%s)\n" % (image_url, issue_url)
